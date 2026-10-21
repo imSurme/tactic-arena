@@ -336,3 +336,12 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
   #sbar{height:10px}
 }
 @media (max-aspect-ratio:3/4){#next{font-size:7px;letter-spacing:.04em;white-space:nowrap}}
+
+/* arkadaş maçı */
+.pvpbtn{width:min(260px,100%);background:linear-gradient(#5be38b,#1e9e52);box-shadow:0 4px 0 #136a37,0 10px 18px rgba(0,0,0,.35)}
+.pvpbtn:active{box-shadow:0 1px 0 #136a37}
+.roomcode{font-family:var(--display);font-size:38px;letter-spacing:.18em;color:var(--gold);text-shadow:0 3px 0 rgba(0,0,0,.35);line-height:1}
+.linkbox{display:flex;gap:6px;width:100%}
+.linkbox input{flex:1;min-width:0;background:#0b1230;border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 12px var(--body);padding:8px 10px}
+.linkbox .cta{flex:none}
+.dotpulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fd36b;margin-right:6px;vertical-align:1px;animation:blink 1s infinite}

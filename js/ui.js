@@ -68,6 +68,7 @@ function updateHud(){
 function tryCard(i){
   if(paused||state!=='play')return;
   const el=document.querySelector('#hand .card[data-i="'+i+'"]');
+  if(Net.isGuest()){Net.guestCard(i,el?el.getBoundingClientRect():null);return;} // kart isteği ev sahibine gider
   if(!playCard(teams[0],i,el?el.getBoundingClientRect():null))Sfx.deny();
 }
 function showOverlay(html,handlers={}){
@@ -90,8 +91,8 @@ function applyOppHud(){
 function showMenu(){
   state='menu';paused=false;Tutorial.hide();matchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
   showOverlay(`<h1>TACTIC<br>ARENA</h1><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
-${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div><button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
-  {go:showTournament,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
+${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div><button class="cta alt small pvpbtn" id="pvp">ARKADAŞINLA OYNA</button><button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
+  {go:showTournament,pvp:()=>Net.host(),quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
 }
 // deste ekranında seçilen kartın ayrıntıları
 const CARD_DETAIL={
@@ -143,7 +144,7 @@ function openCardModal(k){
 <div class="cmeta ${c.type}"><span class="ctype">${c.type==='atk'?'HÜCUM':'SAVUNMA'}</span><span>${c.cost} ★</span><span>${dur}</span></div>
 <p>${CARD_DETAIL[k]}</p>`;
   $('cardModal').hidden=false;modalOpenedAt=performance.now();
-  if(state==='play'&&!paused){paused=true;modalPaused=true;}
+  if(state==='play'&&!paused&&!(matchCtx&&matchCtx.pvp)){paused=true;modalPaused=true;}
   Sfx.ready();$('cmClose').focus();
 }
 function closeCardModal(){
@@ -219,6 +220,12 @@ function kickOffMatch(){
 }
 function setPaused(v){
   if(state!=='play'&&state!=='goal')return;
+  // arkadaş maçı durmaz; düğme sadece çıkış seçeneği sunar
+  if(matchCtx&&matchCtx.pvp){
+    if(!v)return;
+    showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>MAÇ SÜRÜYOR</h2><p>Arkadaş maçı duraklatılamaz.</p><button class="cta" id="go">DEVAM</button><button class="link" id="menu">Maçtan çık (rakip kazanır)</button>',{go:hideOverlay,menu:()=>Net.leave()});
+    return;
+  }
   if(v===paused)return;
   paused=v;
   if(v){
@@ -232,6 +239,7 @@ function endMatch(){
   state='end';Tutorial.hide();Sfx.whistleEnd();
   const a=teams[0].score,b=teams[1].score;
   if(matchCtx&&matchCtx.tour){tourAfterMatch(a,b);return;}
+  if(matchCtx&&matchCtx.pvp){showPvpEnd(a,b);return;}
   const res=a>b?['KAZANDIN!','var(--gold)']:a<b?['KAYBETTİN','var(--away-l)']:['BERABERE','var(--home-l)'];
   const note=overtime?'Uzatmada altın golle bitti.':'Top sendeyken hücum kartı, rakipteyken savunma kartı oyna.';
   showOverlay(`<div class="tip">MAÇ SONU</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div><p>${note}</p><button class="cta" id="go">TEKRAR</button><button class="link" id="menu">Ana menü</button>`,
@@ -251,4 +259,4 @@ pressable($('hand'),{
 });
 $('hand').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest('.card');if(el){e.preventDefault();tryCard(+el.dataset.i);}}});
 // sekme arka plana geçince oyun kendiliğinden durur
-document.addEventListener('visibilitychange',()=>{if(document.hidden)setPaused(true);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&!Net.active())setPaused(true);});

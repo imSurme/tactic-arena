@@ -2,12 +2,12 @@
 // matchOpp: turnuva rakibi {name, short, kit, str}; matchCtx: {tour, knockout, label}. Hızlı maçta ikisi de null
 let matchOpp=null,matchCtx=null;
 // rakibin gücü: ayarlardaki zorluk × turnuva rakibinin gücü
-function oppMod(){const d=Settings.diff(),s=matchOpp?matchOpp.str:1;return{skill:d.skill*s,think:d.think/s};}
+function oppMod(){if(matchCtx&&matchCtx.pvp)return{skill:1,think:1};const d=Settings.diff(),s=matchOpp?matchOpp.str:1;return{skill:d.skill*s,think:d.think/s};}
 let lastPossessor=null,teams,ball,state='menu',clock=MATCH,goalT=0,pendingKick=0,shake=0,now=0,aiT=2,doubleShown=false;
 let parts=[],floats=[],banners=[],handKey='',lastAfford=[],oppLog=[],overtime=false,paused=false;
 
 function makeTeam(id){
-  const keys=shuffle(id===0?Deck.get():Deck.random());
+  const keys=shuffle(id===0?Deck.get():matchCtx&&matchCtx.pvp&&pvpOppDeck?pvpOppDeck.slice():Deck.random());
   const t={id,score:0,stars:STAR_START,fx:{},hand:keys.slice(0,4),queue:keys.slice(4),players:[],chasers:[],
     color:id?'#ff4d5e':'#2f80ff',dark:id?'#b81f35':'#1747b5',light:id?'#ffb0b8':'#9cc4ff',trim:id?'#7a0f22':'#ffffff',
     gkColor:id?'#ffa21f':'#b6f23a',gkTrim:id?'#7a3d00':'#2e5a00'};

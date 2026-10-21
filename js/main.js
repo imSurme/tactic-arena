@@ -11,6 +11,7 @@ function timeUp(){
 function frame(ts){
   requestAnimationFrame(frame); // önce sıradaki kareyi iste: bir karede hata olsa da oyun donmasın
   const dt=Math.min(.05,(ts-last)/1000);last=ts;
+  if(Net.isGuest()){Net.guestFrame(dt);updateHud();draw();return;} // misafir oyunu çalıştırmaz, ev sahibinden gelen durumu çizer
   if(!paused){
     now+=dt;
     updateFx(dt);
@@ -34,6 +35,7 @@ function frame(ts){
       }
     }
   }
+  Net.hostTick(dt);
   updateHud();draw();
 }
 resize();addEventListener('resize',resize);
@@ -41,4 +43,6 @@ resize();addEventListener('resize',resize);
 if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>resize()).observe(document.getElementById('stage'));
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 showMenu();
+// arkadaşın gönderdiği link (?oda=KOD) ile açıldıysa doğrudan odaya katıl
+{const q=new URLSearchParams(location.search);if(q.get('oda'))Net.join(q.get('oda'));else if(q.get('kur'))Net.host(q.get('kur').toUpperCase());}
 requestAnimationFrame(frame);

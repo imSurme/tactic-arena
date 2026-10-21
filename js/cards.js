@@ -74,6 +74,7 @@ function tacticalFoul(t){
   addStars(opp,REWARD.foulComp,o.x,o.y);
 }
 function aiCards(dt){
+  if(matchCtx&&matchCtx.pvp)return; // arkadaş maçında rakibin kartlarını insan oynar
   aiT-=dt;if(aiT>0)return;aiT=rnd(1.5,3.5)*oppMod().think;
   const t=teams[1],o=ball.owner,own=o&&o.team===t,opp=o&&o.team!==t;
   const by=toN(t,ball.x,ball.y).y,late=clock<40;
