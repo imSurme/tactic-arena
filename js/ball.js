@@ -1,0 +1,106 @@
+// Top fiziği, kaleci kurtarışı, top kapma, gol
+function simBall(dt,live){
+  const b=ball;
+  if(b.owner){const p=b.owner;b.x=p.x+Math.cos(p.fa)*9;b.y=p.y+Math.sin(p.fa)*9;b.vx=p.vx;b.vy=p.vy;b.ownT+=dt;}
+  else{
+    b.x+=b.vx*dt;b.y+=b.vy*dt;const f=Math.exp(-TEMPO.friction*dt);b.vx*=f;b.vy*=f;
+    const sp=Math.hypot(b.vx,b.vy);if(sp<170)b.shot=false;if(sp<40)b.passTo=null;
+    if(b.y>FY&&b.y<FY+FH){
+      if(b.x<FX+3){b.x=FX+3;b.vx=Math.abs(b.vx)*.65;}
+      if(b.x>FX+FW-3){b.x=FX+FW-3;b.vx=-Math.abs(b.vx)*.65;}
+    }
+  }
+  if(b.setT>0)b.setT-=dt;
+  if(b.loft){b.loft.t+=dt;if(b.loft.t>=b.loft.T)b.loft=null;}
+  b.z=b.loft?4*b.loft.h*(b.loft.t/b.loft.T)*(1-b.loft.t/b.loft.T):0;
+  b.rot+=Math.hypot(b.vx,b.vy)*dt*.12;
+  b.trail.push({x:b.x,y:b.y});if(b.trail.length>12)b.trail.shift();
+  if(!live){
+    if(b.y<FY-14){b.y=FY-14;b.vy*=-.2;}if(b.y>FY+FH+14){b.y=FY+FH+14;b.vy*=-.2;}
+    if(b.y<FY||b.y>FY+FH)b.x=clamp(b.x,CX-GW/2+4,CX+GW/2-4);
+    return;
+  }
+  const inGoal=Math.abs(b.x-CX)<GW/2;
+  if(b.y<FY){if(inGoal)return goal(0);b.y=FY;b.vy=Math.abs(b.vy)*.65;}
+  if(b.y>FY+FH){if(inGoal)return goal(1);b.y=FY+FH;b.vy=-Math.abs(b.vy)*.65;}
+  if(!b.owner){
+    const sp=Math.hypot(b.vx,b.vy);
+    if(b.shot&&!b.gkRolled){
+      const t=teams[1-b.shotTeam.id],gk=t.players[0];
+      if(dist(gk,b)<(t.fx.gk?26:15)){
+        b.gkRolled=true;
+        // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
+        const ch=clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)-(b.corner?.12:0),.12,.97);
+        if(Math.random()<ch){
+          burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
+          if(sp<430&&Math.random()<.6){take(gk);gk.decT=.9;}
+          else{b.vy=-b.vy*.45;b.vx=rnd(-1,1)*200;b.shot=false;gk.kickCd=.3;}
+          return;
+        }
+      }
+    }
+    let best=null,bd=1e9;
+    if(b.z<6)for(const t of teams)for(const p of t.players){ // havadaki top kesilemez
+      if(p.stun>0||p.kickCd>0)continue;
+      const foe=b.passTeam&&b.passTeam!==p.team;
+      const d=dist(p,b),reach=(p.role==='GK'?13:p.dash>0?13:10)+(foe&&p.team.fx.intercept?4:0);
+      if(d>=reach||d>=bd)continue;
+      // canlı pası sadece alıcı alır; rakip ancak şansla keser ya da top neredeyse durmuşsa alır
+      let ok=b.passTo===p||(b.shot?(p.role==='GK'||sp<150):p.role==='GK'||(foe?sp<70:sp<230));
+      // pas arası: hızlı pası da kesebilir ama şansa bağlı (her oyuncu bir kez dener)
+      if(!ok&&!b.shot&&foe&&sp<TEMPO.interceptMaxSpeed&&!b.rolled.has(p)){
+        b.rolled.add(p);
+        let ch=p.team.fx.intercept?.7:TEMPO.intercept+(p.team.fx.mark?.15:0);
+        if(p.dash>0)ch=Math.max(ch,.65); // kayarak gelen oyuncu çıkan pası da keser
+        if(b.passTeam.fx.tiki)ch*=.3;
+        if(p.team.id===1)ch*=oppMod().skill;
+        ok=Math.random()<ch;
+      }
+      if(ok){bd=d;best=p;}
+    }
+    if(best){
+      const pt=b.passTeam;take(best);
+      if(pt&&pt!==best.team){floatText(best.x,best.y-20,'ARAYA GİRDİ',best.team.light);addStars(best.team,REWARD.intercept,best.x,best.y);}
+      else if(pt&&pt.fx.tiki)addStars(pt,REWARD.tiki);
+    }
+  }else if(!(b.setT>0)){
+    const o=b.owner,t=teams[1-o.team.id];
+    for(const p of t.players){
+      const dashing=p.dash>0; // kayarak gelen oyuncu bekleme süresine takılmaz
+      if(!dashing&&b.ownT<=TEMPO.grace)continue;
+      if(p.stun>0||(p.tackleCd>0&&!dashing))continue;
+      if(dist(p,o)>(dashing?18:13))continue;
+      p.tackleCd=TEMPO.tackleCd;
+      if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
+      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0);
+      if(o.team.fx.dribble&&p.dash<=0)ch*=.35; // çalım ustası
+      if(t.id===1)ch*=oppMod().skill; // rakip zorluğu
+      if(o.role==='GK')ch*=.3;
+      if(Math.random()<ch){
+        o.stun=.7;o.kickCd=.5;p.dash=0;
+        burst((o.x+p.x)/2,(o.y+p.y)/2,'#ffe066',10,110);
+        floatText(p.x,p.y-20,'KAPTI!',t.light);Sfx.tackle();addStars(t,REWARD.tackle,p.x,p.y);
+        if(Math.random()<.75)take(p);
+        else{b.owner=null;const a=rnd(0,Math.PI*2);b.vx=Math.cos(a)*130;b.vy=Math.sin(a)*130;}
+        break;
+      }
+    }
+  }
+}
+function take(p){
+  Object.assign(ball,{owner:p,ownT:0,passTo:null,passTeam:null,shot:false,power:false});
+  p.hold=0;p.run=0;p.drib=dirY(p.team)*Math.PI/2;
+  if(p.team!==lastPossessor){lastPossessor=p.team;const r=Math.random();p.team.lane=r<.38?-1:r<.76?1:0;}
+  // baskı altındaysa tek dokunuş
+  p.decT=p.role==='GK'?.3:nearestOpp(p,p.team).d<25?.12:rnd(.25,.4);
+  // bekleyen Taktik Faul: rakip topu alır almaz kesilir
+  const ft=teams[1-p.team.id];
+  if(ft.fx.foul>0&&p.role!=='GK'&&state==='play'){ft.fx.foul=0;tacticalFoul(ft);}
+}
+function goal(tid){
+  const t=teams[tid];t.score++;
+  Sfx.goal();state='goal';goalT=2.3;pendingKick=1-tid;shake=12;
+  for(let i=0;i<70;i++){const c=['#ffc83d','#fff',t.color,t.light,'#d23cff'][i%5];parts.push({x:ball.x,y:ball.y,vx:rnd(-230,230),vy:rnd(-230,230),life:rnd(.9,1.7),t:0,c,s:rnd(2,4.5),sq:true});}
+  banners.push({type:'big',text:'GOL!',sub:overtime?'ALTIN GOL!':tid===0?'Harika vuruş!':'Rakip attı',color:t.color,t:0,life:2.2});
+  const el=$('s'+tid);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
+}

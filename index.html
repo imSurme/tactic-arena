@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tactic Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="side" id="side0" style="--tc:var(--home)"><span class="ballmark"></span><svg class="crest" viewBox="0 0 32 32"><path d="M16 2 28 6v9c0 7-5 12.5-12 15C9 27.5 4 22 4 15V6z" fill="#2f80ff" stroke="#fff" stroke-width="2.5"/><path d="M16 9l2 4.3 4.6.5-3.4 3.1 1 4.6L16 19.2l-4.2 2.3 1-4.6-3.4-3.1 4.6-.5z" fill="#fff"/></svg><div><div class="who">SEN</div><div class="sc" id="s0">0</div></div></div>
+    <div class="mid"><div id="timer">2:00</div><div id="half">MAÇ</div></div>
+    <div class="side r" id="side1" style="--tc:var(--away)"><span class="ballmark"></span><svg class="crest" viewBox="0 0 32 32"><path id="crest1" d="M16 2 28 6v9c0 7-5 12.5-12 15C9 27.5 4 22 4 15V6z" fill="#ff4d5e" stroke="#fff" stroke-width="2.5"/><circle cx="16" cy="15" r="6" fill="none" stroke="#fff" stroke-width="2.6"/></svg><div style="text-align:right"><div class="who" id="who1">RAKİP</div><div class="sc" id="s1">0</div></div></div>
+  </div>
+  <div id="stage">
+    <div id="field">
+      <canvas id="c" aria-label="Futbol sahası"></canvas>
+      <div id="oppLog" hidden><span>RAKİP</span><div id="oppCards"></div></div>
+      <div id="ctrl"><button class="icon" id="muteBtn"></button><button class="icon" id="pauseBtn" aria-label="Duraklat"></button></div>
+      <div id="tip" role="status" hidden></div>
+      <div class="fxchips" id="fx0" aria-label="Aktif kartların"></div><div class="fxchips" id="fx1" aria-label="Rakibin aktif kartları"></div>
+    </div>
+    <div id="overlay"><div class="box" id="obox"></div></div>
+  </div>
+  <div id="panel">
+    <div id="cardsRow">
+      <div id="next">SIRADAKİ<div id="nextCard"></div></div>
+      <div id="hand"></div>
+    </div>
+    <div id="stars">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6b0"/><stop offset=".5" stop-color="#ffcc2e"/><stop offset="1" stop-color="#e88a00"/></linearGradient></defs></svg>
+      <div id="sicon"><svg viewBox="0 0 24 24"><path d="M12 1.6l3.1 6.5 7.1.9-5.2 4.9 1.3 7-6.3-3.5-6.3 3.5 1.3-7L1.8 9l7.1-.9z" fill="url(#sg)" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg><span id="snum">5</span></div>
+      <div id="sbar" role="meter" aria-label="Yıldız" aria-valuemin="0" aria-valuemax="10"><div id="sfill"></div><div id="sseg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div id="x2"></div>
+    </div>
+  </div>
+</div>
+<div id="cardModal" hidden><div class="cm-panel" role="dialog" aria-modal="true" aria-labelledby="cmTitle"><div id="cmBody"></div><button class="cta small" id="cmClose">TAMAM</button></div></div>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/fsm.js"></script>
+<script src="js/state.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/tactics.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/states.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ball.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/cardfx.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/tournament.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

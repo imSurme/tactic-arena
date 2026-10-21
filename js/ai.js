@@ -1,0 +1,48 @@
+// Takım yönetimi ve hareket: her karede takım görevleri dağıtır (kim topa basar, kim kimi tutar),
+// her oyuncu durum makinesiyle bir durum seçer, durum bir hedef verir, oyuncu oraya koşar
+
+// görev dağıtımı: topa koşan/basan oyuncular ve markajlar
+function assignRoles(t){
+  const o=ball.owner;
+  const out=t.players.filter(p=>p.role!=='GK'&&p.stun<=0&&p!==o);
+  // kendi son üçte birimizde ikinci oyuncu da topa basar
+  const ref=o||ball,n=t.fx.press||(o&&o.team!==t&&toN(t,o.x,o.y).y>.72)?2:1;
+  out.sort((a,b)=>dist(a,ref)-dist(b,ref));
+  if(ball.kickoff||(ball.setT>0&&o&&o.team!==t))t.chasers=[]; // serbest vuruşta topa basılmaz
+  else if(!o)t.chasers=ball.passTo&&ball.passTo.team===t?[ball.passTo]:out.slice(0,n);
+  else if(o.team!==t)t.chasers=out.slice(0,n);
+  else t.chasers=[];
+  assignMarks(t);
+}
+// hedefe doğru hızlanarak koş, takım arkadaşlarından uzak dur, yüzünü hareket yönüne ya da topa çevir
+function steer(p,t,tg,dt){
+  let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.15:1)*tg.sp;
+  if(ball.owner===p)sp*=t.fx.dribble>0?1:.82;
+  if(p.sprint>0)sp*=1.45;else if(p.run>0)sp*=1.2;
+  if(t.fx.offside>0&&p.role==='DEF'&&!attacking(t))sp*=1.25; // tuzak: hat hızla çıkar
+  if(p.dash>0)sp=265;
+  if(p.stun>0)sp=0;
+  const dx=clamp(tg.x,FX+6,FX+FW-6)-p.x,dy=clamp(tg.y,FY+6,FY+FH-6)-p.y,d=Math.hypot(dx,dy);
+  let ax=0,ay=0;
+  if(d>2){const s=Math.min(sp,d*4);ax=dx/d*s;ay=dy/d*s;}
+  for(const q of t.players){if(q===p)continue;const ex=p.x-q.x,ey=p.y-q.y,ed=Math.hypot(ex,ey);if(ed<22&&ed>0){ax+=ex/ed*(22-ed)*4;ay+=ey/ed*(22-ed)*4;}}
+  const k=Math.min(1,dt*(p.dash>0?14:7));
+  p.vx+=(ax-p.vx)*k;p.vy+=(ay-p.vy)*k;
+  p.x=clamp(p.x+p.vx*dt,FX+6,FX+FW-6);p.y=clamp(p.y+p.vy*dt,FY+6,FY+FH-6);
+  const v=Math.hypot(p.vx,p.vy);
+  if(v>8){const ta=Math.atan2(p.vy,p.vx);let da=ta-p.fa;da=Math.atan2(Math.sin(da),Math.cos(da));p.fa+=da*Math.min(1,dt*12);}
+  else if(p.role!=='GK'||ball.owner!==p){const ta=Math.atan2(ball.y-p.y,ball.x-p.x);let da=ta-p.fa;da=Math.atan2(Math.sin(da),Math.cos(da));p.fa+=da*Math.min(1,dt*5);}
+  p.anim+=v*dt*.25;
+  if(v>48&&Math.random()<dt*4)parts.push({x:p.x+rnd(-3,3),y:p.y+6,vx:-p.vx*.1,vy:-p.vy*.1,life:.4,t:0,c:'rgba(230,255,220,.6)',s:rnd(1,1.8)}); // koşu tozu
+}
+function simPlayers(dt){
+  for(const t of teams){updateSeenLine(t,dt);assignRoles(t);}
+  for(const t of teams)for(const p of t.players){
+    playerGlobal(p,t,dt);
+    p.fsm.change(p.role==='GK'?chooseKeeperState(p,t):chooseFieldState(p,t));
+    let tg=p.fsm.update(dt);
+    // serbest vuruşta rakipler topa 30 px'ten fazla yaklaşamaz
+    if(ball.setT>0&&ball.owner&&ball.owner.team!==t){const d=dist(tg,ball);if(d<32){const k=32/(d||1);tg={...tg,x:ball.x+(tg.x-ball.x)*k,y:ball.y+(tg.y-ball.y)*k};}}
+    steer(p,t,tg,dt);
+  }
+}
