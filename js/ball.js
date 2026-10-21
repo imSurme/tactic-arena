@@ -30,7 +30,7 @@ function simBall(dt,live){
       if(dist(gk,b)<(t.fx.gk?26:15)){
         b.gkRolled=true;
         // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
-        const ch=clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)-(b.corner?.12:0),.12,.97);
+        const ch=clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)-(b.corner?.12:0)-(b.power?.12:0),.12,.97);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           if(sp<430&&Math.random()<.6){take(gk);gk.decT=.9;}
@@ -65,7 +65,7 @@ function simBall(dt,live){
     }
   }else if(!(b.setT>0)){
     const o=b.owner,t=teams[1-o.team.id];
-    for(const p of t.players){
+    if(o.role!=='GK')for(const p of t.players){ // topu elinde tutan kaleciye müdahale yok
       const dashing=p.dash>0; // kayarak gelen oyuncu bekleme süresine takılmaz
       if(!dashing&&b.ownT<=TEMPO.grace)continue;
       if(p.stun>0||(p.tackleCd>0&&!dashing))continue;
@@ -75,7 +75,6 @@ function simBall(dt,live){
       let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0);
       if(o.team.fx.dribble&&p.dash<=0)ch*=.35; // çalım ustası
       if(t.id===1)ch*=oppMod().skill; // rakip zorluğu
-      if(o.role==='GK')ch*=.3;
       if(Math.random()<ch){
         o.stun=.7;o.kickCd=.5;p.dash=0;
         burst((o.x+p.x)/2,(o.y+p.y)/2,'#ffe066',10,110);

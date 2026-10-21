@@ -97,7 +97,7 @@ ${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZ
 const CARD_DETAIL={
   counter:'Takım 6 sn boyunca %30 hızlı koşar, topu kazanınca oyuncular hücuma çıkar.',
   through:'Top sendeyse en öndeki oyuncuya hemen derin pas atılır. Değilse 6 sn içinde topu alınca atılır.',
-  power:'Bir sonraki şut uzaktan bile çekilir, çok sert ve kaleciye zor gider.',
+  power:'15 sn içinde takımın çektiği ilk şut güçlü şut olur: oyuncu iyi bir pozisyon kollar, çok sert ve isabetli vurur, kaleci zor kurtarır.',
   wave:'7 sn boyunca kaleci hariç herkes ileri çıkar ve %15 hızlanır. Arkada boşluk kalır.',
   overlap:'7 sn boyunca iki bek kanatlardan hücuma bindirir, paslar kanatlara akar.',
   longball:'Top savunmanın arkasına havadan gönderilir. Havadayken kesilemez.',

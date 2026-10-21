@@ -87,7 +87,7 @@ function shoot(p,t){
   const g=oppGoal(t),gk=teams[1-t.id].players[0],d=dist(p,g);
   let side=gk.x>CX?-1:1;if(Math.random()<.3)side=-side;
   const pow=t.fx.power>0;
-  const tx=CX+side*(GW/2-10)*rnd(.4,1)+rnd(-.5,.5)*d*(pow?.08:.18);
+  const tx=CX+side*(GW/2-10)*rnd(.4,1)+rnd(-.5,.5)*d*(pow?.04:.18);
   const sp=pow?TEMPO.powerShot+d*.3:Math.min(450,rnd(...TEMPO.shot)+d*.4);
   kick(p,tx,g.y+dirY(t)*10,sp);
   ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;Sfx.shot(pow);
@@ -158,7 +158,9 @@ function carrierThink(p,t,dt){
   const g=oppGoal(t),dG=dist(p,g),press=nearestOpp(p,t).d,ny=toN(t,p.x,p.y).y;
   // ortadan gelen topa vole, yakından kesin şut, uzaktan ise açı ve boşluk varsa şut
   const q=shotQuality(p,t);
-  if(t.fx.power>0&&q>-.2||p.volley>0&&dG<120||dG<58){shoot(p,t);return;}
+  // Güçlü Şut: iyi pozisyonu bekle (165 px içi, önü çok kapalı değil); süre bitmek üzereyse uzaktan da vur
+  const powerReady=t.fx.power>0&&((dG<165&&q>-.3)||(t.fx.power<1.2&&dG<240));
+  if(powerReady||p.volley>0&&dG<120||dG<58){shoot(p,t);return;}
   if(q>0&&Math.random()<q*.32+(press<26?.08:0)){shoot(p,t);return;}
   // ceza sahası içinde önü kapalı da olsa vur; ceza sahası önünde topu uzun süre tutma
   if(dG<85&&q>-.4&&Math.random()<.6){shoot(p,t);return;}

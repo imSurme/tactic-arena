@@ -10,7 +10,7 @@ function assignRoles(t){
   out.sort((a,b)=>dist(a,ref)-dist(b,ref));
   if(ball.kickoff||(ball.setT>0&&o&&o.team!==t))t.chasers=[]; // serbest vuruşta topa basılmaz
   else if(!o)t.chasers=ball.passTo&&ball.passTo.team===t?[ball.passTo]:out.slice(0,n);
-  else if(o.team!==t)t.chasers=out.slice(0,n);
+  else if(o.team!==t)t.chasers=o.role==='GK'?[]:out.slice(0,n); // topu tutan kaleciye basılmaz
   else t.chasers=[];
   assignMarks(t);
 }

@@ -35,7 +35,7 @@ const CARDS={
   mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'7 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
-const DUR={counter:6,press:6,through:6,power:8,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
+const DUR={counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
 const DEFAULT_DECK=['counter','through','power','wave','press','wall','gk','slide'];
 const ICONS={
   counter:'<path d="M13.5 2 4.5 13.5h6L9.5 22l10-12h-6.2L14.5 2z"/>',
