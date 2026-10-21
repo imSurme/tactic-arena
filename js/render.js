@@ -1,15 +1,17 @@
 // Canvas çizimi: saha, oyuncular, top, efektler
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const bg=document.createElement('canvas'),bctx=bg.getContext('2d');
-let scale=1,dpr=1;
+let scale=1,dpr=1,viewCrop=0; // viewCrop: tuvalin üstünden ve altından kırpılan oyun pikseli
 function resize(){
   const st=document.getElementById('stage').getBoundingClientRect();
   // pencere henüz boyutlanmadıysa (ilk açılış) tuvali 0 boyutla kurma; boyut gelince tekrar denenir
   if(st.width<10||st.height<10)return;
-  scale=Math.min(st.width/W,st.height/H);dpr=window.devicePixelRatio||1;
-  cv.style.width=W*scale+'px';cv.style.height=H*scale+'px';
-  cv.width=bg.width=Math.round(W*scale*dpr);cv.height=bg.height=Math.round(H*scale*dpr);
-  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);
+  viewCrop=matchMedia('(max-aspect-ratio:3/4)').matches?10:0;
+  const vh=H-viewCrop*2;
+  scale=Math.min(st.width/W,st.height/vh);dpr=window.devicePixelRatio||1;
+  cv.style.width=W*scale+'px';cv.style.height=vh*scale+'px';
+  cv.width=bg.width=Math.round(W*scale*dpr);bg.height=Math.round(H*scale*dpr);cv.height=Math.round(vh*scale*dpr);
+  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,-viewCrop*scale*dpr);
   bctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);
   renderField(bctx);
 }

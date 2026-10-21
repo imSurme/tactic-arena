@@ -5,7 +5,7 @@ const Coach=(()=>{
   // sahanın içindeki bir bölgeyi (oyun koordinatlarında) ekran dikdörtgenine çevirir
   const fieldRect=(x,y,w,h)=>{
     const r=$('c').getBoundingClientRect(),k=r.width/W;
-    return{left:r.left+x*k,top:r.top+y*k,width:w*k,height:h*k};
+    return{left:r.left+x*k,top:r.top+(y-viewCrop)*k,width:w*k,height:h*k};
   };
   const el=id=>()=>$(id).getBoundingClientRect();
   const steps=[
