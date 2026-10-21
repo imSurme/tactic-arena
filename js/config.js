@@ -1,7 +1,7 @@
 // Sabitler: saha ölçüleri, tempo, kartlar, ikonlar, roller, renkler
 const W=360,H=560,FX=20,FY=30,FW=320,FH=500,CX=FX+FW/2,CY=FY+FH/2,GW=96;
 const MATCH=180,FAST_TIME=60;          // 3 dk maç, son 60 sn 2x yıldız
-const STAR_MAX=10,STAR_REGEN=1/2.6,STAR_START=5;  // yıldız: kart oynama parası
+const STAR_MAX=10,STAR_REGEN=1/3,STAR_START=5;  // yıldız: kart oynama parası (3 sn'de 1)
 const DECK_SIZE=8;
 // tempo: oyuncu ve top hızları, top kapma ve pas arası olasılıkları
 const TEMPO={
@@ -14,7 +14,7 @@ const TEMPO={
   think:[.35,.55],   // top sürenin karar verme aralığı
 };
 // oyun içi yıldız ödülleri
-const REWARD={tackle:.5,intercept:.5,save:1,tiki:.2,foulComp:1};
+const REWARD={tackle:.3,intercept:.3,save:.6,tiki:.15,foulComp:1};
 const DEBUG=typeof location!=='undefined'&&location.hash==='#debug';
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CARDS={
