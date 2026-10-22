@@ -32,7 +32,7 @@ const Coach=(()=>{
     {at:el('timer'),title:'Maç süresi',demo:{enter(){this.c=clock;},update(dt){sandbox(dt);const before=clock;clock=Math.max(52,clock-dt*45);if(before>FAST_TIME&&clock<=FAST_TIME)banners.push({type:'info',text:'2x YILDIZ',sub:'Son 60 saniye!',color:'#ff8cf0',t:0,life:1.8});},exit(){clock=this.c;}},
      text:()=>`Maç ${Settings.get('length')/60} dakika sürer. Son 60 saniyede yıldızlar 2 kat hızlı dolar. Berabere biterse <b>altın gollü uzatma</b> oynanır: ilk golü atan kazanır.`},
     {at:el('stars'),title:'Yıldızlar',demo:{enter(){teams[0].stars=0;this.n=0;},update(dt,t){sandbox(dt);teams[0].stars=Math.min(STAR_MAX,teams[0].stars+dt*2.2);if(teams[0].stars>=STAR_MAX&&t>this.n){teams[0].stars=0;}if(t>this.n){this.n=t+2.4;const p=teams[0].players[1+(Math.random()*4|0)];floatText(p.x,p.y-20,'KAPTI!',teams[0].light);addStars(teams[0],REWARD.tackle,p.x,p.y);}}},
-     text:'Kart oynamak yıldız ister. Yıldızlar zamanla dolar, en fazla 10 birikir. İyi oyunla bonus da kazanırsın: top kapma ve pas arası +0,5★, kaleci kurtarışı +1★.'},
+     text:'Kart oynamak yıldız ister. Yıldızlar zamanla dolar, en fazla 10 birikir. İyi oyunla bonus da kazanırsın: top kapma ve pas arası +0,3★, kaleci kurtarışı +0,6★.'},
     {at:el('hand'),title:'Elindeki kartlar',demo:{enter(){teams[0].stars=0;},update(dt){sandbox(dt);teams[0].stars+=dt*1.6;if(teams[0].stars>STAR_MAX+1.5)teams[0].stars=0;teams[0].stars=Math.min(teams[0].stars,STAR_MAX+1.6);}},
      text:'Her an elinde 4 kart olur. Karta <b>dokununca oynanır</b>. Köşedeki yıldız bedelini gösterir. Yıldızın yetmiyorsa kart soluk durur ve yıldız doldukça alttan aydınlanır.'},
     {at:el('hand'),title:'Hücum mu, savunma mı?',demo:every(2.6,()=>{teams[0].stars=STAR_MAX;swapBall();}),

@@ -31,9 +31,11 @@ function kickoff(tid){
     if(t.id!==tid)ny=Math.max(ny,.62); // rakip santra yuvarlağının dışında bekler
     const w=toW(t,p.bx,ny);Object.assign(p,{x:w.x,y:w.y,vx:0,vy:0,stun:0,dash:0,sprint:0,run:0,kickCd:0,tackleCd:0,hold:0,spot:null,spotT:0,mark:null,fa:t.id?Math.PI/2:-Math.PI/2});
   }
-  const kt=teams[tid],f=kt.players[4],m=kt.players[3];
+  const kt=teams[tid],f=kt.players[4],r=Math.random();
+  const m=r<.5?kt.players[3]:r<.75?kt.players[1]:kt.players[2]; // geri pası alacak oyuncu: orta saha ya da bir bek
+  kt.koRecv=m;
   f.x=CX;f.y=CY-dirY(kt)*8;
-  m.x=CX-28;m.y=CY-dirY(kt)*48; // santrada orta saha geride pası bekler
+  if(m.role==='MID'){m.x=CX+(Math.random()<.5?-28:28);m.y=CY-dirY(kt)*48;} // orta saha geride, sağda ya da solda bekler
   f.fa=Math.atan2(m.y-f.y,m.x-f.x);
   ball={x:CX,y:CY,vx:0,vy:0,owner:f,ownT:0,passTo:null,passTeam:null,shot:false,shotTeam:null,power:false,gkRolled:false,kickoff:true,rolled:new Set(),trail:[],rot:0};
   f.decT=.8;f.drib=f.fa;

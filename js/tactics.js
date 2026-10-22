@@ -54,6 +54,7 @@ function passOptions(p,t){
     const near=Math.max(0,200-dist(tg,oppGoal(t)))*.25;
     const s=prog*.7+open*.8+near+Math.min(safe,30)*.4-d*.08+rnd(0,8)-(r.role==='GK'?25:0)
       +(t.fx.overlap&&r.role==='DEF'?18:0)
+      -(r===p.passFrom&&now-p.passFromT<2.5?(ball.kickoff===false&&p.hold<.3?40:24):0) // topu yeni verene hemen geri verme
       +(laneX(t)!==null&&Math.abs(tg.x-laneX(t))<60?14:0); // hücum kanadına pas
     res.push({r,tg,sp,s});
   }
@@ -61,7 +62,7 @@ function passOptions(p,t){
 }
 function kick(p,tx,ty,sp){
   const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy)||1;
-  Object.assign(ball,{owner:null,vx:dx/d*sp,vy:dy/d*sp,x:p.x+dx/d*9,y:p.y+dy/d*9,shot:false,passTo:null,passTeam:null,power:false,safe:false,tactical:false,offsideR:null,penalty:false,pen:false,kickoff:false,loft:null,passTarget:null,setT:0,rolled:new Set()});
+  Object.assign(ball,{owner:null,vx:dx/d*sp,vy:dy/d*sp,x:p.x+dx/d*9,y:p.y+dy/d*9,shot:false,passTo:null,passTeam:null,power:false,safe:false,tactical:false,offsideR:null,penalty:false,pen:false,header:false,kickoff:false,loft:null,passTarget:null,setT:0,rolled:new Set()});
   p.kickCd=.35;p.fa=Math.atan2(dy,dx);
 }
 function pass(p,r,t,tg,sp){
@@ -69,7 +70,7 @@ function pass(p,r,t,tg,sp){
   // ofsayt: yan hakem bayrağı kaldırır, rakip serbest vuruş kullanır
   const off=isOffside(r,t,p); // pas anındaki konuma bakılır, düdük topu alınca çalar
   kick(p,tg.x,tg.y,sp||passSpeed(dist(p,tg)));
-  ball.passTo=r;ball.passTeam=t;ball.passTarget=tg;ball.offsideR=off?r:null;Sfx.pass();
+  ball.passTo=r;ball.passTeam=t;ball.passTarget=tg;ball.offsideR=off?r:null;ball.passer=p;Sfx.pass();
   stats.passes[t.id]++;
 }
 // derin pas için en iyi koşu: alıcının topa rakipten önce yetişeceği hedefi ve top hızını bul
@@ -131,12 +132,14 @@ function shoot(p,t){
   const g=oppGoal(t),gk=teams[1-t.id].players[0],d=dist(p,g);
   let side=gk.x>CX?-1:gk.x<CX?1:Math.random()<.5?-1:1;if(Math.random()<.15)side=-side; // genelde kalecinin uzak köşesi
   const pow=t.fx.power>0,pen=ball.penalty; // penaltı köşeye, temiz vurulur
-  const tx=CX+side*(GW/2-9)*(pen?rnd(.2,.8):rnd(.55,1))+rnd(-.5,.5)*d*(pow||pen?.04:.16);
+  const head=!pow&&!pen&&t.fx.overlap>0&&p.volley>0; // bindirmeden gelen ortaya vuruş
+  const tx=CX+side*(GW/2-9)*(pen?rnd(.2,.8):head?rnd(.75,1):rnd(.55,1))+rnd(-.5,.5)*d*(pow||pen||head?.04:.16);
   const sp=pow?TEMPO.powerShot+d*.3:Math.min(450,rnd(...TEMPO.shot)+d*.4);
   kick(p,tx,g.y+dirY(t)*10,sp);
-  ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;ball.pen=pen;Sfx.shot(pow);
+  ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;ball.pen=pen;ball.header=head;Sfx.shot(pow);
   ball.corner=Math.abs(tx-CX)>GW/2-16;ball.shotDist=d;
   if(pow){t.fx.power=0;shake=8;burst(p.x,p.y,CARDS.power.col,18,160);floatText(p.x,p.y-20,'BOMBA!',CARDS.power.col);}
+  else if(head)floatText(p.x,p.y-20,'KAFA!',CARDS.overlap.col);
   else floatText(p.x,p.y-20,d>110?'UZAKTAN!':'ŞUT!',d>110?'#ffd23f':'#fff');
 }
 
@@ -188,7 +191,7 @@ function dribbleDir(p,t){
 }
 function carrierThink(p,t,dt){
   p.hold+=dt;p.decT-=dt;if(p.decT>0)return;p.decT=rnd(...TEMPO.think)*(t.fx.tiki>0?.6:1);
-  if(ball.kickoff){pass(p,t.players[3],t);floatText(p.x,p.y-20,'SANTRA','#fff');return;}
+  if(ball.kickoff){pass(p,t.koRecv||t.players[3],t);floatText(p.x,p.y-20,'SANTRA','#fff');return;}
   if(p.penalty){p.penalty=false;shoot(p,t);return;}
   if(p.freeKick){p.freeKick=false;if(shotQuality(p,t)>-.45){shoot(p,t);return;}}
   if(p.setPass&&!p.resetPass){p.setPass=false;const o=passOptions(p,t)[0];if(o){pass(p,o.r,t,o.tg,o.sp);return;}}
@@ -234,6 +237,7 @@ function formation(p,t){
       if(p.role==='DEF'&&(p.bx-.5)*t.lane>0){ny-=.12;nx=t.lane>0?.88:.12;} // kanat tarafındaki bek bindirir
     }
     if(t.fx.overlap&&p.role==='DEF'){ny-=.22;nx=p.bx<.5?.08:.92;} // bekler bindirir
+    if(t.fx.overlap&&p.role!=='DEF'&&p.role!=='GK')ny-=.1; // orta saha ve forvet ortaya hazırlanır
   }else if(t.fx.offside&&p.role!=='GK')ny-=p.role==='DEF'?.16:.07; // ofsayt tuzağı: hat aniden öne çıkar
   if(t.fx.wave)ny-=has?.2:.1;
   if(t.fx.wall&&!has){ny=.7+(p.by-.44)*.45+(b.y-.5)*.08;nx=.5+(nx-.5)*.75;}

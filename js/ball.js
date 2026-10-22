@@ -46,7 +46,7 @@ function simBall(dt,live){
         b.gkRolled=true;
         // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
         // kurtarış şansı (kaleci yetişirse): yakından ~%68, uzaktan ~%95; köşeye ve güçlü şut daha zor
-        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0),.12,.95);
+        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0)-(b.header?.18:0),.12,.95);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           stats.saves[t.id]++;statOnTarget(b.shotTeam.id);
@@ -91,8 +91,9 @@ function simBall(dt,live){
       if(dist(p,o)>(dashing?18:13))continue;
       p.tackleCd=TEMPO.tackleCd;
       if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
-      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.1:0);
-      if(p.dash<=0){const ax=p.x-o.x,ay=p.y-o.y,c=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1);ch*=c>.3?1.6:c<-.3?.45:1.05;} // önden / yandan / arkadan
+      let ch=p.dash>0?.75:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.1:0);
+      const ax=p.x-o.x,ay=p.y-o.y,dirC=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1); // >0 önden, <0 arkadan
+      if(p.dash<=0)ch*=dirC>.3?1.6:dirC<-.3?.45:1.9; // önden karşılama ve omuz omuza mücadele iyi, arkadan zor
       if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası
       if(o.team.fx.tiki&&p.dash<=0)ch*=.45;
       if(t.id===1)ch*=oppMod().skill; // rakip zorluğu
@@ -106,6 +107,7 @@ function simBall(dt,live){
         break;
       }
       if(o.team.fx.dribble&&p.dash<=0){floatText(o.x,o.y-20,'ÇALIM!',CARDS.dribble.col);burst(o.x,o.y,CARDS.dribble.col,6,70);} // müdahale boşa çıktı
+      if(p.dash<=0&&dirC<=.3)p.stun=Math.max(p.stun,.3); // yandan/arkadan giren ve topu alamayan savunmacı geçilir, bir an dengesini kaybeder
     }
   }
 }
@@ -114,6 +116,7 @@ function take(p){
   const off=ball.offsideR;
   if(off&&!ball.owner){ball.offsideR=null;if(off===p&&state==='play'){p.kickCd=.4;callOffside(p,p.team);return;}}
   ball.offsideR=null;
+  if(ball.passTeam===p.team&&ball.passer&&ball.passer!==p){p.passFrom=ball.passer;p.passFromT=now;}else p.passFrom=null;
   Object.assign(ball,{owner:p,ownT:0,passTo:null,passTeam:null,shot:false,power:false});
   p.hold=0;p.run=0;p.drib=dirY(p.team)*Math.PI/2;
   if(p.team!==lastPossessor){lastPossessor=p.team;const r=Math.random();p.team.lane=r<.38?-1:r<.76?1:0;}

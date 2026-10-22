@@ -72,9 +72,9 @@ function tacticalFoul(t){
   let best=null,bd=1e9;
   for(const p of t.players){if(p.role==='GK')continue;const d=dist(p,o);if(d<bd){bd=d;best=p;}}
   t.fx.foul=0;
-  // faul erken yapılır: serbest vuruş kalemize 175 px'ten yakın olamaz
+  // faul erken yapılır: serbest vuruş kalemize 240 px'ten yakın olamaz, atak orta sahaya itilir
   const g=ownGoal(t),gd=dist(o,g);
-  if(gd<175){const k=175/(gd||1);o.x=clamp(g.x+(o.x-g.x)*k,FX+10,FX+FW-10);o.y=clamp(g.y+(o.y-g.y)*k,FY+10,FY+FH-10);}
+  if(gd<240){const k=240/(gd||1);o.x=clamp(g.x+(o.x-g.x)*k,FX+10,FX+FW-10);o.y=clamp(g.y+(o.y-g.y)*k,FY+10,FY+FH-10);}
   best.x=clamp(o.x-dirY(opp)*10,FX+6,FX+FW-6);best.y=clamp(o.y-dirY(opp)*10,FY+6,FY+FH-6);
   callFoul(best,o,{delay:2.6,label:'TAKTİK FAUL!',indirect:true});
   for(const p of t.players)if(p.role!=='GK'&&p!==best)p.sprint=2.2; // savunmaya koş

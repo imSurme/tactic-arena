@@ -101,7 +101,7 @@ function chooseFieldState(p,t){
   const o=ball.owner,S=FieldStates;
   if(p.stun>0)return S.stunned;
   if(p.dash>0)return S.dash;
-  if(ball.kickoff&&p===t.players[3]&&attacking(t))return S.kickoffWait;
+  if(ball.kickoff&&p===t.koRecv&&attacking(t))return S.kickoffWait;
   if(o===p)return S.dribble;
   if(ball.passTo===p&&!o)return S.receive;
   if(t.chasers.includes(p))return o?S.press:S.chase;
