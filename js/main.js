@@ -42,6 +42,20 @@ function frame(ts){
   Net.hostTick(dt);
   updateHud();draw();
 }
+// iPhone ana ekran uygulaması: iOS açılışta ekran yüksekliğini ara sıra kısa bildirir ve düzeltmez (altta boşluk kalır).
+// Yükseklik birkaç kez ölçülür, en büyüğü oyun kutusuna verilir.
+{
+  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(standalone){
+    const fit=()=>{
+      const h=Math.max(innerHeight,document.documentElement.clientHeight,window.visualViewport?visualViewport.height:0);
+      document.documentElement.style.setProperty('--apph',h+'px');document.documentElement.classList.add('standalone');
+    };
+    fit();for(const t of [50,300,1000])setTimeout(fit,t);
+    for(const ev of ['resize','orientationchange','pageshow'])addEventListener(ev,()=>{fit();setTimeout(fit,300);});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){fit();setTimeout(fit,300);}});
+  }
+}
 resize();addEventListener('resize',resize);
 // saha alanının boyutu değişince (pencere ilk kez boyutlanınca, yazı tipleri geç yüklenince) yeniden ölç
 if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>resize()).observe(document.getElementById('stage'));

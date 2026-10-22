@@ -598,3 +598,5 @@ canvas{border-radius:0;box-shadow:none}
 /* oyun kutusu ekranın dört kenarına sabit: iPhone'da ana ekrana eklenmiş web uygulamasında 100dvh ekranı tam kapsamadığı
    için üstte sıkışma / altta boşluk oluyordu. Çentik ve ev çubuğu payı skorbord ve kart panelindeki safe-area boşluklarıyla verilir */
 #app{position:fixed;inset:0;height:auto}
+/* ana ekran uygulamasında yükseklik JS ile ölçülen en büyük değer (bkz. main.js) */
+html.standalone #app{bottom:auto;height:var(--apph,100vh)}
