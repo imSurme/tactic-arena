@@ -516,3 +516,58 @@ canvas{border-radius:0;box-shadow:none}
 @media (prefers-reduced-motion:reduce){#super .card.ready{animation:none}}
 
 @media (max-height:700px){.box .dtip{display:none}.supertip{margin-top:0}}
+
+/* alt panel: kartlar tüm genişliği doldurur; solda süper ve sıradaki kart küçük gerçek kartlar */
+#cardsRow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:7px;align-items:stretch}
+#hand{grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch;gap:6px;align-items:end}
+#hand .card,#hand .card[style]{width:auto}
+#sidecol{width:auto;justify-content:space-between;gap:4px}
+#super,#next{width:100%;gap:2px}
+#next{font-size:7.5px;letter-spacing:.06em}
+#super .card,#next .card{width:100%;padding:2px;border-radius:9px}
+#next .card{width:44px}
+#super .card .art,#next .card .art{aspect-ratio:1/1;border-radius:7px 7px 3px 3px}
+#super .card .nm,#next .card .nm{display:flex;min-height:12px;padding:1px 0 0}
+#super .card .nm b,#next .card .nm b{font-size:7px;line-height:1.1}
+#super .card .art svg,#next .card .art svg{width:58%;height:58%}
+#superLbl{font-size:7.5px;letter-spacing:.08em}
+/* yıldız çubuğu tüm genişlikte; 2x rozeti çubuğun üstünde */
+#stars{position:relative}
+#x2{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:auto;font-size:11px;text-shadow:0 1px 0 #000;pointer-events:none}
+/* süper kart el kartlarıyla aynı boyda; sıradaki kart yıldız çubuğunun solunda küçük rozet */
+#cardsRow{grid-template-columns:60px minmax(0,1fr)}
+#sidecol{justify-content:flex-end}
+#super .card .art{aspect-ratio:4/5}
+#super .card .tag{display:block;top:3px;left:50%;right:auto;transform:translateX(-50%);font-size:6.5px;padding:1px 4px 0}
+#super .card .nm{min-height:18px}
+#super .card .nm b{font-size:7.5px}
+#superLbl{display:none}
+#super.used .card::after{content:"KULLANILDI";position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) rotate(-12deg);font:800 7px var(--body);letter-spacing:.06em;color:#fff;background:rgba(11,18,48,.85);padding:2px 4px;border-radius:4px;white-space:nowrap;z-index:3}
+#stars #next{flex:none;width:auto;flex-direction:row;align-items:center;gap:4px;font-size:7px;letter-spacing:.06em;line-height:1.05;color:var(--muted)}
+#stars #next>span{width:34px;text-align:right}
+#stars #next .card{width:28px;padding:1.5px;border-radius:7px}
+#stars #next .card .art{aspect-ratio:1/1;border-radius:5px}
+#stars #next .card .nm,#stars #next .card .tag{display:none}
+#stars #next .card .cost{width:15px;height:15px;top:-5px;left:-5px}
+#stars #next .card .cost span{font-size:7px;inset:4.5px 0 0}
+@media (max-aspect-ratio:3/4) and (max-height:720px){#super .card .art{aspect-ratio:1/1}#super .card .nm{min-height:14px}}
+/* süper kart el kartlarıyla aynı yükseklikte */
+#sidecol,#super,#superCard{height:100%}
+#super{justify-content:flex-end}
+#superCard{width:100%;display:flex}
+#super .card{height:100%}
+#super .card .art{flex:1;aspect-ratio:auto;min-height:0}
+@media (max-aspect-ratio:3/4) and (max-height:720px){#super .card .art{aspect-ratio:auto}}
+/* süper kart: dönen gökkuşağı çerçeve ve üzerinden geçen parıltı; yıldız yetmezken de renkli kalır */
+@property --sang{syntax:'<angle>';inherits:false;initial-value:0deg}
+#super .card{background:conic-gradient(from var(--sang),#ff4d5e,#ffd23f,#5be38b,#5cb8ff,#b18cff,#ff4d5e);animation:superSpin 3s linear infinite;box-shadow:0 0 14px rgba(255,210,63,.6)}
+@keyframes superSpin{to{--sang:360deg}}
+#super .card .art{overflow:hidden}
+#super .card .art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:superShine 2.4s ease-in-out infinite}
+@keyframes superShine{60%,100%{transform:translateX(120%)}}
+#super .card.off{filter:none}
+#super .card.off .art{filter:saturate(.55) brightness(.75)}
+#super .card.ready{animation:superSpin 1.6s linear infinite;box-shadow:0 0 0 2px #fff3a0,0 0 24px rgba(255,210,63,.95)}
+#super.used .card{animation:none;filter:grayscale(1) brightness(.5)}
+#super.used .card .art::after{display:none}
+@media (prefers-reduced-motion:reduce){#super .card,#super .card .art::after{animation:none}}

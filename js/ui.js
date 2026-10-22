@@ -13,6 +13,8 @@ function cardHTML(k,i){
     <span class="art">${iconSvg(k)}<span class="tag">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER'}</span></span>
     <span class="nm"><b>${c.name}</b></span><span class="lock"></span></button>`;
 }
+// yan sütun için kısa adlı kart
+const miniCard=(k,i)=>cardHTML(k,i).replace('<b>'+CARDS[k].name+'</b>','<b>'+CARDS[k].short+'</b>');
 // top kimdeyse ona uygun kart türü parlar
 function suggestedType(){
   if(state!=='play')return null;
@@ -44,7 +46,7 @@ function updateHud(){
   $('timer').classList.toggle('hot',fast);
   $('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';
   const t=teams[0],key=t.hand.join()+'|'+t.queue[0],sug=suggestedType();
-  if(key!==handKey){handKey=key;$('hand').innerHTML=t.hand.map(cardHTML).join('');$('nextCard').innerHTML=cardHTML(t.queue[0],-1);lastAfford=[];}
+  if(key!==handKey){handKey=key;$('hand').innerHTML=t.hand.map(cardHTML).join('');$('nextCard').innerHTML=miniCard(t.queue[0],-1);lastAfford=[];}
   document.querySelectorAll('#hand .card').forEach(el=>{
     const i=+el.dataset.i,c=CARDS[t.hand[i]],can=t.stars>=c.cost&&(state==='play'||state==='coach')&&!paused;
     el.classList.toggle('off',!can);
@@ -55,7 +57,7 @@ function updateHud(){
   });
   // süper kart yuvası
   const sk=t.superKey+'|'+t.superUsed;
-  if(sk!==superKeyShown){superKeyShown=sk;$('superCard').innerHTML=cardHTML(t.superKey,-2);$('super').classList.toggle('used',t.superUsed);$('superLbl').textContent=t.superUsed?'KULLANILDI':'SÜPER';}
+  if(sk!==superKeyShown){superKeyShown=sk;$('superCard').innerHTML=miniCard(t.superKey,-2);$('super').classList.toggle('used',t.superUsed);$('superLbl').textContent=t.superUsed?'KULLANILDI':'SÜPER';}
   {const el=$('superCard').querySelector('.card'),c=CARDS[t.superKey],can=!t.superUsed&&t.stars>=c.cost&&state==='play'&&!paused;
     if(el){el.classList.toggle('off',!can);el.classList.toggle('ready',can);el.querySelector('.lock').style.height=(t.superUsed?100:t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';}}
   $('sfill').style.width=t.stars/STAR_MAX*100+'%';$('sbar').setAttribute('aria-valuenow',Math.floor(t.stars));
