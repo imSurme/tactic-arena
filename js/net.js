@@ -190,6 +190,7 @@ const Net=(()=>{
     Sfx.init();newMatch();paused=false;hideOverlay();applyOppHud();resize();
     state='play';sendT=0;events=[];sentEnd=false;
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
+    if(ball.owner)ball.owner.decT=1.7; // santra yazı bitince yapılır
     Sfx.whistle();
     send({t:'start'});
   }

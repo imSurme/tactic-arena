@@ -216,6 +216,7 @@ function start(){
 function kickOffMatch(){
   state='play';
   banners.push({type:'info',text:'BAŞLA!',sub:matchCtx?matchCtx.label+' · '+matchOpp.name:'Taktiğini kartlarla kur',color:'#ffc83d',t:0,life:1.6});
+  if(ball.owner)ball.owner.decT=1.7; // santra yazı bitince yapılır
   Sfx.whistle();Tutorial.begin();
 }
 function setPaused(v){

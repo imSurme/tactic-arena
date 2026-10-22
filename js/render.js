@@ -98,8 +98,10 @@ function drawPlayer(p){
   const x=p.x,y=p.y;
   // gölge ve takım tabanı
   ctx.fillStyle='rgba(0,15,5,.32)';ell(x+3,y+4,10.5,8);ctx.fill();
-  ctx.globalAlpha=.9;ctx.strokeStyle=t.color;ctx.lineWidth=2;ell(x,y+2,12.5,8);ctx.stroke();
-  ctx.globalAlpha=.16;ctx.fillStyle=t.color;ctx.fill();ctx.globalAlpha=1;
+  // topa basan oyuncu: top sahibine yakın ve ona doğru koşuyor
+  const o=ball.owner;
+  if(o&&o.team!==t&&!gk){const dx=o.x-x,dy=o.y-y,d=Math.hypot(dx,dy),v=Math.hypot(p.vx,p.vy);
+    if(d<70&&v>20&&(dx*p.vx+dy*p.vy)/(d*v||1)>.7){ctx.globalAlpha=.9;ctx.strokeStyle=t.color;ctx.lineWidth=2;ell(x,y+2,12.5,8);ctx.stroke();ctx.globalAlpha=.16;ctx.fillStyle=t.color;ctx.fill();ctx.globalAlpha=1;}}
   if(ball.owner===p){ctx.strokeStyle='#ffc83d';ctx.lineWidth=2.5;ell(x,y+2,15+Math.sin(now*10)*1.2,9.5);ctx.stroke();}
   const aura=['wave','counter','press','wall'].find(k=>t.fx[k]>0);
   if(aura&&!gk){ctx.strokeStyle=CARDS[aura].col;ctx.globalAlpha=.5+Math.sin(now*8+p.num)*.25;ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.lineDashOffset=-now*20;ell(x,y+2,17,11);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}

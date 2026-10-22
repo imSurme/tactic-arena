@@ -1,7 +1,7 @@
 // Sabitler: saha ölçüleri, tempo, kartlar, ikonlar, roller, renkler
 const W=360,H=560,FX=20,FY=30,FW=320,FH=500,CX=FX+FW/2,CY=FY+FH/2,GW=96;
 const MATCH=180,FAST_TIME=60;          // 3 dk maç, son 60 sn 2x yıldız
-const STAR_MAX=10,STAR_REGEN=1/3,STAR_START=5;  // yıldız: kart oynama parası (3 sn'de 1)
+const STAR_MAX=10,STAR_REGEN=1/4.5,STAR_START=5;  // yıldız: kart oynama parası (3 sn'de 1)
 const DECK_SIZE=8;
 // tempo: oyuncu ve top hızları, top kapma ve pas arası olasılıkları
 const TEMPO={

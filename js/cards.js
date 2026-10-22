@@ -43,7 +43,7 @@ function playCard(t,i,from){
   return true;
 }
 // süreli kartın sayacı işe yaramadığı anda yavaş akar: hücum kartı rakip topa sahipken, savunma kartı top bizdeyken
-const FX_IDLE=.35;
+const FX_IDLE=.6;
 const fxLive=(t,k)=>CARDS[k].type==='atk'?!attacking(teams[1-t.id]):!attacking(t);
 function applyCard(t,k){
   const o=ball.owner,mine=o&&o.team===t,theirs=o&&o.team!==t;
