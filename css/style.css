@@ -571,3 +571,7 @@ canvas{border-radius:0;box-shadow:none}
 #super.used .card{animation:none;filter:grayscale(1) brightness(.5)}
 #super.used .card .art::after{display:none}
 @media (prefers-reduced-motion:reduce){#super .card,#super .card .art::after{animation:none}}
+/* menüde turnuva ikincil (yeşil) buton; alt satır yazısı küçük */
+.tourbtn small{display:block;font-family:var(--body);font-size:10px;font-weight:800;opacity:.8;margin-top:1px}
+.box.menu .tourbtn{background:linear-gradient(#5be38b,#1e9e52);box-shadow:0 4px 0 #136a37,0 10px 18px rgba(0,0,0,.35)}
+.box.menu .tourbtn:active{box-shadow:0 1px 0 #136a37}

@@ -97,7 +97,7 @@ function showOverlay(html,handlers={}){
 function hideOverlay(){$('overlay').hidden=true;}
 function tourButton(){
   const nx=Tour.active()&&Tour.next();
-  return'<button class="cta tour" id="go">'+(nx?'TURNUVAYA DEVAM<small>'+nx.label+'</small>':'TURNUVA<small>32 takım</small>')+'</button>';
+  return'<button class="cta alt small pvpbtn tourbtn" id="go">'+(nx?'TURNUVAYA DEVAM<small>'+nx.label+'</small>':'TURNUVA<small>32 takım</small>')+'</button>';
 }
 // skorbordda rakibin adı ve forma rengi
 function applyOppHud(){
@@ -109,7 +109,7 @@ function applyOppHud(){
 function showMenu(){
   state='menu';paused=false;Tutorial.hide();matchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
   showOverlay(`<h1>TACTIC<br>ARENA</h1><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
-${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div><button class="cta alt small pvpbtn" id="pvp">ARKADAŞINLA OYNA</button><button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
+<button class="cta tour" id="pvp">ARKADAŞINLA OYNA<small>Link ya da oda koduyla</small></button><div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div>${tourButton()}<button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
   {go:showTournament,pvp:showPvpMenu,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
   $('obox').classList.add('menu');
 }
