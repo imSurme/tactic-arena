@@ -394,3 +394,14 @@ canvas{border-radius:0;box-shadow:none}
   .cta.small{font-size:14px;padding:7px 16px 5px}
   #deckGrid{gap:8px 6px}
 }
+
+/* giriş ekranı: öğeler arasında daha çok nefes */
+.box.menu{gap:16px}
+.box.menu .menurow{gap:10px}
+.box.menu h1{margin-bottom:2px}
+@media (max-height:760px){.box.menu{gap:12px}}
+/* arkadaş maçı: oda kodu girişi */
+.ordiv{display:flex;align-items:center;gap:10px;width:100%;color:var(--muted);font-size:12px;font-weight:700}
+.ordiv::before,.ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
+.codebox input{font-family:var(--display);font-size:20px;letter-spacing:.2em;text-align:center;text-transform:uppercase}
+.codebox input::placeholder{font-size:13px;letter-spacing:.12em;color:var(--muted)}

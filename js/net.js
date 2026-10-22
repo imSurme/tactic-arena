@@ -54,8 +54,10 @@ const Net=(()=>{
   const r1=v=>Math.round(v*10)/10;
   // misafirin gözünden: saha 180° döner, takımlar yer değiştirir
   const mx=x=>2*CX-x,my=y=>2*CY-y;
-  const SWAP={'#9cc4ff':'#ffb0b8','#ffb0b8':'#9cc4ff','#2f80ff':'#ff4d5e','#ff4d5e':'#2f80ff','#b6f23a':'#ffa21f','#ffa21f':'#b6f23a'};
-  const sc=c=>SWAP[c]||c;
+  // misafir kendi takımını ev sahibindeki rengiyle (kırmızı) görür, bu yüzden olay renkleri değişmez
+  const sc=c=>c;
+  const KIT_KEYS=['color','dark','light','trim','gkColor','gkTrim'];
+  function swapKits(){const a=teams[0],b=teams[1];for(const k of KIT_KEYS)[a[k],b[k]]=[b[k],a[k]];}
   const send=m=>{if(conn&&conn.open)conn.send(m);};
   function keepAlive(p){
     p.on('disconnected',()=>{if(role&&p===peer&&!p.destroyed)setTimeout(()=>{try{if(p===peer&&!p.destroyed&&p.disconnected)p.reconnect();}catch(e){}},800);});
@@ -241,7 +243,7 @@ const Net=(()=>{
   function guestBegin(){
     readyMe=readyThem=false;
     matchCtx={pvp:true,guest:true,label:'ARKADAŞ MAÇI'};matchOpp=null;
-    Sfx.init();newMatch();paused=false;hideOverlay();applyOppHud();resize();
+    Sfx.init();newMatch();swapKits();paused=false;hideOverlay();applyOppHud();resize();
     for(const t of teams)for(const p of t.players)p.fsm.current=null;
     state='play';snap=null;lastSnapAt=performance.now();
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
@@ -270,7 +272,7 @@ const Net=(()=>{
         peer.__ready=true;
         const link=roomLink();
         showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>ODA HAZIR</h2>
-<p>Bu linki arkadaşına gönder. Linke girdiği an maç başlar.</p>
+<p>Linki arkadaşına gönder ya da oda kodunu söyle. Arkadaşın girdiği an maç başlar.</p>
 <div class="roomcode">${code}</div>
 <div class="linkbox"><input id="roomLink" readonly value="${link}"><button class="cta alt small" id="copyLink">KOPYALA</button></div>
 ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
@@ -356,7 +358,7 @@ let pvpOppDeck=null;
 function showPvpEnd(a,b){
   state='end';
   const res=a>b?['KAZANDIN!','var(--gold)']:['KAYBETTİN','var(--away-l)'];
-  showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}
+  showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:${teams[0].light}">${a}</span> – <span style="color:${teams[1].light}">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}
 <button class="cta" id="go">RÖVANŞ</button><p class="tip" id="rmStatus"></p><button class="link" id="menu">Ana menü</button>`,
   {go:()=>{Net.rematch();},menu:()=>Net.leave()});
 }

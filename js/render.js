@@ -73,7 +73,7 @@ function renderField(c){
     c.fillStyle='#ffc83d';c.beginPath();c.moveTo(x,y);c.lineTo(x+(x<CX?-7:7),y-3);c.lineTo(x,y-6);c.fill();
     c.fillStyle='#fff';c.beginPath();c.arc(x,y,1.6,0,Math.PI*2);c.fill();
   }
-  drawGoal(c,FY,-1,teams?teams[1].color:'#ff4d5e');drawGoal(c,FY+FH,1,'#2f80ff');
+  drawGoal(c,FY,-1,teams?teams[1].color:'#ff4d5e');drawGoal(c,FY+FH,1,teams?teams[0].color:'#2f80ff');
 }
 function drawGoal(c,y,s,col){
   const d=18,x0=CX-GW/2,y0=s<0?y-d:y;

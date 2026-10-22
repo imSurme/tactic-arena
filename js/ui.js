@@ -71,11 +71,15 @@ function tryCard(i){
   if(Net.isGuest()){Net.guestCard(i,el?el.getBoundingClientRect():null);return;} // kart isteği ev sahibine gider
   if(!playCard(teams[0],i,el?el.getBoundingClientRect():null))Sfx.deny();
 }
+// son kullanılan giriş klavye mi? (dokunmatik ve farede otomatik odak çerçevesi gösterilmez)
+let kbNav=false;
+addEventListener('keydown',e=>{if(e.key==='Tab'||e.key==='Enter'||e.key.startsWith('Arrow'))kbNav=true;},true);
+addEventListener('pointerdown',()=>{kbNav=false;},true);
 function showOverlay(html,handlers={}){
   closeCardModal();
   $('obox').className='box';$('obox').innerHTML=html;$('overlay').hidden=false;$('overlay').scrollTop=0;
   for(const id in handlers){const el=$(id);if(el)el.onclick=()=>{Sfx.init();Sfx.click();handlers[id]();};}
-  const go=$('go');if(go)go.focus({preventScroll:true}); // odak pencereyi aşağı kaydırmasın
+  const go=$('go');if(go&&kbNav)go.focus({preventScroll:true}); // klavyeyle gezinirken; odak pencereyi aşağı kaydırmasın
 }
 function hideOverlay(){$('overlay').hidden=true;}
 function tourButton(){
@@ -85,6 +89,7 @@ function tourButton(){
 // skorbordda rakibin adı ve forma rengi
 function applyOppHud(){
   const t=teams[1];
+  $('crest0').setAttribute('fill',teams[0].color);$('side0').style.setProperty('--tc',teams[0].color);
   $('crest1').setAttribute('fill',t.color);$('side1').style.setProperty('--tc',t.color);
   $('who1').textContent=matchOpp?matchOpp.short:'RAKİP';
 }
@@ -92,7 +97,27 @@ function showMenu(){
   state='menu';paused=false;Tutorial.hide();matchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
   showOverlay(`<h1>TACTIC<br>ARENA</h1><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
 ${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div><button class="cta alt small pvpbtn" id="pvp">ARKADAŞINLA OYNA</button><button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
-  {go:showTournament,pvp:()=>Net.host(),quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
+  {go:showTournament,pvp:showPvpMenu,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
+  $('obox').classList.add('menu');
+}
+// arkadaş maçı: oda kur ya da arkadaşının oda kodunu gir
+function showPvpMenu(){
+  showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>ARKADAŞINLA OYNA</h2>
+<p>Oda kur, linki ya da kodu arkadaşına gönder. Arkadaşın oda kurduysa kodunu gir.</p>
+<button class="cta" id="host">ODA KUR</button>
+<div class="ordiv"><span>ya da</span></div>
+<div class="linkbox codebox"><input id="codeIn" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ODA KODU" aria-label="Oda kodu"><button class="cta alt small" id="joinBtn">KATIL</button></div>
+<p class="tip" id="codeErr" hidden>Kod 6 karakter olmalı.</p>
+<button class="link" id="menu">Ana menü</button>`,{host:()=>Net.host(),menu:showMenu});
+  const inp=$('codeIn');
+  const join=()=>{
+    const c=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(c.length!==6){$('codeErr').hidden=false;inp.focus();Sfx.deny();return;}
+    Sfx.click();Net.join(c);
+  };
+  inp.oninput=()=>{inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');$('codeErr').hidden=true;};
+  inp.onkeydown=e=>{if(e.key==='Enter')join();};
+  $('joinBtn').onclick=join;
 }
 // deste ekranında seçilen kartın ayrıntıları
 const CARD_DETAIL={
