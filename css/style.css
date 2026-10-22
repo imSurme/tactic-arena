@@ -588,3 +588,7 @@ canvas{border-radius:0;box-shadow:none}
 #deckGrid.sup{align-content:center}
 .dtab.sup.on{background:linear-gradient(90deg,#9b6bff,#ff5fa8 55%,#ffb52e);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 2px 0 #6a2fb0}
 #deckGrid .card .art{aspect-ratio:1/1}
+
+/* arkadaş maçı ping göstergesi */
+#half .ping{font-weight:800;letter-spacing:.04em;color:var(--muted)}
+#half .ping.g{color:#2fd36b}#half .ping.y{color:#ffd23f}#half .ping.r{color:#ff4d5e}

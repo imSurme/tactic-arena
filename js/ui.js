@@ -44,7 +44,11 @@ function updateHud(){
   const s=overtime?Math.floor(clock):Math.ceil(clock);$('timer').textContent=(overtime?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
   const fast=overtime||clock<=FAST_TIME;
   $('timer').classList.toggle('hot',fast);
-  $('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';
+  if(Net.active()&&matchCtx&&matchCtx.pvp){ // arkadaş maçı: süre altında bağlantı gecikmesi (yeşil iyi, sarı orta, kırmızı kötü)
+    const p=Net.ping(),lbl=overtime?'UZATMA · ':clock<=FAST_TIME&&state==='play'?'SON DK · ':'';
+    const html=lbl+(p==null?'<span class="ping">● …</span>':'<span class="ping '+(p<80?'g':p<150?'y':'r')+'">● '+p+' ms</span>');
+    if($('half').innerHTML!==html)$('half').innerHTML=html;
+  }else $('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';
   const t=teams[0],key=t.hand.join()+'|'+t.queue[0],sug=suggestedType();
   if(key!==handKey){handKey=key;$('hand').innerHTML=t.hand.map(cardHTML).join('');$('nextCard').innerHTML=miniCard(t.queue[0],-1);lastAfford=[];}
   document.querySelectorAll('#hand .card').forEach(el=>{

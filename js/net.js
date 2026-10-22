@@ -30,7 +30,10 @@ const Net=(()=>{
     return iceCache;
   }
   const peerOpts=async()=>({debug:0,config:{iceServers:await iceServers()}});
-  let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null,snapAt=0,stalled=false;
+  let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null,stalled=false;
+  // hızlı kanal: konum güncellemeleri sırasız ve yeniden gönderimsiz gider; biri kaybolursa beklenmez, sonraki kullanılır
+  let fast=null,snapN=0,lastN=-1,buf=[],offMin=null,pingMs=null,pingT=0,offs=[],delay=120,renderT=null;
+  // misafir ekranı ev sahibinin gerisinden çizilir; gecikme ne kadar dalgalanıyorsa tampon o kadar uzun (80-320 ms)
   let readyMe=false,readyThem=false,guestDeck=null,cardLock=0,sentEnd=false;
 
   // ---------- yardımcılar
@@ -59,6 +62,21 @@ const Net=(()=>{
   const KIT_KEYS=['color','dark','light','trim','gkColor','gkTrim'];
   function swapKits(){const a=teams[0],b=teams[1];for(const k of KIT_KEYS)[a[k],b[k]]=[b[k],a[k]];}
   const send=m=>{if(conn&&conn.open)conn.send(m);};
+  const sendFast=m=>{if(fast&&fast.readyState==='open'){try{fast.send(JSON.stringify(m));return true;}catch(e){}}return false;};
+  // iki taraf da aynı numarayla kendi kanalını açar (WebRTC "negotiated" kanal: ek sinyal gerekmez)
+  function openFast(c){
+    let tries=0;
+    const go=()=>{
+      const pc=c.peerConnection;if(!pc){if(++tries<50)setTimeout(go,100);return;}
+      try{fast=pc.createDataChannel('ta-fast',{negotiated:true,id:7,ordered:false,maxRetransmits:0});}catch(e){fast=null;return;}
+      fast.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}onData(m);};
+    };
+    go();
+  }
+  function pingTick(dt){
+    pingT-=dt;if(pingT>0)return;pingT=1.5;
+    const m={t:'pi',c:performance.now()};if(!sendFast(m))send(m);
+  }
   function keepAlive(p){
     p.on('disconnected',()=>{if(role&&p===peer&&!p.destroyed)setTimeout(()=>{try{if(p===peer&&!p.destroyed&&p.disconnected)p.reconnect();}catch(e){}},800);});
   }
@@ -95,15 +113,16 @@ const Net=(()=>{
     for(const n of ['pass','shot','tackle','save','whistle','whistleEnd','overtime'])
       {const o=Sfx[n];Sfx[n]=function(...a){o.apply(Sfx,a);emit(['sfx',n,...a]);};}
   }
+  const ri=Math.round;
   function snapshot(){
     const P=[...teams[0].players,...teams[1].players],b=ball;
     const fxOf=t=>Object.fromEntries(Object.entries(t.fx).filter(([,v])=>v>0).map(([k,v])=>[k,r1(v)]));
-    return{t:'s',st:state,c:r1(clock),ot:overtime?1:0,sc:[teams[0].score,teams[1].score],
+    return{t:'s',n:++snapN,ht:ri(performance.now()),st:state,c:r1(clock),ot:overtime?1:0,sc:[teams[0].score,teams[1].score],
       stars:[r1(teams[0].stars),r1(teams[1].stars)],hand:teams[1].hand,next:teams[1].queue[0],fx:[fxOf(teams[0]),fxOf(teams[1])],
-      p:P.map(p=>[r1(p.x),r1(p.y),r1(p.fa),r1(p.vx),r1(p.vy),(p.stun>0?1:0)|(p.dash>0?2:0)|(p.sprint>0?4:0)]),
-      b:[r1(b.x),r1(b.y),r1(b.z||0),r1(b.vx),r1(b.vy),b.owner?P.indexOf(b.owner):-1,b.shot?1:0,b.power?1:0,b.setT>0?1:0,b.kickoff?1:0,
-        b.passTo?P.indexOf(b.passTo):-1,b.passTeam?b.passTeam.id:-1,b.passTarget?r1(b.passTarget.x):0,b.passTarget?r1(b.passTarget.y):0],
-      su:[teams[0].superUsed?1:0,teams[1].superUsed?1:0],ev:events.splice(0)};
+      p:P.map(p=>[ri(p.x),ri(p.y),ri(p.fa*100),ri(p.vx),ri(p.vy),(p.stun>0?1:0)|(p.dash>0?2:0)|(p.sprint>0?4:0)]),
+      b:[ri(b.x),ri(b.y),r1(b.z||0),ri(b.vx),ri(b.vy),b.owner?P.indexOf(b.owner):-1,b.shot?1:0,b.power?1:0,b.setT>0?1:0,b.kickoff?1:0,
+        b.passTo?P.indexOf(b.passTo):-1,b.passTeam?b.passTeam.id:-1,b.passTarget?ri(b.passTarget.x):0,b.passTarget?ri(b.passTarget.y):0],
+      su:[teams[0].superUsed?1:0,teams[1].superUsed?1:0]};
   }
 
   // ---------- misafir: gelen durumu kendi tarafına çevirip uygula
@@ -131,9 +150,18 @@ const Net=(()=>{
     Sfx.goal();
     const el=$('s'+tid);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
   }
+  // gelen görüntü: sırasız kanal olduğu için eskisi gelirse atlanır; saat farkı en az gecikmeli görüntüden ölçülür
+  function receiveSnap(s){
+    if(s.n<=lastN)return;lastN=s.n;
+    const rt=performance.now(),off=rt-s.ht;
+    s.rt=rt;buf.push(s);if(buf.length>40)buf.shift();
+    offMin=offMin==null?off:Math.min(offMin+.02,off); // en hızlı gelenin gecikmesi; yavaşça yukarı da kayabilir (saat kayması)
+    offs.push(off);if(offs.length>60)offs.shift();
+    applySnapshot(s);
+  }
   function applySnapshot(s){
     const prevState=state,prevOt=overtime,prevClock=clock;
-    snap=s;snapAt=now;lastSnapAt=performance.now();
+    snap=s;lastSnapAt=performance.now();
     if(stalled){stalled=false;hideOverlay();}
     // takımlar: ev sahibinin 1. takımı = misafirin kendi takımı (0)
     teams[0].score=s.sc[1];teams[1].score=s.sc[0];
@@ -142,7 +170,7 @@ const Net=(()=>{
     teams[0].fx=s.fx[1];teams[1].fx=s.fx[0];
     if(s.su){teams[0].superUsed=!!s.su[1];teams[1].superUsed=!!s.su[0];}
     overtime=!!s.ot;clock=s.c;
-    for(const e of s.ev)applyEvent(e);
+    if(s.ev)for(const e of s.ev)applyEvent(e);
     if(s.st!==prevState){
       state=s.st;
       if(state==='play'&&prevState==='goal')ball.trail=[];
@@ -151,32 +179,54 @@ const Net=(()=>{
     if(overtime&&!prevOt)banners.push({type:'info',text:'UZATMA',sub:'Altın gol: ilk atan kazanır',color:'#ffc83d',t:0,life:2.2});
     if(!overtime&&prevClock>FAST_TIME&&clock<=FAST_TIME&&!doubleShown){doubleShown=true;banners.push({type:'info',text:'2x YILDIZ',sub:'Son 60 saniye!',color:'#ff8cf0',t:0,life:1.8});}
   }
-  // her karede: anlık görüntüye doğru yumuşak hareket (araya geçen süre kadar ileri tahmin)
+  // her kare: ekran ev sahibinin INTERP kadar gerisinden çizilir; o ana denk gelen iki görüntü arası doldurulur
+  // (görüntü gecikirse en son görüntüden en fazla 0,2 sn ileri tahmin edilir)
+  const lerp=(a,b,f)=>a+(b-a)*f;
+  const lerpAng=(a,b,f)=>{let d=b-a;d=Math.atan2(Math.sin(d),Math.cos(d));return a+d*f;};
+  function ballAt(s){ // görüntüdeki topun yeri (ev sahibi koordinatı); sahibi varsa sahibinin önünde
+    const b=s.b;if(b[5]>=0){const q=s.p[b[5]],fa=q[2]/100;return[q[0]+Math.cos(fa)*9,q[1]+Math.sin(fa)*9];}
+    return[b[0],b[1]];
+  }
   function guestFrame(dt){
-    now+=dt;updateFx(dt);
-    if(!snap)return;
-    const ahead=Math.min(.15,now-snapAt),k=Math.min(1,dt*18);
-    snap.p.forEach((q,idx)=>{
-      const p=localPlayer(idx);
-      const tx=mx(q[0]+q[3]*ahead),ty=my(q[1]+q[4]*ahead);
+    now+=dt;updateFx(dt);pingTick(dt);
+    if(!buf.length)return;
+    // tampon: son 60 görüntüde gecikmenin %90'lık dalgalanması + bir görüntü aralığı
+    const sorted=offs.slice().sort((x,y)=>x-y),jit=sorted.length?sorted[Math.floor(sorted.length*.9)]-sorted[0]:0;
+    delay+=(clamp(jit+60,80,320)-delay)*Math.min(1,dt*1.5);
+    // çizim zamanı geri gitmez: hedefin gerisindeyse biraz hızlı, önündeyse biraz yavaş akar (en fazla %15); çok saparsa atlar
+    const target=performance.now()-offMin-delay;
+    if(renderT==null||Math.abs(target-renderT)>600)renderT=target;
+    else renderT+=dt*1000*(1+clamp((target-renderT)*.004,-.15,.15));
+    const T=renderT;
+    let a=buf[0],b2=null;
+    for(let i=buf.length-1;i>=0;i--){if(buf[i].ht<=T){a=buf[i];b2=buf[i+1]||null;break;}}
+    let f=0,ext=0;
+    if(b2){f=Math.min(1,(T-a.ht)/Math.max(1,b2.ht-a.ht));}else{ext=Math.min(.2,Math.max(0,(T-a.ht)/1000));}
+    const B=b2||a;
+    a.p.forEach((qa,idx)=>{
+      const p=localPlayer(idx),qb=B.p[idx];
+      let x=lerp(qa[0],qb[0],f),y=lerp(qa[1],qb[1],f);
+      if(ext){x+=qa[3]*ext;y+=qa[4]*ext;}
+      const tx=mx(x),ty=my(y),k=Math.min(1,dt*22);
       if(Math.hypot(tx-p.x,ty-p.y)>60){p.x=tx;p.y=ty;}else{p.x+=(tx-p.x)*k;p.y+=(ty-p.y)*k;}
-      p.vx=-q[3];p.vy=-q[4];
-      let da=(q[2]+Math.PI)-p.fa;da=Math.atan2(Math.sin(da),Math.cos(da));p.fa+=da*Math.min(1,dt*14);
-      p.stun=q[5]&1?1:0;p.dash=q[5]&2?1:0;p.sprint=q[5]&4?1:0;
+      p.vx=-lerp(qa[3],qb[3],f);p.vy=-lerp(qa[4],qb[4],f);
+      p.fa=lerpAng(qa[2]/100,qb[2]/100,f)+Math.PI;
+      const fl=(f<.5?qa:qb)[5];p.stun=fl&1?1:0;p.dash=fl&2?1:0;p.sprint=fl&4?1:0;
       const v=Math.hypot(p.vx,p.vy);p.anim+=v*dt*.25;
       if(v>48&&Math.random()<dt*4)parts.push({x:p.x+rnd(-3,3),y:p.y+6,vx:-p.vx*.1,vy:-p.vy*.1,life:.4,t:0,c:'rgba(230,255,220,.6)',s:rnd(1,1.8)});
     });
-    const b=snap.b,owner=localPlayer(b[5]);
-    ball.owner=owner;
-    if(owner){ball.x=owner.x+Math.cos(owner.fa)*9;ball.y=owner.y+Math.sin(owner.fa)*9;}
-    else{
-      const tx=mx(b[0]+b[3]*ahead),ty=my(b[1]+b[4]*ahead);
-      if(Math.hypot(tx-ball.x,ty-ball.y)>80){ball.x=tx;ball.y=ty;}else{ball.x+=(tx-ball.x)*k;ball.y+=(ty-ball.y)*k;}
-    }
-    ball.z=b[2];ball.vx=-b[3];ball.vy=-b[4];ball.shot=!!b[6];ball.power=!!b[7];ball.setT=b[8]?1:0;ball.kickoff=!!b[9];
-    ball.passTo=localPlayer(b[10]);ball.passTeam=b[11]<0?null:localTeam(b[11]);ball.passTarget=b[10]<0?null:{x:mx(b[12]),y:my(b[13])};
+    const sb=(f<.5?a:B).b,ba=ballAt(a),bb=ballAt(B);
+    ball.owner=localPlayer(sb[5]);
+    let bx=lerp(ba[0],bb[0],f),by=lerp(ba[1],bb[1],f);
+    if(ext&&a.b[5]<0){bx+=a.b[3]*ext;by+=a.b[4]*ext;}
+    if(ball.owner){const o=ball.owner;ball.x=o.x+Math.cos(o.fa)*9;ball.y=o.y+Math.sin(o.fa)*9;}
+    else{const tx=mx(bx),ty=my(by),k=Math.min(1,dt*26);if(Math.hypot(tx-ball.x,ty-ball.y)>70){ball.x=tx;ball.y=ty;}else{ball.x+=(tx-ball.x)*k;ball.y+=(ty-ball.y)*k;}}
+    ball.z=lerp(a.b[2],B.b[2],f);ball.vx=-sb[3];ball.vy=-sb[4];ball.shot=!!sb[6];ball.power=!!sb[7];ball.setT=sb[8]?1:0;ball.kickoff=!!sb[9];
+    ball.passTo=localPlayer(sb[10]);ball.passTeam=sb[11]<0?null:localTeam(sb[11]);ball.passTarget=sb[10]<0?null:{x:mx(sb[12]),y:my(sb[13])};
     ball.rot+=Math.hypot(ball.vx,ball.vy)*dt*.12;
     ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>12)ball.trail.shift();
+    // eski görüntüleri at (çizilen andan eski olanların sonuncusu kalsın)
+    while(buf.length>2&&buf[1].ht<=T)buf.shift();
     // ev sahibinden 1,5 sn haber yoksa uyar
     if(state==='play'&&!stalled&&performance.now()-lastSnapAt>1500){stalled=true;showOverlay('<h2>BAĞLANTI YAVAŞ</h2><p>Rakipten veri gelmiyor. Rakibin oyunu arka plana almış olabilir.</p><button class="link" id="menu">Maçtan çık</button>',{menu:leave});}
   }
@@ -185,7 +235,7 @@ const Net=(()=>{
   function wire(c){
     conn=c;
     c.on('data',onData);
-    let opened=false;c.on('open',()=>{opened=true;});
+    let opened=false;c.on('open',()=>{opened=true;openFast(c);});
     c.on('close',()=>{if(role&&opened&&conn===c)lost('Rakip maçtan ayrıldı ya da bağlantısı koptu.');});
     c.on('error',()=>{if(role&&opened&&conn===c)lost('Bağlantı hatası oluştu.');});
   }
@@ -198,12 +248,15 @@ const Net=(()=>{
     role=null;matchCtx=null;
     try{conn&&conn.close();}catch(e){}
     try{peer&&peer.destroy();}catch(e){}
-    conn=null;peer=null;events=[];snap=null;readyMe=readyThem=false;
+    try{fast&&fast.close();}catch(e){}
+    conn=null;peer=null;fast=null;events=[];snap=null;buf=[];offs=[];renderT=null;lastN=-1;offMin=null;pingMs=null;readyMe=readyThem=false;
     if(location.search.includes('oda='))history.replaceState(null,'',location.pathname);
   }
   function leave(){cleanup();showMenu();}
   function onData(m){
     if(!m||typeof m!=='object')return;
+    if(m.t==='pi'){const r={t:'po',c:m.c};if(!sendFast(r))send(r);return;}
+    if(m.t==='po'){const rtt=performance.now()-m.c;pingMs=pingMs==null?rtt:pingMs*.7+rtt*.3;return;}
     if(role==='host'){
       if(m.t==='hello'){guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();pvpOppSuper=SUPER_KEYS.includes(m.super)?m.super:Deck.randomSuper();beginMatch();}
       else if(m.t==='super'&&state==='play'&&!paused){if(!playSuper(teams[1],null))send({t:'deny'});}
@@ -214,7 +267,8 @@ const Net=(()=>{
       else if(m.t==='bye')lost('Rakip maçtan ayrıldı.');
     }else if(role==='guest'){
       if(m.t==='start')guestBegin(m);
-      else if(m.t==='s')applySnapshot(m);
+      else if(m.t==='s')receiveSnap(m);
+      else if(m.t==='ev'){for(const e of m.ev)applyEvent(e);}
       else if(m.t==='stats')pvpStats=m.s;
       else if(m.t==='deny')Sfx.deny();
       else if(m.t==='rematch'){readyThem=true;rematchStatus();}
@@ -249,7 +303,7 @@ const Net=(()=>{
     matchCtx={pvp:true,guest:true,label:'ARKADAŞ MAÇI'};matchOpp=null;
     Sfx.init();newMatch();swapKits();paused=false;hideOverlay();applyOppHud();resize();
     for(const t of teams)for(const p of t.players)p.fsm.current=null;
-    state='play';snap=null;lastSnapAt=performance.now();
+    state='play';snap=null;buf=[];offs=[];renderT=null;offMin=null;lastSnapAt=performance.now();
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
     Sfx.whistle();
   }
@@ -339,10 +393,13 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     // ev sahibi her karede çağırır: belli aralıklarla anlık görüntü gönder
     hostTick(dt){
       if(role!=='host'||!conn||!conn.open)return;
-      if(state==='end'){if(!sentEnd){sentEnd=true;send({t:'stats',s:stats});send(snapshot());}return;} // maç sonu bir kez gönderilir (istatistikler önce)
+      pingTick(dt);
+      if(events.length)send({t:'ev',ev:events.splice(0)}); // olaylar (gol, kart, ses) kaybolmamalı: güvenilir kanal
+      if(state==='end'){if(!sentEnd){sentEnd=true;send({t:'stats',s:stats});send(snapshot());}return;} // maç sonu bir kez, güvenilir kanaldan
       sendT-=dt;
-      if(sendT<=0){sendT=SNAP_EVERY;send(snapshot());}
+      if(sendT<=0){sendT=SNAP_EVERY;const sn=snapshot();if(!sendFast(sn))send(sn);}
     },
+    ping:()=>pingMs==null?null:Math.round(pingMs),
     guestFrame,
     // misafir kart oynar: isteği gönder, kartın uçuşunu hemen göster
     guestSuper(rect){
