@@ -33,7 +33,9 @@ const Net=(()=>{
   let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null;
   // kalp atışı: iki taraf 1,5 sn'de bir ping atar; rakipten 4 sn ses çıkmazsa oyun durur, 15 sn içinde dönmezse maç hükmen kazanılır
   const GONE_AFTER=4000,FORFEIT_AFTER=15;
-  let lastHeard=0,gone=null;
+  let lastHeard=0,gone=null,hiddenAt=0;
+  // rakibin oyun döngüsünden geldiğini kanıtlayan mesajlar (arka plandaki sayfa ping'e cevap verebilir ama bunları gönderemez)
+  const ALIVE=new Set(['s','pi','ev','card','super','hello','start','rematch']);
   // hızlı kanal: konum güncellemeleri sırasız ve yeniden gönderimsiz gider; biri kaybolursa beklenmez, sonraki kullanılır
   let fast=null,snapN=0,lastN=-1,buf=[],offMin=null,pingMs=null,pingT=0,offs=[],delay=120,renderT=null;
   // misafir ekranı ev sahibinin gerisinden çizilir; gecikme ne kadar dalgalanıyorsa tampon o kadar uzun (80-320 ms)
@@ -236,23 +238,39 @@ const Net=(()=>{
   function checkPeer(){
     if(!role||!conn||!conn.open||(state!=='play'&&state!=='goal'))return;
     const now0=performance.now();
-    if(!gone&&now0-lastHeard>GONE_AFTER){
-      gone={t0:now0};if(role==='host')paused=true; // ev sahibinde oyun bekler
-      showOverlay(`<h2>RAKİBİN BAĞLANTISI KOPTU</h2><p>Bekleniyor… <b id="goneLeft">${FORFEIT_AFTER}</b></p><p class="tip">Dönmezse maçı hükmen kazanırsın.</p><button class="link" id="menu">Maçtan çık</button>`,{menu:()=>{send({t:'bye'});leave();}});
-    }
+    if(!gone&&now0-lastHeard>GONE_AFTER)showGone(false);
     if(gone){
       const left=Math.max(0,Math.ceil(FORFEIT_AFTER-(now0-gone.t0)/1000)),el=$('goneLeft');
       if(el&&el.textContent!==String(left))el.textContent=left;
-      if(left<=0)forfeitWin('Rakip geri dönmedi.');
+      if(left<=0&&!document.hidden)forfeitWin('Rakip geri dönmedi.');
     }
   }
+  function showGone(away){
+    gone={t0:performance.now(),away};if(role==='host')paused=true; // ev sahibinde oyun bekler
+    showOverlay(`<h2>${away?'RAKİP OYUNDAN ÇIKTI':'RAKİBİN BAĞLANTISI KOPTU'}</h2><p>Bekleniyor… <b id="goneLeft">${FORFEIT_AFTER}</b></p><p class="tip">Dönmezse maçı hükmen kazanırsın.</p><button class="link" id="menu">Maçtan çık</button>`,{menu:()=>{send({t:'bye'});leave();}});
+  }
+  function peerAway(){if(role&&(state==='play'||state==='goal')&&!(gone&&gone.away))showGone(true);}
   function peerBack(){gone=null;if(role==='host')paused=false;if(state==='play'||state==='goal')hideOverlay();}
+  function forfeitLoss(){
+    const sc=[teams[0].score,teams[1].score];cleanup();state='end';
+    showOverlay(`<h2 style="color:var(--away-l)">KAYBETTİN</h2><p>Maçtan uzun süre ayrıldın; maç hükmen rakibin.</p><div class="big">${sc[0]} – ${sc[1]}</div><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
+  }
   // rakip ayrıldı: maç hükmen bizim
   function forfeitWin(why){
     const sc=[teams[0].score,teams[1].score];
     cleanup();state='end';
     showOverlay(`<h2 style="color:var(--gold)">KAZANDIN!</h2><p>${why} Maçı hükmen kazandın.</p><div class="big">${sc[0]} – ${sc[1]}</div><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
   }
+  // biz arka plana gidince rakibe hemen haber ver; dönünce "geri geldim" de.
+  // 15 sn'den uzun ayrı kaldıysak maç rakibe hükmen gitmiştir: bizde asla "kazandın" çıkmaz
+  document.addEventListener('visibilitychange',()=>{
+    if(!role||!conn||(state!=='play'&&state!=='goal'))return;
+    if(document.hidden){hiddenAt=performance.now();const m={t:'away'};sendFast(m);send(m);return;}
+    const away=performance.now()-hiddenAt;
+    if(hiddenAt&&away>FORFEIT_AFTER*1000+1000){forfeitLoss();return;}
+    hiddenAt=0;lastHeard=performance.now(); // sessizlik bizdendi: rakibi kopmuş sayma
+    const m={t:'back'};sendFast(m);send(m);
+  });
   // sekme kapanırken ya da sayfadan çıkarken rakibe haber ver (tarayıcı izin verdiği kadar)
   addEventListener('pagehide',()=>{if(role){try{sendFast({t:'bye'});send({t:'bye'});}catch(e){}}});
 
@@ -265,6 +283,8 @@ const Net=(()=>{
     c.on('error',()=>{if(role&&opened&&conn===c)lost('Bağlantı hatası oluştu.');});
   }
   function lost(msg){
+    // uzun süre arka planda kaldıktan sonra bağlantı kapandıysa: maç hükmen rakibin
+    if(hiddenAt&&performance.now()-hiddenAt>FORFEIT_AFTER*1000&&(state==='play'||state==='goal')){forfeitLoss();return;}
     const r=role;cleanup();
     if(r==='host'&&state==='play'){state='end';}
     showOverlay(`<h2>BAĞLANTI KOPTU</h2><p>${msg}</p><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
@@ -274,14 +294,16 @@ const Net=(()=>{
     try{conn&&conn.close();}catch(e){}
     try{peer&&peer.destroy();}catch(e){}
     try{fast&&fast.close();}catch(e){}
-    gone=null;
+    gone=null;hiddenAt=0;
     conn=null;peer=null;fast=null;events=[];snap=null;buf=[];offs=[];renderT=null;lastN=-1;offMin=null;pingMs=null;readyMe=readyThem=false;
     if(location.search.includes('oda='))history.replaceState(null,'',location.pathname);
   }
   function leave(){cleanup();showMenu();}
   function onData(m){
     if(!m||typeof m!=='object')return;
-    lastHeard=performance.now();if(gone)peerBack();
+    if(ALIVE.has(m.t)){lastHeard=performance.now();if(gone&&!gone.away)peerBack();}
+    if(m.t==='away'){peerAway();return;}
+    if(m.t==='back'){lastHeard=performance.now();if(gone)peerBack();return;}
     if(m.t==='pi'){const r={t:'po',c:m.c};if(!sendFast(r))send(r);return;}
     if(m.t==='po'){const rtt=performance.now()-m.c;pingMs=pingMs==null?rtt:pingMs*.7+rtt*.3;return;}
     if(role==='host'){
