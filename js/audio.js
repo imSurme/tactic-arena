@@ -7,12 +7,16 @@ const Sfx=(()=>{
   function init(){
     if(ac){if(ac.state==='suspended')ac.resume();return;}
     const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-    ac=new AC();
+    ac=new AC();if(ac.state==='suspended')ac.resume();
     master=ac.createGain();master.gain.value=muted?0:Settings.get('sfx');master.connect(ac.destination);
     noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
     const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   }
-  const ok=()=>ac&&ac.state==='running';
+  // ses motoru ilk dokunuşta oluşur ve bir an sonra çalışmaya başlar; o arada istenen sesler (ör. santra düdüğü) atılmaz, motor açılınca çalar
+  let held=false; // oyun duraklatıldı: bu sırada istenen sesler birikip sonradan çalmasın
+  const ok=()=>ac&&ac.state!=='closed'&&!held;
+  // tarayıcılar sesi ancak kullanıcı etkileşiminden sonra açar: ekrana ilk dokunuşta ses açılsın
+  for(const ev of ['pointerdown','touchend','keydown'])addEventListener(ev,()=>init(),{capture:true,passive:true});
   function applyVolume(){if(master)master.gain.setTargetAtTime(muted?0:Settings.get('sfx'),ac.currentTime,.05);}
 
   function env(g,t,a,peak,dec){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec);}
@@ -42,8 +46,8 @@ const Sfx=(()=>{
       return muted;
     },
     applyVolume,
-    suspend(){if(ac&&ac.state==='running')ac.suspend();},
-    resume(){if(ac&&ac.state==='suspended')ac.resume();},
+    suspend(){held=true;if(ac&&ac.state==='running')ac.suspend();},
+    resume(){held=false;if(ac&&ac.state==='suspended')ac.resume();},
     pass(){tone(170,.09,{to:60,vol:.35});noise(.03,{type:'highpass',freq:2500,vol:.08});},
     shot(power){
       if(power){tone(110,.45,{to:30,vol:.6});noise(.35,{type:'lowpass',freq:900,vol:.35});noise(.12,{type:'highpass',freq:3000,vol:.12});}

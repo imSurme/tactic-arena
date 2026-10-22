@@ -253,7 +253,7 @@ function showSettings(){
 <div class="settings">
   <fieldset><legend>Rakip zorluğu <small id="diffDesc">· ${d.desc}</small></legend>${seg('diff',Object.entries(Settings.DIFF).map(([k,v])=>[k,v.name]),Settings.get('difficulty'))}</fieldset>
   <fieldset><legend>Maç süresi</legend>${seg('len',Settings.LENGTHS.map(v=>[v,v/60+' dk']),Settings.get('length'))}</fieldset>
-  <div class="srow"><label for="volSfx">Efekt sesi</label><input type="range" id="volSfx" min="0" max="100" value="${Math.round(Settings.get('sfx')*100)}"></div>
+  <div class="srow"><label for="optSound">Ses</label><input type="checkbox" class="sw" id="optSound"${Sfx.muted?'':' checked'}></div>
   <div class="srow"><label for="optShake">Ekran sarsıntısı</label><input type="checkbox" class="sw" id="optShake"${Settings.get('shake')?' checked':''}></div>
 </div>
 <button class="cta alt small" id="replayTut">EĞİTİMİ TEKRAR İZLE</button>
@@ -261,8 +261,7 @@ function showSettings(){
   $('obox').classList.add('wide');
   $('obox').querySelectorAll('input[name=diff]').forEach(el=>el.onchange=()=>{Settings.set('difficulty',el.value);$('diffDesc').textContent='· '+Settings.diff().desc;Sfx.click();});
   $('obox').querySelectorAll('input[name=len]').forEach(el=>el.onchange=()=>{Settings.set('length',+el.value);Sfx.click();});
-  $('volSfx').oninput=e=>{Settings.set('sfx',e.target.value/100);Sfx.init();Sfx.applyVolume();};
-  $('volSfx').onchange=()=>Sfx.click();
+  $('optSound').onchange=e=>{Sfx.init();if(e.target.checked===Sfx.muted)Sfx.toggleMute();Sfx.click();updateMuteBtn();};
   $('optShake').onchange=e=>{Settings.set('shake',e.target.checked);Sfx.click();};
 }
 function start(){
@@ -342,6 +341,7 @@ function endMatch(){
 function updateMuteBtn(){
   const b=$('muteBtn');b.innerHTML=Sfx.muted?UI_ICONS.mute:UI_ICONS.sound;
   b.setAttribute('aria-label',Sfx.muted?'Sesi aç':'Sesi kapat');b.setAttribute('aria-pressed',Sfx.muted);
+  const sw=$('optSound');if(sw)sw.checked=!Sfx.muted;
 }
 $('pauseBtn').innerHTML=UI_ICONS.pause;
 $('pauseBtn').onclick=()=>setPaused(!paused);
