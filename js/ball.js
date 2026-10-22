@@ -3,7 +3,7 @@ function simBall(dt,live){
   const b=ball;
   if(b.owner){const p=b.owner;b.x=p.x+Math.cos(p.fa)*9;b.y=p.y+Math.sin(p.fa)*9;b.vx=p.vx;b.vy=p.vy;b.ownT+=dt;}
   else{
-    b.x+=b.vx*dt;b.y+=b.vy*dt;const f=Math.exp(-TEMPO.friction*dt);b.vx*=f;b.vy*=f;
+    b.x+=b.vx*dt;b.y+=b.vy*dt;const f=Math.exp(-(b.shot?TEMPO.shotFriction:TEMPO.friction)*dt);b.vx*=f;b.vy*=f; // şut daha az yavaşlar
     const sp=Math.hypot(b.vx,b.vy);if(sp<170)b.shot=false;if(sp<40)b.passTo=null;
     if(b.y>FY&&b.y<FY+FH){
       if(b.x<FX+3){b.x=FX+3;b.vx=Math.abs(b.vx)*.65;}
@@ -40,10 +40,13 @@ function simBall(dt,live){
     }
     if(b.shot&&!b.gkRolled){
       const t=teams[1-b.shotTeam.id],gk=t.players[0];
-      if(dist(gk,b)<(t.fx.gk?26:15)){
+      // uzaktan gelen şutta kaleci uzanmaya zaman bulur: erişim mesafeyle artar
+      const reach=(t.fx.gk?30:21)+clamp(((b.shotDist||0)-110)/9,0,12);
+      if(dist(gk,b)<reach){
         b.gkRolled=true;
         // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
-        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)+(t.fx.wall?.12:0)-(b.corner?.12:0)-(b.power?.12:0),.12,.97);
+        // kurtarış şansı (kaleci yetişirse): yakından ~%68, uzaktan ~%95; köşeye ve güçlü şut daha zor
+        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0),.12,.95);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           stats.saves[t.id]++;statOnTarget(b.shotTeam.id);
@@ -56,6 +59,7 @@ function simBall(dt,live){
     let best=null,bd=1e9;
     if(b.z<6)for(const t of teams)for(const p of t.players){ // havadaki top kesilemez
       if(p.stun>0||p.kickCd>0)continue;
+      if(b.shot&&b.gkRolled&&p.role==='GK'&&p.team!==b.shotTeam)continue; // kurtarışı kaçıran kaleci aynı şutu tutamaz
       const foe=b.passTeam&&b.passTeam!==p.team;
       const d=dist(p,b),reach=(p.role==='GK'?13:p.dash>0?13:10)+(foe&&p.team.fx.intercept?4:0);
       if(d>=reach||d>=bd)continue;
@@ -88,6 +92,7 @@ function simBall(dt,live){
       p.tackleCd=TEMPO.tackleCd;
       if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
       let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.1:0);
+      if(p.dash<=0){const ax=p.x-o.x,ay=p.y-o.y,c=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1);ch*=c>.3?1.6:c<-.3?.45:1.05;} // önden / yandan / arkadan
       if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası
       if(o.team.fx.tiki&&p.dash<=0)ch*=.45;
       if(t.id===1)ch*=oppMod().skill; // rakip zorluğu

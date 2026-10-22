@@ -20,19 +20,34 @@ const FieldStates={
       const a=p.drib;
       return{x:p.x+Math.cos(a)*60,y:p.y+Math.sin(a)*60,sp:.9};
     }},
-  receive:{name:'Pası karşıla',short:'KRŞ',execute(){
-    return{x:ball.x+ball.vx*.45,y:ball.y+ball.vy*.45,sp:1.1};
+  receive:{name:'Pası karşıla',short:'KRŞ',execute(p){
+    const f=TEMPO.friction,run=TEMPO.run*p.spd*1.25*(p.sprint>0?1.45:p.run>0?1.2:1);
+    const t0=ball.loft?Math.max(0,ball.loft.T-ball.loft.t):0; // havadaki top inmeden alınamaz
+    // boşluğa atılan pas (ara pas, koşu yoluna pas): oraya toptan önce yetişebiliyorsa koşusunu sürdürür
+    const pt=ball.passTarget,v=Math.hypot(ball.vx,ball.vy);
+    if(pt){
+      const D=Math.hypot(pt.x-ball.x,pt.y-ball.y),q=1-D*f/Math.max(v,1);
+      const tBall=q>.05?-Math.log(q)/f:9,tMe=Math.hypot(pt.x-p.x,pt.y-p.y)/run;
+      if(tMe<=tBall+.15)return{x:pt.x,y:pt.y,sp:1.25};
+    }
+    let tg=null;
+    for(let T=Math.max(.05,t0);T<=1.8;T+=.05){
+      const k=(1-Math.exp(-f*T))/f,bx=ball.x+ball.vx*k,by=ball.y+ball.vy*k;
+      if(Math.hypot(bx-p.x,by-p.y)<=run*T+6){tg={x:bx,y:by};break;}
+    }
+    if(!tg){const k=1/f;tg={x:ball.x+ball.vx*k,y:ball.y+ball.vy*k};}
+    return{...tg,sp:1.25};
   }},
   chase:{name:'Boştaki topa koş',short:'KOŞ',execute(p){
     const l=Math.min(.6,dist(p,ball)/150);
     return{x:ball.x+ball.vx*l,y:ball.y+ball.vy*l,sp:1.1};
   }},
-  // önce rakiple kale arasına gir, yaklaşınca topa dal
+  // rakiple kale arasına gir ve önünde karşıla: taşıyan üstüne sürerken topa müdahale et
   press:{name:'Baskı',short:'BSK',execute(p){
-    const o=ball.owner;
-    if(dist(p,o)<22)return{x:o.x,y:o.y,sp:1.08};
-    const g=ownGoal(p.team),dx=g.x-o.x,dy=g.y-o.y,d=Math.hypot(dx,dy)||1;
-    return{x:o.x+dx/d*12,y:o.y+dy/d*12,sp:1.08};
+    const o=ball.owner,g=ownGoal(p.team),dx=g.x-o.x,dy=g.y-o.y,d=Math.hypot(dx,dy)||1;
+    const front=((p.x-o.x)*dx+(p.y-o.y)*dy)/d; // >0: oyuncu taşıyanın kale tarafında
+    if(front>4&&dist(p,o)<28)return{x:o.x+dx/d*11,y:o.y+dy/d*11,sp:1.05}; // önünde: mesafeyi koruyup karşıla
+    return{x:o.x+dx/d*14,y:o.y+dy/d*14,sp:1.12}; // arkada ya da uzakta: önüne dolan
   }},
   mark:{name:'Markaj',short:'MRK',execute:p=>markSpot(p,p.team)},
   // hücumda boş alan bul; fırsat olursa savunma arkasına koşuya çık

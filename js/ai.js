@@ -28,6 +28,7 @@ function steer(p,t,tg,dt){
   let ax=0,ay=0;
   if(d>2){const s=Math.min(sp,d*4);ax=dx/d*s;ay=dy/d*s;}
   for(const q of t.players){if(q===p)continue;const ex=p.x-q.x,ey=p.y-q.y,ed=Math.hypot(ex,ey);if(ed<22&&ed>0){ax+=ex/ed*(22-ed)*4;ay+=ey/ed*(22-ed)*4;}}
+  if(p.dash<=0&&p!==ball.owner&&p!==ball.passTo)for(const q of teams[1-t.id].players){const ex=p.x-q.x,ey=p.y-q.y,ed=Math.hypot(ex,ey);if(ed<12&&ed>0){ax+=ex/ed*(12-ed)*9;ay+=ey/ed*(12-ed)*9;}} // rakibin içine girme
   const k=Math.min(1,dt*(p.dash>0?14:7));
   p.vx+=(ax-p.vx)*k;p.vy+=(ay-p.vy)*k;
   p.x=clamp(p.x+p.vx*dt,FX+6,FX+FW-6);p.y=clamp(p.y+p.vy*dt,FY+6,FY+FH-6);

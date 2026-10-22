@@ -448,3 +448,38 @@ canvas{border-radius:0;box-shadow:none}
 .motm b{display:block;font-size:13px}
 .motm span{font-size:11px;color:var(--muted)}
 @media (max-height:700px){.mstats{padding:8px 10px;gap:3px}.srow2{font-size:11px}.gline{height:34px}.box.end .big{font-size:34px}}
+
+/* menü ve maç sonu ekranları ekran yüksekliğine göre ölçeklenir: büyük ekranda ortaya sıkışmaz, küçükte sığar */
+.box{gap:clamp(8px,2vh,22px);padding-block:clamp(8px,2.4vh,28px)}
+.box.menu{gap:clamp(12px,2.8vh,30px)}
+.box h1{font-size:clamp(34px,6.4vh,58px)}
+.box h2{font-size:clamp(22px,4.2vh,38px)}
+.box p{font-size:clamp(13px,1.9vh,16px)}
+.box .tip{font-size:clamp(11px,1.5vh,13px)}
+.box .big{font-size:clamp(34px,7vh,64px)}
+.cta{font-size:clamp(18px,2.9vh,24px);padding:clamp(8px,1.5vh,13px) clamp(30px,5vh,48px) clamp(7px,1.3vh,11px)}
+.cta.alt,.cta.tour{font-size:clamp(15px,2.2vh,19px);padding:clamp(8px,1.4vh,12px) 18px clamp(6px,1.2vh,10px)}
+.cta.small{font-size:clamp(14px,2vh,17px);padding:clamp(7px,1.3vh,11px) 16px clamp(5px,1.1vh,9px)}
+.menurow{gap:clamp(8px,1.6vh,14px)}
+.box.end{gap:clamp(6px,1.8vh,18px)}
+.box.end .big{font-size:clamp(34px,6.5vh,60px)}
+.mstats{gap:clamp(3px,1.1vh,11px);padding:clamp(8px,1.8vh,18px) clamp(10px,3vw,18px)}
+.srow2{font-size:clamp(11px,1.6vh,14px);row-gap:clamp(3px,.6vh,6px)}
+.srow2 b{font-size:clamp(12px,1.8vh,16px)}
+.srow2 i{height:clamp(4px,.6vh,6px)}
+.gline{height:clamp(34px,5vh,46px)}
+.mcard{width:clamp(28px,4vh,36px);height:clamp(28px,4vh,36px)}
+.motm .mcard{width:clamp(34px,5vh,44px);height:clamp(34px,5vh,44px)}
+.ttable td{padding-block:clamp(4px,1vh,9px)}
+/* maç sonu: istatistik kutusu sığsın diye biraz daha sıkı ölçek */
+.box.end{gap:clamp(4px,1.2vh,14px);padding-block:clamp(6px,1.6vh,20px)}
+.box.end h2{font-size:clamp(22px,3.8vh,34px)}
+.box.end .big{font-size:clamp(30px,5.6vh,54px)}
+.box.end .mstats{gap:clamp(2px,.75vh,8px);padding:clamp(7px,1.4vh,16px) clamp(10px,3vw,18px)}
+.box.end .srow2{font-size:clamp(11px,1.45vh,13px);row-gap:clamp(2px,.45vh,5px)}
+.box.end .srow2 b{font-size:clamp(12px,1.65vh,15px)}
+.box.end .gline{height:clamp(32px,4.2vh,42px)}
+.box.end .cta{padding-block:clamp(7px,1.3vh,12px) clamp(6px,1.1vh,10px)}
+/* menü butonları büyüyünce yazı kırılmasın */
+.box.menu .cta{white-space:nowrap}
+.box.menu .menurow,.box.menu .cta.tour,.box.menu .pvpbtn{width:min(300px,100%)}

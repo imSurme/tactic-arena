@@ -1,13 +1,14 @@
 // Sabitler: saha ölçüleri, tempo, kartlar, ikonlar, roller, renkler
 const W=360,H=560,FX=20,FY=30,FW=320,FH=500,CX=FX+FW/2,CY=FY+FH/2,GW=96;
 const MATCH=180,FAST_TIME=60;          // 3 dk maç, son 60 sn 2x yıldız
-const STAR_MAX=10,STAR_REGEN=1/4.5,STAR_START=5;  // yıldız: kart oynama parası (3 sn'de 1)
+const STAR_MAX=10,STAR_REGEN=1/4.5,STAR_START=5;  // yıldız: kart oynama parası (4,5 sn'de 1)
 const DECK_SIZE=8;
 // tempo: oyuncu ve top hızları, top kapma ve pas arası olasılıkları
 const TEMPO={
   run:54,            // oyuncu koşu hızı (px/sn)
   friction:1.0,      // topun yavaşlama katsayısı
-  passMin:145,passMax:285,
+  shotFriction:.4,   // şutun yavaşlama katsayısı
+  passMin:160,passMax:310,
   shot:[320,380],powerShot:500,shotRange:240,
   tackle:.15,tackleCd:1.2,grace:.8,  // top kapma şansı, deneme arası, topu yeni alana dokunulmaz süre
   intercept:.18,interceptMaxSpeed:320,
@@ -36,9 +37,10 @@ const CARDS={
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
 const DUR={counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
-// xG: şutun gol olma olasılığı. Simülasyondaki 20.515 şuttan lojistik regresyonla çıkarıldı.
-// özellikler: [sabit, d, d², açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×d, vole, rakip kaleci kartı, rakip duvar kartı]
-const XG={w:[-1.125,2.949,-3.122,-0.488,-0.039,-0.023,-2.174,3.591,0.409,-2.012,-0.305],pen:.77};
+// xG: şutun gol olma olasılığı. Simülasyondaki 18.153 şuttan lojistik regresyonla çıkarıldı.
+// mesafe dilimleri (px): <50, <80, <110, <150, <200, 200+ (her dilimin kendi sabiti);
+// sonra: açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×mesafe, vole, rakip kaleci kartı, rakip duvar kartı
+const XG={bins:[50,80,110,150,200],b:[0.391,-0.53,-0.864,-1.408,-1.878,-2.448],w:[-0.044,-0.099,0.108,0.838,-0.066,0.042,-1.47,-1.324],pen:.74};
 const DEFAULT_DECK=['counter','through','power','wave','press','wall','gk','slide'];
 const ICONS={
   counter:'<path d="M13.5 2 4.5 13.5h6L9.5 22l10-12h-6.2L14.5 2z"/>',

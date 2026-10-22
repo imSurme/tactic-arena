@@ -66,7 +66,7 @@ function setPiece(t,spot,delay,indirect=false){
 function tackleFoul(tackler,carrier){
   const ax=tackler.x-carrier.x,ay=tackler.y-carrier.y;
   const fromBehind=Math.cos(carrier.fa)*ax+Math.sin(carrier.fa)*ay<-4; // taşıyanın arkasından
-  const ch=tackler.dash>0?.06+(fromBehind?.05:0):.04+(fromBehind?.1:0);
+  const ch=tackler.dash>0?.035+(fromBehind?.035:0):.017+(fromBehind?.045:0);
   const box=inBox(carrier,ownGoal(tackler.team))?.5:1; // ceza sahasında savunmacı daha dikkatli (faul = penaltı)
   return Math.random()<ch*box;
 }

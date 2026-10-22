@@ -8,7 +8,7 @@ function offsideLimit(t){
   const line=t.seenLine??secondLastDefender(t);
   return Math.max(line,adv(t,ball.y))-2;
 }
-const passSpeed=d=>clamp(120+d*1.1,TEMPO.passMin,TEMPO.passMax);
+const passSpeed=d=>clamp(135+d*1.15,TEMPO.passMin,TEMPO.passMax);
 // rakip, top oraya varmadan pas yoluna yetişebilir mi? (pozitif = güvenli)
 function laneSafety(a,b,sp,t){
   const dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy||1,L=Math.sqrt(L2);let m=1e9;
@@ -24,14 +24,31 @@ function passTarget(r){
   const lead=r.run>0||r.sprint>0?.55:.3;
   return{x:clamp(r.x+r.vx*lead,FX+8,FX+FW-8),y:clamp(r.y+r.vy*lead,FY+8,FY+FH-8)};
 }
+// pasın gideceği nokta: alıcının ayağı ya da önündeki / yanındaki boş alan
+function passSpot(p,r,t){
+  const base=passTarget(r);
+  if(r.role==='GK'||r.run>0||r.sprint>0)return{tg:base,safe:laneSafety(p,base,passSpeed(dist(p,base)),t)}; // koşana zaten önüne atılır
+  const f=dirY(t),q=nearestOpp(r,t),ox=r.x-q.p.x,oy=r.y-q.p.y,od=Math.hypot(ox,oy)||1;
+  const cands=[[0,0],[0,26*f],[18,20*f],[-18,20*f],[24,0],[-24,0],[ox/od*24,oy/od*24]];
+  let best=null;
+  for(const [cx,cy] of cands){
+    const tg={x:clamp(r.x+cx,FX+12,FX+FW-12),y:clamp(r.y+cy,FY+12,FY+FH-12)};
+    const d=dist(p,tg);if(d<28)continue;
+    if((cx||cy)&&dist(tg,oppGoal(t))<55)continue; // kale ağzına boşluk pası yok: alınmazsa kaleye yuvarlanır
+    const safe=laneSafety(p,tg,passSpeed(d),t);if(safe<3)continue;
+    const s=Math.min(nearestOpp(tg,t).d,50)+(tg.y-r.y)*f*.35+Math.min(safe,25)*.3-Math.hypot(cx,cy)*.12+rnd(0,10)+(cx===0&&cy===0?16:0); // boştaki oyuncuya çoğu zaman ayağına
+    if(!best||s>best.s)best={tg,safe,s};
+  }
+  return best||{tg:base,safe:laneSafety(p,base,passSpeed(dist(p,base)),t)};
+}
 function passOptions(p,t){
   const res=[],gk=p.role==='GK',deep=toN(t,p.x,p.y).y>.7;
   for(const r of t.players){
     if(r===p||r.stun>0||(r.role==='GK'&&(gk||!deep)))continue;
     if(!gk&&looksOffside(r,t))continue; // ofsayttaki arkadaşa pas atılmaz (hattı doğru gördüyse)
-    const tg=passTarget(r),d=dist(p,tg);
+    const {tg,safe}=passSpot(p,r,t),d=dist(p,tg);
     if(d<28||d>(gk?280:240))continue;
-    const sp=passSpeed(d),safe=laneSafety(p,tg,sp,t);
+    const sp=passSpeed(d);
     if(safe<3)continue; // riskli pas atılmaz
     const prog=(tg.y-p.y)*dirY(t),open=Math.min(nearestOpp(tg,t).d,60);
     const near=Math.max(0,200-dist(tg,oppGoal(t)))*.25;
@@ -102,18 +119,19 @@ function throughPass(p,t){
 // şutun xG'si (şut çekildiği anki duruma göre)
 function xgOf(p,t){
   if(ball.penalty)return XG.pen;
-  const g=oppGoal(t),opp=teams[1-t.id],dist0=dist(p,g),d=Math.min(dist0/100,2.4);
+  const g=oppGoal(t),opp=teams[1-t.id],dist0=dist(p,g);
   let nb=0;for(const o of opp.players)if(o.role!=='GK'&&segDist(o.x,o.y,p.x,p.y,CX,g.y)<9)nb++;
+  let bi=0;while(bi<XG.bins.length&&dist0>=XG.bins[bi])bi++;
   const pow=t.fx.power>0?1:0;
-  const x=[1,d,d*d,Math.abs(p.x-CX)/Math.max(dist0,1),Math.min(nb,2),nearestOpp(p,t).d<16?1:0,pow,pow*d,p.volley>0?1:0,opp.fx.gk>0?1:0,opp.fx.wall>0?1:0];
-  return 1/(1+Math.exp(-x.reduce((s,v,i)=>s+v*XG.w[i],0)));
+  const x=[Math.abs(p.x-CX)/Math.max(dist0,1),Math.min(nb,2),nearestOpp(p,t).d<16?1:0,pow,pow*dist0/100,p.volley>0?1:0,opp.fx.gk>0?1:0,opp.fx.wall>0?1:0];
+  return 1/(1+Math.exp(-(XG.b[bi]+x.reduce((s,v,i)=>s+v*XG.w[i],0))));
 }
 function shoot(p,t){
   statShot(p,t,xgOf(p,t));
   const g=oppGoal(t),gk=teams[1-t.id].players[0],d=dist(p,g);
-  let side=gk.x>CX?-1:1;if(Math.random()<.3)side=-side;
+  let side=gk.x>CX?-1:gk.x<CX?1:Math.random()<.5?-1:1;if(Math.random()<.15)side=-side; // genelde kalecinin uzak köşesi
   const pow=t.fx.power>0,pen=ball.penalty; // penaltı köşeye, temiz vurulur
-  const tx=CX+side*(GW/2-10)*rnd(pen?.65:.4,1)+rnd(-.5,.5)*d*(pow||pen?.04:.18);
+  const tx=CX+side*(GW/2-9)*(pen?rnd(.2,.8):rnd(.55,1))+rnd(-.5,.5)*d*(pow||pen?.04:.16);
   const sp=pow?TEMPO.powerShot+d*.3:Math.min(450,rnd(...TEMPO.shot)+d*.4);
   kick(p,tx,g.y+dirY(t)*10,sp);
   ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;ball.pen=pen;Sfx.shot(pow);
@@ -190,9 +208,9 @@ function carrierThink(p,t,dt){
   // Güçlü Şut: iyi pozisyonu bekle (165 px içi, önü çok kapalı değil); süre bitmek üzereyse uzaktan da vur
   const powerReady=t.fx.power>0&&((dG<165&&q>-.3)||(t.fx.power<1.2&&dG<240));
   if(powerReady||p.volley>0&&dG<150||dG<58){shoot(p,t);return;}
-  if(q>0&&Math.random()<q*(t.fx.wave?.55:.32)+(press<26?.08:0)){shoot(p,t);return;}
+  if(q>0&&Math.random()<q*(t.fx.wave?.75:.56)+(press<26?.1:0)){shoot(p,t);return;}
   // ceza sahası içinde önü kapalı da olsa vur; ceza sahası önünde topu uzun süre tutma
-  if(dG<85&&q>-.4&&Math.random()<.6){shoot(p,t);return;}
+  if(dG<90&&q>-.45&&Math.random()<.7){shoot(p,t);return;}
   if(dG<130&&p.hold>1.1&&q>-.25){shoot(p,t);return;}
   // kanatta ve son üçte birdeyse ortala
   if(Math.abs(p.x-CX)>85&&ny<(t.fx.overlap?.42:.3)&&Math.random()<(ny<.18||t.fx.overlap&&p.role==='DEF'?.75:.4)&&cross(p,t))return;
