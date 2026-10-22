@@ -212,6 +212,7 @@ const Net=(()=>{
     }else if(role==='guest'){
       if(m.t==='start')guestBegin(m);
       else if(m.t==='s')applySnapshot(m);
+      else if(m.t==='stats')pvpStats=m.s;
       else if(m.t==='deny')Sfx.deny();
       else if(m.t==='rematch'){readyThem=true;rematchStatus();}
       else if(m.t==='bye')lost('Rakip maçtan ayrıldı.');
@@ -335,7 +336,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     // ev sahibi her karede çağırır: belli aralıklarla anlık görüntü gönder
     hostTick(dt){
       if(role!=='host'||!conn||!conn.open)return;
-      if(state==='end'){if(!sentEnd){sentEnd=true;send(snapshot());}return;} // maç sonu bir kez gönderilir
+      if(state==='end'){if(!sentEnd){sentEnd=true;send({t:'stats',s:stats});send(snapshot());}return;} // maç sonu bir kez gönderilir (istatistikler önce)
       sendT-=dt;
       if(sendT<=0){sendT=SNAP_EVERY;send(snapshot());}
     },
@@ -354,11 +355,13 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
 })();
 // ev sahibinde misafirin destesi (state.js'deki makeTeam kullanır)
 let pvpOppDeck=null;
+let pvpStats=null; // misafirde: ev sahibinden gelen maç istatistikleri
 // maç sonu ekranı (iki taraf da kendi gözünden görür)
 function showPvpEnd(a,b){
   state='end';
   const res=a>b?['KAZANDIN!','var(--gold)']:['KAYBETTİN','var(--away-l)'];
   showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:${teams[0].light}">${a}</span> – <span style="color:${teams[1].light}">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}
-<button class="cta" id="go">RÖVANŞ</button><p class="tip" id="rmStatus"></p><button class="link" id="menu">Ana menü</button>`,
+${Net.isGuest()?(pvpStats?statsHTML(pvpStats,1):''):statsHTML(stats,0)}<button class="cta" id="go">RÖVANŞ</button><p class="tip" id="rmStatus"></p><button class="link" id="menu">Ana menü</button>`,
   {go:()=>{Net.rematch();},menu:()=>Net.leave()});
+  $('obox').classList.add('wide','end');
 }

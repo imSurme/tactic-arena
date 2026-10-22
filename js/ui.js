@@ -261,15 +261,50 @@ function setPaused(v){
     {go:()=>setPaused(false),restart:start,menu:showMenu});
   }else{hideOverlay();Sfx.resume();}
 }
+// maç sonu istatistikleri: solda izleyenin takımı, sağda rakip
+const fmtT=sec=>Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+function statsHTML(s,me){
+  const o=1-me,cL=teams[0].color,cR=teams[1].color;
+  const row=(label,a,b,va=a,vb=b)=>{const t=a+b,pa=t>0?a/t*100:50;
+    return`<div class="srow2"><b>${va}</b><span>${label}</span><b>${vb}</b><i style="--pa:${pa.toFixed(1)}%;--cl:${cL};--cr:${cR}"></i></div>`;};
+  const pct=(n,d)=>d>0?Math.round(n/d*100):0;
+  const pT=s.poss[0]+s.poss[1],pm=pT>0?Math.round(s.poss[me]/pT*100):50;
+  // gol akışı: süre çizgisi üzerinde senin gollerin altta, rakibinkiler üstte
+  const end=Math.max(s.len,...s.goals.map(g=>g.at),1);
+  const marks=s.goals.map(g=>{const mine=g.tid===me,x=Math.min(98,Math.max(2,g.at/end*100));
+    return`<span class="gm ${mine?'me':'op'}" style="left:${x}%;--c:${mine?cL:cR}">${fmtT(g.at)}${g.pen?' P':''}${g.ot?' AG':''}</span>`;}).join('');
+  const ot=end>s.len?`<span class="otline" style="left:${s.len/end*100}%"></span>`:'';
+  // kartlar
+  const mine=Object.entries(s.cards[me]).sort((a,b)=>b[1]-a[1]);
+  const chips=mine.length?mine.map(([k,n])=>`<span class="mcard" title="${CARDS[k].name}" style="--c1:${CARDS[k].c1};--c2:${CARDS[k].c2}">${iconSvg(k)}<em>×${n}</em></span>`).join(''):'<span class="tip">Kart oynamadın</span>';
+  const best=Object.entries(s.cardXg[me]).sort((a,b)=>b[1]-a[1])[0];
+  let star='';
+  if(best&&best[1]>=.05)star=`<div class="motm"><span class="mcard" style="--c1:${CARDS[best[0]].c1};--c2:${CARDS[best[0]].c2}">${iconSvg(best[0])}</span><div><small>MAÇIN KARTI</small><b>${CARDS[best[0]].name}</b><span>${best[1].toFixed(2)} xG yarattı</span></div></div>`;
+  else if(mine.length)star=`<div class="motm"><span class="mcard" style="--c1:${CARDS[mine[0][0]].c1};--c2:${CARDS[mine[0][0]].c2}">${iconSvg(mine[0][0])}</span><div><small>EN ÇOK OYNADIĞIN</small><b>${CARDS[mine[0][0]].name}</b><span>${mine[0][1]} kez</span></div></div>`;
+  return`<div class="mstats">
+<div class="gline">${ot}${marks}</div>
+${row('xG',s.xg[me],s.xg[o],s.xg[me].toFixed(2),s.xg[o].toFixed(2))}
+${row('Topa sahip olma',pm,100-pm,pm+'%',(100-pm)+'%')}
+${row('Şut (isabetli)',s.shots[me],s.shots[o],s.shots[me]+' ('+s.onT[me]+')',s.shots[o]+' ('+s.onT[o]+')')}
+${row('Pas isabeti',pct(s.passOk[me],s.passes[me]),pct(s.passOk[o],s.passes[o]),s.passes[me]?pct(s.passOk[me],s.passes[me])+'%':'–',s.passes[o]?pct(s.passOk[o],s.passes[o])+'%':'–')}
+${row('Top kapma',s.tackles[me],s.tackles[o])}
+${row('Pas arası',s.ints[me],s.ints[o])}
+${row('Kurtarış',s.saves[me],s.saves[o])}
+${row('Faul',s.foulsT[me],s.foulsT[o])}
+${row('Ofsayt',s.offT[me],s.offT[o])}
+<div class="mcards"><div class="mchips">${chips}</div><div class="tip">Harcanan yıldız: <b>${s.stars[me]}★</b> · Rakip ${s.stars[o]}★</div></div>
+${star}
+</div>`;
+}
 function endMatch(){
   state='end';Tutorial.hide();Sfx.whistleEnd();
   const a=teams[0].score,b=teams[1].score;
   if(matchCtx&&matchCtx.tour){tourAfterMatch(a,b);return;}
   if(matchCtx&&matchCtx.pvp){showPvpEnd(a,b);return;}
   const res=a>b?['KAZANDIN!','var(--gold)']:a<b?['KAYBETTİN','var(--away-l)']:['BERABERE','var(--home-l)'];
-  const note=overtime?'Uzatmada altın golle bitti.':'Top sendeyken hücum kartı, rakipteyken savunma kartı oyna.';
-  showOverlay(`<div class="tip">MAÇ SONU</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div><p>${note}</p><button class="cta" id="go">TEKRAR</button><button class="link" id="menu">Ana menü</button>`,
+  showOverlay(`<div class="tip">MAÇ SONU${overtime?' · ALTIN GOL':''}</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${statsHTML(stats,0)}<div class="btnrow"><button class="cta" id="go">TEKRAR</button></div><button class="link" id="menu">Ana menü</button>`,
   {go:start,menu:showMenu});
+  $('obox').classList.add('wide','end');
 }
 function updateMuteBtn(){
   const b=$('muteBtn');b.innerHTML=Sfx.muted?UI_ICONS.mute:UI_ICONS.sound;

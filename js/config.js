@@ -36,6 +36,9 @@ const CARDS={
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
 const DUR={counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
+// xG: şutun gol olma olasılığı. Simülasyondaki 20.515 şuttan lojistik regresyonla çıkarıldı.
+// özellikler: [sabit, d, d², açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×d, vole, rakip kaleci kartı, rakip duvar kartı]
+const XG={w:[-1.125,2.949,-3.122,-0.488,-0.039,-0.023,-2.174,3.591,0.409,-2.012,-0.305],pen:.77};
 const DEFAULT_DECK=['counter','through','power','wave','press','wall','gk','slide'];
 const ICONS={
   counter:'<path d="M13.5 2 4.5 13.5h6L9.5 22l10-12h-6.2L14.5 2z"/>',

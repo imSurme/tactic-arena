@@ -53,6 +53,7 @@ function pass(p,r,t,tg,sp){
   const off=isOffside(r,t,p); // pas anındaki konuma bakılır, düdük topu alınca çalar
   kick(p,tg.x,tg.y,sp||passSpeed(dist(p,tg)));
   ball.passTo=r;ball.passTeam=t;ball.passTarget=tg;ball.offsideR=off?r:null;Sfx.pass();
+  stats.passes[t.id]++;
 }
 // derin pas için en iyi koşu: alıcının topa rakipten önce yetişeceği hedefi ve top hızını bul
 // top sürtünmeyle yavaşlar: T sn'de D px gitmesi için ilk hız D/(1-e^-T)
@@ -98,7 +99,17 @@ function throughPass(p,t){
   floatText(p.x,p.y-20,'ARA PAS!',CARDS.through.col);
   return true;
 }
+// şutun xG'si (şut çekildiği anki duruma göre)
+function xgOf(p,t){
+  if(ball.penalty)return XG.pen;
+  const g=oppGoal(t),opp=teams[1-t.id],dist0=dist(p,g),d=Math.min(dist0/100,2.4);
+  let nb=0;for(const o of opp.players)if(o.role!=='GK'&&segDist(o.x,o.y,p.x,p.y,CX,g.y)<9)nb++;
+  const pow=t.fx.power>0?1:0;
+  const x=[1,d,d*d,Math.abs(p.x-CX)/Math.max(dist0,1),Math.min(nb,2),nearestOpp(p,t).d<16?1:0,pow,pow*d,p.volley>0?1:0,opp.fx.gk>0?1:0,opp.fx.wall>0?1:0];
+  return 1/(1+Math.exp(-x.reduce((s,v,i)=>s+v*XG.w[i],0)));
+}
 function shoot(p,t){
+  statShot(p,t,xgOf(p,t));
   const g=oppGoal(t),gk=teams[1-t.id].players[0],d=dist(p,g);
   let side=gk.x>CX?-1:1;if(Math.random()<.3)side=-side;
   const pow=t.fx.power>0,pen=ball.penalty; // penaltı köşeye, temiz vurulur

@@ -31,7 +31,7 @@ function callOffside(r,t){
   const def=teams[1-t.id];
   refFx.push({type:'flag',y:r.y,line:offsideLine(t)*dirY(t),t:0,life:1.6});
   floatText(r.x,r.y-20,'OFSAYT!',CARDS.offside.col);Sfx.whistle();
-  stats.offside++;
+  stats.offside++;stats.offT[t.id]++;
   if(def.fx.offside>0){def.fx.offside=0;addStars(def,1,r.x,r.y);} // tuzak tuttu
   setPiece(def,{x:r.x,y:r.y},1.2);
 }
@@ -40,7 +40,7 @@ function callFoul(fouler,victim,{delay=1.3,label='FAUL!',indirect=false}={}){
   const t=victim.team;
   refFx.push({type:'card',x:fouler.x,y:fouler.y,t:0,life:1.4});
   floatText(fouler.x,fouler.y-22,label,'#ffe14d');Sfx.whistle();
-  stats.fouls++;
+  stats.fouls++;stats.foulsT[fouler.team.id]++;
   fouler.stun=Math.max(fouler.stun,.5);
   const spot={x:victim.x,y:victim.y},g=oppGoal(t);
   if(inBox(spot,g)){penalty(t);return;}
@@ -88,4 +88,25 @@ function penalty(t){
 }
 function updateRefFx(dt){for(const f of refFx)f.t+=dt;refFx=refFx.filter(f=>f.t<f.life);}
 // maç istatistikleri (ölçüm ve ileride maç sonu ekranı için)
-let stats={offside:0,fouls:0};
+// her alan [takım 0, takım 1]
+function freshStats(){
+  const z=()=>[0,0];
+  return{offside:0,fouls:0,len:Settings.get('length'),poss:z(),shots:z(),onT:z(),xg:z(),passes:z(),passOk:z(),tackles:z(),ints:z(),saves:z(),
+    foulsT:z(),offT:z(),stars:z(),cards:[{},{}],cardXg:[{},{}],recent:[[],[]],goals:[]};
+}
+let stats=freshStats();
+// maçın kaçıncı saniyesi (uzatmada normal süre + uzatma)
+const elapsed=()=>overtime?stats.len+clock:stats.len-clock;
+// şut: xG takıma ve son 10 sn'de oynanan ya da etkisi süren hücum kartlarına yazılır
+function statShot(p,t,xg){
+  const i=t.id;stats.shots[i]++;stats.xg[i]+=xg;stats.cur={team:i,on:false};
+  const now0=elapsed(),keys=new Set(stats.recent[i].filter(r=>now0-r.at<=10&&CARDS[r.k].type==='atk').map(r=>r.k));
+  for(const k in t.fx)if(t.fx[k]>0&&CARDS[k].type==='atk')keys.add(k);
+  for(const k of keys)stats.cardXg[i][k]=(stats.cardXg[i][k]||0)+xg;
+}
+// son şut kaleyi buldu (kurtarış ya da gol); her şut bir kez sayılır
+function statOnTarget(i){const c=stats.cur;if(c&&c.team===i&&!c.on){c.on=true;stats.onT[i]++;}}
+function statCard(t,k){
+  const i=t.id;stats.cards[i][k]=(stats.cards[i][k]||0)+1;stats.stars[i]+=CARDS[k].cost;
+  stats.recent[i].push({k,at:elapsed()});
+}

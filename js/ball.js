@@ -46,6 +46,7 @@ function simBall(dt,live){
         const ch=b.pen?(t.fx.gk?.42:.25):clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)+(t.fx.wall?.12:0)-(b.corner?.12:0)-(b.power?.12:0),.12,.97);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
+          stats.saves[t.id]++;statOnTarget(b.shotTeam.id);
           if(sp<430&&Math.random()<.6){take(gk);gk.decT=.9;}
           else{b.vy=-b.vy*.45;b.vx=rnd(-1,1)*200;b.shot=false;gk.kickCd=.3;}
           return;
@@ -73,6 +74,7 @@ function simBall(dt,live){
     }
     if(best){
       const pt=b.passTeam;take(best);
+      if(pt&&ball.owner===best){if(pt===best.team)stats.passOk[pt.id]++;else stats.ints[best.team.id]++;}
       if(pt&&pt!==best.team){floatText(best.x,best.y-20,'ARAYA GİRDİ',best.team.light);addStars(best.team,REWARD.intercept,best.x,best.y);}
       else if(pt&&pt.fx.tiki)addStars(pt,REWARD.tiki);
     }
@@ -93,6 +95,7 @@ function simBall(dt,live){
         o.stun=.7;o.kickCd=.5;p.dash=0;
         burst((o.x+p.x)/2,(o.y+p.y)/2,'#ffe066',10,110);
         floatText(p.x,p.y-20,'KAPTI!',t.light);Sfx.tackle();addStars(t,REWARD.tackle,p.x,p.y);
+        stats.tackles[t.id]++;
         if(Math.random()<.75)take(p);
         else{b.owner=null;const a=rnd(0,Math.PI*2);b.vx=Math.cos(a)*130;b.vy=Math.sin(a)*130;}
         break;
@@ -117,6 +120,7 @@ function take(p){
 }
 function goal(tid){
   const t=teams[tid];t.score++;
+  statOnTarget(tid);stats.goals.push({tid,at:Math.round(elapsed()),pen:!!ball.pen,ot:overtime});
   Sfx.goal();state='goal';goalT=2.3;pendingKick=1-tid;shake=12;
   for(let i=0;i<70;i++){const c=['#ffc83d','#fff',t.color,t.light,'#d23cff'][i%5];parts.push({x:ball.x,y:ball.y,vx:rnd(-230,230),vy:rnd(-230,230),life:rnd(.9,1.7),t:0,c,s:rnd(2,4.5),sq:true});}
   banners.push({type:'big',text:'GOL!',sub:overtime?'ALTIN GOL!':tid===0?'Harika vuruş!':'Rakip attı',color:t.color,t:0,life:2.2});

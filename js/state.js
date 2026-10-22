@@ -22,7 +22,7 @@ function makeTeam(id){
 }
 function newMatch(){
   teams=[makeTeam(0),makeTeam(1)];
-  clock=Settings.get('length');stats={offside:0,fouls:0};refFx=[];pendingCards=[];lastPossessor=null;doubleShown=false;overtime=false;paused=false;oppLog=[];aiT=2.5;parts=[];floats=[];banners=[];handKey='';lastAfford=[];
+  clock=Settings.get('length');stats=freshStats();refFx=[];pendingCards=[];lastPossessor=null;doubleShown=false;overtime=false;paused=false;oppLog=[];aiT=2.5;parts=[];floats=[];banners=[];handKey='';lastAfford=[];
   kickoff(Math.random()<.5?0:1);
 }
 function kickoff(tid){

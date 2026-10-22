@@ -185,5 +185,6 @@ function tourAfterMatch(a,b){
   const title=T.champion===0?['ŞAMPİYON!','var(--gold)']:won?['KAZANDIN!','var(--gold)']:['KAYBETTİN','var(--away-l)'];
   const note=T.champion===0?'Kupa senin!':T.out?(T.out==='GRUP AŞAMASI'?'Gruptan çıkamadın, turnuva bitti.':T.out+' turunda elendin.'):
     T.stage==='ko'&&nx.knockout===false?'Gruptan çıktın! Sıradaki: '+ROUND_NAMES[0]+'.':won&&nx.knockout?'Tur atladın! Sıradaki: '+ROUND_NAMES[T.round]+'.':'Turnuva devam ediyor.';
-  showOverlay(`<div class="tip">${nx.label}</div><h2 style="color:${title[1]}">${title[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}<p>${note}</p><button class="cta" id="go">DEVAM</button>`,{go:showTournament});
+  showOverlay(`<div class="tip">${nx.label}</div><h2 style="color:${title[1]}">${title[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}<p>${note}</p>${statsHTML(stats,0)}<button class="cta" id="go">DEVAM</button>`,{go:showTournament});
+  $('obox').classList.add('wide','end');
 }

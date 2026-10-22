@@ -36,6 +36,7 @@ function playCard(t,i,from){
   if(!c||t.stars<c.cost)return false;
   t.stars-=c.cost;
   t.hand[i]=t.queue.shift();t.queue.push(k);
+  statCard(t,k);
   pendingCards.push({team:t,key:k,t:CARD_FLIGHT});
   CardFx.play(t,k,from);
   if(t.id===0){Sfx.card(c.type);Tutorial.onCard();}
