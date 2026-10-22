@@ -21,7 +21,7 @@ function frame(ts){
       if(!overtime&&clock<=0){clock=0;timeUp();}
       else{
         const mult=overtime||clock<=FAST_TIME?2:1;
-        for(const t of teams){t.stars=Math.min(STAR_MAX,t.stars+STAR_REGEN*mult*dt);for(const k in t.fx)t.fx[k]=Math.max(0,t.fx[k]-dt);}
+        for(const t of teams){t.stars=Math.min(STAR_MAX,t.stars+STAR_REGEN*mult*dt);for(const k in t.fx)t.fx[k]=Math.max(0,t.fx[k]-dt*(fxLive(t,k)?1:FX_IDLE));}
         if(!overtime&&clock<=FAST_TIME&&!doubleShown){doubleShown=true;banners.push({type:'info',text:'2x YILDIZ',sub:'Son 60 saniye!',color:'#ff8cf0',t:0,life:1.8});}
         updatePendingCards(dt);aiCards(dt);simPlayers(dt);if(state==='play')simBall(dt,true);
         Tutorial.update(dt);

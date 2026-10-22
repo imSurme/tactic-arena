@@ -44,6 +44,7 @@ const Net=(()=>{
     const _ri=ring;ring=function(x,y,c){_ri(x,y,c);emit(['r',r1(x),r1(y),c]);};
     const _co=callOffside;callOffside=function(r,t){_co(r,t);const f=refFx[refFx.length-1];if(f)emit(['ref',f]);};
     const _cf=callFoul;callFoul=function(a,b,o){_cf(a,b,o);const f=refFx[refFx.length-1];if(f)emit(['ref',f]);};
+    const _pen=penalty;penalty=function(t){_pen(t);emit(['pen',t.id]);};
     const _go=goal;goal=function(tid){_go(tid);emit(['goal',tid]);};
     const _pc=playCard;playCard=function(t,i,from){const k=t.hand[i],ok=_pc(t,i,from);if(ok)emit(['play',t.id,k]);return ok;};
     const _imp=CardFx.impact;CardFx.impact=function(t,k,at){_imp(t,k,at);emit(['imp',t.id,k,r1(at.x),r1(at.y)]);};
@@ -71,6 +72,7 @@ const Net=(()=>{
     else if(k==='r')ring(mx(e[1]),my(e[2]),sc(e[3]));
     else if(k==='ref'){const f={...e[1]};if(f.type==='flag'){f.y=my(f.y);f.line=my(f.line);}else{f.x=mx(f.x);f.y=my(f.y);}refFx.push(f);}
     else if(k==='goal')goalFx(1-e[1]);
+    else if(k==='pen')banners.push({type:'info',text:'PENALTI!',sub:e[1]===1?'Kaleye vur!':'Kaleci, hazır ol!',color:'#ffe14d',t:0,life:1.6});
     else if(k==='play'){
       if(e[1]===0){const t=teams[1];CardFx.play(t,e[2],null);Sfx.oppCard();oppLog.unshift(e[2]);oppLog.length=Math.min(oppLog.length,3);}
     }

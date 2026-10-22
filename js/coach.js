@@ -4,8 +4,8 @@ const Coach=(()=>{
   try{done=localStorage.getItem('ta-coach')==='1';}catch(e){}
   // sahanın içindeki bir bölgeyi (oyun koordinatlarında) ekran dikdörtgenine çevirir
   const fieldRect=(x,y,w,h)=>{
-    const r=$('c').getBoundingClientRect(),k=r.width/W;
-    return{left:r.left+x*k,top:r.top+(y-viewCrop)*k,width:w*k,height:h*k};
+    const r=$('c').getBoundingClientRect(),k=scale;
+    return{left:r.left+(x+offX)*k,top:r.top+(y-viewCrop+offY)*k,width:w*k,height:h*k};
   };
   const el=id=>()=>$(id).getBoundingClientRect();
   const steps=[
@@ -25,14 +25,14 @@ const Coach=(()=>{
      text:'Bir kartın ne yaptığını görmek için ona <b>basılı tut</b>. Kart oynanmaz; ekranın ortasında ayrıntı penceresi açılır ve maç sen kapatana kadar durur.'},
     {at:el('next'),title:'Sıradaki kart',
      text:'Oynadığın kart destenin sonuna gider, yerine buradaki kart gelir. 8 kartlık desteni menüdeki <b>DESTE</b> ekranında 16 kart arasından kurarsın.'},
-    {at:()=>fieldRect(FX+FW-44,FY+FH-110,44,104),title:'Aktif kartlar',
-     text:'Oynadığın kart sahaya uçar ve çarptığı an etkisi başlar. Süren kartlar sağ altta küçük ikonlar olarak durur; çevresindeki halka kalan süreyi gösterir. Rakibinkiler sağ üstte.'},
-    {at:()=>fieldRect(0,0,140,30),title:'Rakibin kartları',
+    {at:()=>{const r=$('field').getBoundingClientRect();return{left:r.right-48,top:r.bottom-118,width:44,height:112};},title:'Aktif kartlar',
+     text:'Oynadığın kart sahaya uçar ve çarptığı an etkisi başlar. Süren kartlar sağ altta küçük ikonlar olarak durur; çevresindeki halka kalan süreyi gösterir. Hücum kartının süresi top rakipteyken, savunma kartınınki top sendeyken <b>yavaş akar</b> (ikon soluklaşır), yani kart boşa gitmez. Rakibinkiler sağ üstte.'},
+    {at:()=>{const r=$('field').getBoundingClientRect();return{left:r.left+2,top:r.top+2,width:150,height:36};},title:'Rakibin kartları',
      text:'Rakip de kart oynar. Son oynadığı 3 kart sol üstte belirir. Ona göre cevap ver: rakip hücum kartı oynadıysa savunma kartını hazır tut.'},
     {at:()=>fieldRect(CX-60,CY-60,120,120),title:'Sahayı okumak',
      text:'Topu süren oyuncunun altında <b>sarı halka</b> olur. Kesikli çizgi, giden pasın ineceği yeri gösterir. Ortalar ve uzun toplar havadan gider, havadayken kesilemez.'},
     {at:()=>fieldRect(FX,CY-110,FW,120),title:'Ofsayt ve faul',
-     text:'Kurallar gerçek: savunmanın arkasında bekleyen oyuncuya atılan pas <b>ofsayttır</b>, yan hakem bayrağı kaldırır ve top rakibe geçer. Sert ya da arkadan müdahale <b>faul</b> olur, faule uğrayan takım serbest vuruş kullanır. Kaleye yakın serbest vuruş direkt kaleye çekilir.'},
+     text:'Kurallar gerçek: pas anında savunmanın arkasında bekleyen oyuncu topu alınca <b>ofsayt</b> olur, yan hakem bayrağı kaldırır ve top rakibe geçer. Sert ya da arkadan müdahale <b>faul</b> olur; faule uğrayan takım serbest vuruşu genelde pasla kullanır, kaleye yakınsa direkt şut da çekebilir. Ceza sahasındaki faul <b>penaltıdır</b>.'},
     {at:el('ctrl'),title:'Duraklat ve ses',
      text:'Buradan oyunu duraklatır, sesi açıp kapatırsın. Rakip zorluğu ve maç süresi menüdeki <b>AYARLAR</b> ekranında.'},
     {at:el('field'),title:'Hazırsın!',last:true,

@@ -16,10 +16,12 @@ function assignRoles(t){
 }
 // hedefe doğru hızlanarak koş, takım arkadaşlarından uzak dur, yüzünü hareket yönüne ya da topa çevir
 function steer(p,t,tg,dt){
-  let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.15:1)*tg.sp;
+  let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.25:1)*tg.sp;
   if(ball.owner===p)sp*=t.fx.dribble>0?1:.82;
   if(p.sprint>0)sp*=1.45;else if(p.run>0)sp*=1.2;
   if(t.fx.offside>0&&p.role==='DEF'&&!attacking(t))sp*=1.25; // tuzak: hat hızla çıkar
+  if(teams[1-t.id].fx.tiki>0&&attacking(teams[1-t.id]))sp*=.8; // tiki-taka: top peşinde koşan rakip yorulur
+  if(ball.tactical&&ball.setT>0&&ball.owner&&ball.owner.team===t&&ball.owner!==p)sp*=.35; // taktik faul sonrası atak durur
   if(p.dash>0)sp=265;
   if(p.stun>0)sp=0;
   const dx=clamp(tg.x,FX+6,FX+FW-6)-p.x,dy=clamp(tg.y,FY+6,FY+FH-6)-p.y,d=Math.hypot(dx,dy);
@@ -43,6 +45,8 @@ function simPlayers(dt){
     let tg=p.fsm.update(dt);
     // serbest vuruşta rakipler topa 30 px'ten fazla yaklaşamaz
     if(ball.setT>0&&ball.owner&&ball.owner.team!==t){const d=dist(tg,ball);if(d<32){const k=32/(d||1);tg={...tg,x:ball.x+(tg.x-ball.x)*k,y:ball.y+(tg.y-ball.y)*k};}}
+    // penaltıda vurucu ve kaleci dışında herkes ceza sahası dışında bekler
+    if(ball.penalty&&ball.setT>0&&p!==ball.owner&&!(p.role==='GK'&&t!==ball.owner.team)){const g=oppGoal(ball.owner.team);if(inBox(tg,g))tg={...tg,y:g.y-dirY(ball.owner.team)*86};}
     steer(p,t,tg,dt);
   }
 }

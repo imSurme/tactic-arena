@@ -2,17 +2,20 @@
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const bg=document.createElement('canvas'),bctx=bg.getContext('2d');
 let scale=1,dpr=1,viewCrop=0; // viewCrop: tuvalin üstünden ve altından kırpılan oyun pikseli
+let offX=0,offY=0; // tuval sahneyi tamamen doldurur; oyun alanı ortalanır, kalan yer tribündür (oyun pikseli)
 function resize(){
   const st=document.getElementById('stage').getBoundingClientRect();
   // pencere henüz boyutlanmadıysa (ilk açılış) tuvali 0 boyutla kurma; boyut gelince tekrar denenir
   if(st.width<10||st.height<10)return;
   viewCrop=matchMedia('(max-aspect-ratio:3/4)').matches?10:0;
   const vh=H-viewCrop*2;
-  scale=Math.min(st.width/W,st.height/vh);dpr=window.devicePixelRatio||1;
-  cv.style.width=W*scale+'px';cv.style.height=vh*scale+'px';
-  cv.width=bg.width=Math.round(W*scale*dpr);bg.height=Math.round(H*scale*dpr);cv.height=Math.round(vh*scale*dpr);
-  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,-viewCrop*scale*dpr);
-  bctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);
+  const cw=Math.floor(st.width),ch=Math.floor(st.height);
+  scale=Math.min(cw/W,ch/vh);dpr=window.devicePixelRatio||1;
+  offX=(cw/scale-W)/2;offY=(ch/scale-vh)/2;
+  cv.style.width=cw+'px';cv.style.height=ch+'px';
+  cv.width=bg.width=Math.round(cw*dpr);cv.height=bg.height=Math.round(ch*dpr);
+  ctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
+  bctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
   renderField(bctx);
 }
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
@@ -20,10 +23,15 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
 function renderField(c){
   let seed=7;const sr=()=>(seed=(seed*16807)%2147483647)/2147483647;
   // tribün
-  const st=c.createLinearGradient(0,0,0,H);st.addColorStop(0,'#141d48');st.addColorStop(.5,'#0e1636');st.addColorStop(1,'#141d48');
-  c.fillStyle=st;c.fillRect(0,0,W,H);
+  // görünen alanın tamamı (saha dar kalınca yanlar, kısa kalınca üst ve alt da tribün)
+  const x0=-offX-2,x1=W+offX+2,y0=viewCrop-offY-2,y1=H-viewCrop+offY+2;
+  const st=c.createLinearGradient(0,y0,0,y1);st.addColorStop(0,'#141d48');st.addColorStop(.5,'#0e1636');st.addColorStop(1,'#141d48');
+  c.fillStyle=st;c.fillRect(x0,y0,x1-x0,y1-y0);
+  // tribün basamakları: sahaya paralel koyu şeritler
+  c.strokeStyle='rgba(0,0,0,.22)';c.lineWidth=1;
+  for(let k=1;k<40;k++){const m=k*9;if(FX-10-m<x0&&FY-12-m<y0&&FX+FW+10+m>x1&&FY+FH+12+m>y1)break;rr(c,FX-10-m,FY-12-m,FW+20+2*m,FH+24+2*m,14+m);c.stroke();}
   const crowd=['#2f80ff','#9cc4ff','#ff4d5e','#ffb0b8','#ffffff','#ffc83d','#3a4a8a','#3a4a8a'];
-  for(let y=3;y<H;y+=5)for(let x=3;x<W;x+=5){
+  for(let y=Math.floor(y0/5)*5+3;y<y1;y+=5)for(let x=Math.floor(x0/5)*5+3;x<x1;x+=5){
     if(x>FX-10&&x<FX+FW+10&&y>FY-12&&y<FY+FH+12)continue;
     c.globalAlpha=.25+sr()*.35;c.fillStyle=crowd[(sr()*crowd.length)|0];
     c.beginPath();c.arc(x+sr()*1.5,y+sr()*1.5,1.5,0,Math.PI*2);c.fill();
@@ -220,8 +228,8 @@ function drawCrowdFlashes(){
   ctx.fillStyle='#fff';
   for(let i=0;i<n;i++){
     if(Math.random()>.5)continue;
-    const top=Math.random()<.5,x=rnd(4,W-4),y=Math.random()<.7?(top?rnd(2,FY-14):rnd(FY+FH+14,H-2)):rnd(FY,FY+FH);
-    const xx=y>FY-12&&y<FY+FH+12?(Math.random()<.5?rnd(1,FX-11):rnd(FX+FW+11,W-1)):x;
+    const top=Math.random()<.5,x=rnd(4-offX,W+offX-4),y=Math.random()<.7?(top?rnd(viewCrop-offY,FY-14):rnd(FY+FH+14,H-viewCrop+offY)):rnd(FY,FY+FH);
+    const xx=y>FY-12&&y<FY+FH+12?(Math.random()<.5?rnd(-offX,FX-11):rnd(FX+FW+11,W+offX)):x;
     ctx.globalAlpha=rnd(.5,1);ctx.beginPath();ctx.arc(xx,y,rnd(.8,1.8),0,Math.PI*2);ctx.fill();
   }
   ctx.globalAlpha=1;
@@ -251,7 +259,7 @@ function drawBanners(){
 function draw(){
   ctx.save();
   if(shake>0)ctx.translate(rnd(-1,1)*shake*.5,rnd(-1,1)*shake*.5);
-  if(bg.width&&bg.height)ctx.drawImage(bg,0,0,W,H);
+  if(bg.width&&bg.height)ctx.drawImage(bg,-offX,viewCrop-offY,bg.width/(scale*dpr),bg.height/(scale*dpr));
   drawCrowdFlashes();
   drawZones();drawPassLine();drawRefFx();
   const ps=teams.flatMap(t=>t.players).sort((a,b)=>a.y-b.y);

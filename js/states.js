@@ -16,6 +16,7 @@ const FieldStates={
     execute(p,dt){
       carrierThink(p,p.team,dt);
       if(ball.owner!==p)return formation(p,p.team); // pas ya da şut çıktı; sonraki karede yeni durum
+      if(ball.kickoff||ball.setT>0||p.setPass||p.penalty)return stay(p); // santra ve duran topta top sürülmez, pasla başlanır
       const a=p.drib;
       return{x:p.x+Math.cos(a)*60,y:p.y+Math.sin(a)*60,sp:.9};
     }},

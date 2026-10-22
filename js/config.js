@@ -14,24 +14,24 @@ const TEMPO={
   think:[.35,.55],   // top sürenin karar verme aralığı
 };
 // oyun içi yıldız ödülleri
-const REWARD={tackle:.3,intercept:.3,save:.6,tiki:.15,foulComp:1};
+const REWARD={tackle:.3,intercept:.3,save:.6,tiki:.25,foulComp:.5};
 const DEBUG=typeof location!=='undefined'&&location.hash==='#debug';
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CARDS={
   counter:{name:'Kontra Atak',short:'KONTRA',type:'atk',cost:3,desc:'6 sn hız, öne çık',c1:'#ffd36b',c2:'#ff6a00',col:'#ffb52e'},
   through:{name:'Ara Pas',short:'ARA PAS',type:'atk',cost:2,desc:'Forvete derin pas',c1:'#7dffb0',c2:'#0f9b6c',col:'#43e97b'},
   power:{name:'Güçlü Şut',short:'BOMBA',type:'atk',cost:3,desc:'Uzaktan sert şut',c1:'#ff9ad0',c2:'#c2187a',col:'#ff6fbf'},
-  wave:{name:'Hücum Dalgası',short:'DALGA',type:'atk',cost:5,desc:'7 sn herkes ileri',c1:'#ffb27a',c2:'#d9431e',col:'#ff8a4d'},
+  wave:{name:'Hücum Dalgası',short:'DALGA',type:'atk',cost:4,desc:'7 sn herkes ileri',c1:'#ffb27a',c2:'#d9431e',col:'#ff8a4d'},
   overlap:{name:'Kanat Bindirme',short:'BİNDİRME',type:'atk',cost:3,desc:'Bekler kanattan hücuma',c1:'#ffe27a',c2:'#c98a00',col:'#ffd23f'},
   longball:{name:'Uzun Top',short:'UZUN TOP',type:'atk',cost:2,desc:'Havadan savunma arkasına',c1:'#9ff0ff',c2:'#1b88b5',col:'#6fe3ff'},
   dribble:{name:'Çalım Ustası',short:'ÇALIM',type:'atk',cost:3,desc:'6 sn top kaptırmaz',c1:'#ffc2f2',c2:'#a1309a',col:'#ff9ae8'},
-  tiki:{name:'Tiki-Taka',short:'TİKİ-TAKA',type:'atk',cost:4,desc:'8 sn kısa, güvenli pas',c1:'#c3ff9e',c2:'#3e9a20',col:'#9cf26a'},
+  tiki:{name:'Tiki-Taka',short:'TİKİ-TAKA',type:'atk',cost:3,desc:'Hızlı paslarla topu sakla',c1:'#c3ff9e',c2:'#3e9a20',col:'#9cf26a'},
   press:{name:'Önde Baskı',short:'BASKI',type:'def',cost:3,desc:'2 oyuncu topa basar',c1:'#b18cff',c2:'#5a2fd0',col:'#a77bff'},
-  wall:{name:'Savunma Duvarı',short:'DUVAR',type:'def',cost:4,desc:'7 sn geriye yaslan',c1:'#8fd3ff',c2:'#2a5bd0',col:'#5cb8ff'},
-  gk:{name:'Kaleci Refleksi',short:'KALECİ',type:'def',cost:2,desc:'10 sn süper kurtarış',c1:'#8ff5e6',c2:'#118a8c',col:'#3fe0d0'},
+  wall:{name:'Savunma Duvarı',short:'DUVAR',type:'def',cost:3,desc:'Geriye yaslan, şutları blokla',c1:'#8fd3ff',c2:'#2a5bd0',col:'#5cb8ff'},
+  gk:{name:'Kaleci Refleksi',short:'KALECİ',type:'def',cost:3,desc:'10 sn süper kurtarış',c1:'#8ff5e6',c2:'#118a8c',col:'#3fe0d0'},
   slide:{name:'Kayan Müdahale',short:'KAYMA',type:'def',cost:2,desc:'Kayarak topa dalar',c1:'#d4f78a',c2:'#4c9a1f',col:'#b4e85a'},
   offside:{name:'Ofsayt Tuzağı',short:'OFSAYT',type:'def',cost:3,desc:'Hat çıkar, ofsayt yakalar',c1:'#fff3a0',c2:'#b58b00',col:'#ffe14d'},
-  foul:{name:'Taktik Faul',short:'FAUL',type:'def',cost:2,desc:'Atağı kes, savunmaya dizil',c1:'#ffa3a3',c2:'#b3122b',col:'#ff6b7a'},
+  foul:{name:'Taktik Faul',short:'FAUL',type:'def',cost:2,desc:'Atağı kes, baştan kurdur',c1:'#ffa3a3',c2:'#b3122b',col:'#ff6b7a'},
   mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'7 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };

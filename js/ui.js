@@ -32,7 +32,7 @@ function updateFxChips(t){
       el.innerHTML='<i>'+iconSvg(k)+'</i>';box.appendChild(el);
     }
     el.style.setProperty('--p',(t.fx[k]/DUR[k]*100).toFixed(1)+'%');
-    el.classList.toggle('ending',t.fx[k]<1.5);
+    el.classList.toggle('ending',t.fx[k]<1.5);el.classList.toggle('wait',!fxLive(t,k));
   }
 }
 function updateHud(){
@@ -97,20 +97,20 @@ ${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZ
 // deste ekranında seçilen kartın ayrıntıları
 const CARD_DETAIL={
   counter:'Takım 6 sn boyunca %30 hızlı koşar, topu kazanınca oyuncular hücuma çıkar.',
-  through:'Top sendeyse en öndeki oyuncuya hemen derin pas atılır. Değilse 6 sn içinde topu alınca atılır.',
+  through:'En öndeki oyuncuya savunmanın arkasına derin pas atılır. Bu pas yolda kesilemez, topu alan oyuncu ilk dokunuşta kaleye vurur. Top rakipteyse, topu geri aldığın an atılır.',
   power:'15 sn içinde takımın çektiği ilk şut güçlü şut olur: oyuncu iyi bir pozisyon kollar, çok sert ve isabetli vurur, kaleci zor kurtarır.',
-  wave:'7 sn boyunca kaleci hariç herkes ileri çıkar ve %15 hızlanır. Arkada boşluk kalır.',
+  wave:'7 sn boyunca kaleci hariç herkes ileri çıkar, %25 hızlanır ve çok daha sık şut çeker. Arkada boşluk kalır.',
   overlap:'7 sn boyunca iki bek kanatlardan hücuma bindirir, paslar kanatlara akar.',
-  longball:'Top savunmanın arkasına havadan gönderilir. Havadayken kesilemez.',
+  longball:'Top savunmanın arkasına havadan gönderilir, havadayken kesilemez. Topu alan oyuncu ilk dokunuşta kaleye vurur. Top rakipteyse, topu geri aldığın an atılır.',
   dribble:'6 sn boyunca top süren oyuncundan top kapmak çok zorlaşır, daha cesur sürer.',
-  tiki:'8 sn boyunca kısa, güvenli paslar. Rakip pasları zor keser, her isabetli pas +0,2★.',
+  tiki:'8 sn boyunca top hızlı paslarla dolaşır. Rakip pasları zor keser, topu kapmakta zorlanır ve peşinden koşarken yavaşlar. Her isabetli pas +0,25★.',
   press:'6 sn boyunca iki oyuncu birden topa basar, top kapma şansı artar.',
-  wall:'7 sn boyunca takım kendi kalesine yaslanır ve ortayı kapatır.',
+  wall:'7 sn boyunca takım kendi kalesine yaslanır ve ortayı kapatır. Şutun önüne giren savunmacı topu büyük ihtimalle bloke eder, kaleci de daha çok kurtarır.',
   gk:'10 sn boyunca kaleci daha geniş alanı kapatır, kurtarış şansı çok artar.',
   slide:'Topa en yakın oyuncun kayarak atılır. Rakibe yetişirse topu büyük ihtimalle alır, rakip pası çıkarırsa pası kesmeye çalışır. Kayarak müdahale bazen faul olur.',
-  offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; hattın arkasında kalan oyuncuya atılan pas ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
-  foul:'Top süren rakibe bilerek faul yapılır, atak orada kesilir. Rakip serbest vuruş kullanır ama vuruş geç gelir; bu sırada takımın koşarak savunmaya dizilir. Rakip +1★ kazanır. Kaleye yakın faul direkt serbest vuruşa dönüşür, dikkat!',
-  mark:'7 sn boyunca savunmacılar rakiplerini yakından tutar, pas arası şansı artar.',
+  offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; pas anında hattın arkasında kalan oyuncu topu alınca ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
+  foul:'Top süren rakibe bilerek faul yapılır, atak orada kesilir. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Faul kalene çok yakınsa vuruş geriden kullanılır. Rakip +0,5★ kazanır.',
+  mark:'7 sn boyunca savunmacılar rakiplerini yakından tutar; pas arası ve top kapma şansı artar.',
   intercept:'6 sn boyunca rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
 };
 function cardInfoHTML(k){

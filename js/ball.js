@@ -25,12 +25,25 @@ function simBall(dt,live){
   if(b.y>FY+FH){if(inGoal)return goal(1);b.y=FY+FH;b.vy=-Math.abs(b.vy)*.65;}
   if(!b.owner){
     const sp=Math.hypot(b.vx,b.vy);
+    // Savunma Duvarı: şutun önüne giren oyuncu topu bloke eder
+    if(b.shot){
+      const dt2=teams[1-b.shotTeam.id];
+      if(dt2.fx.wall>0)for(const p of dt2.players){
+        if(p.role==='GK'||p.stun>0||b.rolled.has(p)||dist(p,b)>20)continue;
+        b.rolled.add(p);
+        if(Math.random()<.75){
+          b.vx=-b.vx*.35+rnd(-1,1)*90;b.vy=-b.vy*.35;b.shot=false;
+          burst(b.x,b.y,CARDS.wall.col,12,110);floatText(p.x,p.y-20,'BLOK!',dt2.light);Sfx.tackle();addStars(dt2,REWARD.tackle,p.x,p.y);
+          return;
+        }
+      }
+    }
     if(b.shot&&!b.gkRolled){
       const t=teams[1-b.shotTeam.id],gk=t.players[0];
       if(dist(gk,b)<(t.fx.gk?26:15)){
         b.gkRolled=true;
         // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
-        const ch=clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)-(b.corner?.12:0)-(b.power?.12:0),.12,.97);
+        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.86-(sp-330)/420+clamp(((b.power?0:b.shotDist||0)-80)/260,0,.3)+(t.fx.gk?.35:0)+(t.fx.wall?.12:0)-(b.corner?.12:0)-(b.power?.12:0),.12,.97);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           if(sp<430&&Math.random()<.6){take(gk);gk.decT=.9;}
@@ -48,9 +61,9 @@ function simBall(dt,live){
       // canlı pası sadece alıcı alır; rakip ancak şansla keser ya da top neredeyse durmuşsa alır
       let ok=b.passTo===p||(b.shot?(p.role==='GK'||sp<150):p.role==='GK'||(foe?sp<70:sp<230));
       // pas arası: hızlı pası da kesebilir ama şansa bağlı (her oyuncu bir kez dener)
-      if(!ok&&!b.shot&&foe&&sp<TEMPO.interceptMaxSpeed&&!b.rolled.has(p)){
+      if(!ok&&!b.shot&&!b.safe&&foe&&sp<TEMPO.interceptMaxSpeed&&!b.rolled.has(p)){
         b.rolled.add(p);
-        let ch=p.team.fx.intercept?.7:TEMPO.intercept+(p.team.fx.mark?.15:0);
+        let ch=p.team.fx.intercept?.7:TEMPO.intercept+(p.team.fx.mark?.3:0);
         if(p.dash>0)ch=Math.max(ch,.65); // kayarak gelen oyuncu çıkan pası da keser
         if(b.passTeam.fx.tiki)ch*=.3;
         if(p.team.id===1)ch*=oppMod().skill;
@@ -72,8 +85,9 @@ function simBall(dt,live){
       if(dist(p,o)>(dashing?18:13))continue;
       p.tackleCd=TEMPO.tackleCd;
       if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
-      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0);
-      if(o.team.fx.dribble&&p.dash<=0)ch*=.35; // çalım ustası
+      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.1:0);
+      if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası
+      if(o.team.fx.tiki&&p.dash<=0)ch*=.45;
       if(t.id===1)ch*=oppMod().skill; // rakip zorluğu
       if(Math.random()<ch){
         o.stun=.7;o.kickCd=.5;p.dash=0;
@@ -83,10 +97,15 @@ function simBall(dt,live){
         else{b.owner=null;const a=rnd(0,Math.PI*2);b.vx=Math.cos(a)*130;b.vy=Math.sin(a)*130;}
         break;
       }
+      if(o.team.fx.dribble&&p.dash<=0){floatText(o.x,o.y-20,'ÇALIM!',CARDS.dribble.col);burst(o.x,o.y,CARDS.dribble.col,6,70);} // müdahale boşa çıktı
     }
   }
 }
 function take(p){
+  // ofsayt konumundaki oyuncu topu aldı: yan hakem bayrağı kaldırır
+  const off=ball.offsideR;
+  if(off&&!ball.owner){ball.offsideR=null;if(off===p&&state==='play'){p.kickCd=.4;callOffside(p,p.team);return;}}
+  ball.offsideR=null;
   Object.assign(ball,{owner:p,ownT:0,passTo:null,passTeam:null,shot:false,power:false});
   p.hold=0;p.run=0;p.drib=dirY(p.team)*Math.PI/2;
   if(p.team!==lastPossessor){lastPossessor=p.team;const r=Math.random();p.team.lane=r<.38?-1:r<.76?1:0;}

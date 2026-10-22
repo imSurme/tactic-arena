@@ -224,6 +224,7 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .fxchip i{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 50% 38%,var(--c1),var(--c2) 85%)}
 .fxchip svg{width:14px;height:14px;color:#fff}
 .fxchip.ending{animation:blink .5s steps(2) infinite}
+.fxchip.wait{opacity:.45;filter:grayscale(.7);animation:none}
 @keyframes chipIn{from{transform:scale(0)}}
 @keyframes blink{50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.fxchip,.fxchip.ending{animation:none}}
@@ -345,3 +346,32 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .linkbox input{flex:1;min-width:0;background:#0b1230;border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 12px var(--body);padding:8px 10px}
 .linkbox .cta{flex:none}
 .dotpulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fd36b;margin-right:6px;vertical-align:1px;animation:blink 1s infinite}
+
+/* skorbord, saha ve kartlar boşluksuz tek blok; saha sahneyi tamamen doldurur */
+#app{gap:0}
+#hud{border-radius:16px 16px 0 0;padding:10px 8px}
+#panel{border-radius:0 0 18px 18px}
+canvas{border-radius:0;box-shadow:none}
+#stage{align-items:stretch;justify-content:stretch}
+#field{flex:1;min-width:0}
+.crest{width:38px;height:38px}
+.side .who{font-size:12px}
+.side .sc{font-size:38px}
+#timer{font-size:26px;padding:8px 14px 7px;min-width:96px}
+#half{font-size:11px;margin-top:3px}
+@media (max-aspect-ratio:3/4){
+  #app{gap:0}
+  #hud{padding:8px 6px}
+  .crest{width:32px;height:32px}
+  .side .sc{font-size:32px}
+  #timer{font-size:22px;padding:7px 12px 6px;min-width:82px}
+}
+@media (max-aspect-ratio:3/4) and (max-height:720px){
+  #app{gap:0}
+  #hud{padding:8px 6px}
+  .crest{width:30px;height:30px}
+  .side .who{font-size:10px}
+  .side .sc{font-size:30px}
+  #timer{font-size:21px;padding:6px 11px 5px;min-width:76px}
+}
+#field{position:absolute;inset:0}
