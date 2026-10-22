@@ -115,7 +115,7 @@ ${tourButton()}<div class="menurow"><button class="cta alt small" id="quick">HIZ
 }
 // arkadaş maçı: oda kur ya da arkadaşının oda kodunu gir
 function showPvpMenu(){
-  showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>ARKADAŞINLA OYNA</h2>
+  showOverlay(`<h2>ARKADAŞINLA OYNA</h2>
 <p>Oda kur, linki ya da kodu arkadaşına gönder. Arkadaşın oda kurduysa kodunu gir.</p>
 <button class="cta" id="host">ODA KUR</button>
 <div class="ordiv"><span>ya da</span></div>
@@ -202,7 +202,7 @@ function showDeck(){
   let sel=Deck.get(),selSuper=Deck.getSuper();
   const keys=Object.keys(CARDS).filter(k=>CARDS[k].type!=='super').sort((a,b)=>CARDS[a].type.localeCompare(CARDS[b].type)||CARDS[a].cost-CARDS[b].cost);
   const grid=keys.map(k=>cardHTML(k,-1).replace('data-i="-1"','data-k="'+k+'"').replace('tabindex="-1"','')).join('');
-  showOverlay(`<div class="tip">KART KOLEKSİYONU</div><h2>DESTEN</h2>
+  showOverlay(`<h2>DESTEN</h2>
 <div class="deckbar"><span>Seçili <b id="deckCount"></b></span><span>Hücum <b id="deckAtk"></b> · Savunma <b id="deckDef"></b></span><span>Ortalama <b id="deckAvg"></b>★</span></div>
 <div class="tip dtip">Dokun: desteye ekle ya da çıkar · Basılı tut: kart ayrıntısı</div>
 <div id="deckGrid">${grid}</div>
@@ -237,14 +237,15 @@ function showSettings(){
   const seg=(name,items,cur)=>'<div class="seg" role="radiogroup">'+items.map(([v,l])=>
     '<input type="radio" name="'+name+'" id="'+name+'-'+v+'" value="'+v+'"'+(String(v)===String(cur)?' checked':'')+'><label for="'+name+'-'+v+'">'+l+'</label>').join('')+'</div>';
   const d=Settings.diff();
-  showOverlay(`<div class="tip">SEÇENEKLER</div><h2>AYARLAR</h2>
+  showOverlay(`<h2>AYARLAR</h2>
 <div class="settings">
   <fieldset><legend>Rakip zorluğu <small id="diffDesc">· ${d.desc}</small></legend>${seg('diff',Object.entries(Settings.DIFF).map(([k,v])=>[k,v.name]),Settings.get('difficulty'))}</fieldset>
   <fieldset><legend>Maç süresi</legend>${seg('len',Settings.LENGTHS.map(v=>[v,v/60+' dk']),Settings.get('length'))}</fieldset>
   <div class="srow"><label for="volSfx">Efekt sesi</label><input type="range" id="volSfx" min="0" max="100" value="${Math.round(Settings.get('sfx')*100)}"></div>
   <div class="srow"><label for="optShake">Ekran sarsıntısı</label><input type="checkbox" class="sw" id="optShake"${Settings.get('shake')?' checked':''}></div>
 </div>
-<button class="cta" id="go">TAMAM</button>`,{go:showMenu});
+<button class="cta alt small" id="replayTut">EĞİTİMİ TEKRAR İZLE</button>
+<button class="cta" id="go">TAMAM</button>`,{go:showMenu,replayTut:()=>{Coach.reset();Tutorial.reset();matchCtx=null;matchOpp=null;start();}});
   $('obox').classList.add('wide');
   $('obox').querySelectorAll('input[name=diff]').forEach(el=>el.onchange=()=>{Settings.set('difficulty',el.value);$('diffDesc').textContent='· '+Settings.diff().desc;Sfx.click();});
   $('obox').querySelectorAll('input[name=len]').forEach(el=>el.onchange=()=>{Settings.set('length',+el.value);Sfx.click();});
@@ -269,14 +270,14 @@ function setPaused(v){
   // arkadaş maçı durmaz; düğme sadece çıkış seçeneği sunar
   if(matchCtx&&matchCtx.pvp){
     if(!v)return;
-    showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>MAÇ SÜRÜYOR</h2><p>Arkadaş maçı duraklatılamaz.</p><button class="cta" id="go">DEVAM</button><button class="link" id="menu">Maçtan çık (rakip kazanır)</button>',{go:hideOverlay,menu:()=>Net.leave()});
+    showOverlay('<h2>MAÇ SÜRÜYOR</h2><p>Arkadaş maçı duraklatılamaz.</p><button class="cta" id="go">DEVAM</button><button class="link" id="menu">Maçtan çık (rakip kazanır)</button>',{go:hideOverlay,menu:()=>Net.leave()});
     return;
   }
   if(v===paused)return;
   paused=v;
   if(v){
     Sfx.suspend();
-    showOverlay(`<div class="tip">MOLA</div><h2>DURAKLATILDI</h2><div class="big"><span style="color:var(--home-l)">${teams[0].score}</span> – <span style="color:var(--away-l)">${teams[1].score}</span></div>
+    showOverlay(`<h2>DURAKLATILDI</h2><div class="big"><span style="color:var(--home-l)">${teams[0].score}</span> – <span style="color:var(--away-l)">${teams[1].score}</span></div>
 <button class="cta" id="go">DEVAM</button>${matchCtx?'':'<button class="link" id="restart">Yeniden başla</button>'}<button class="link" id="menu">${matchCtx?'Maçı bırak (sonuç kaydedilmez)':'Ana menü'}</button>`,
     {go:()=>setPaused(false),restart:start,menu:showMenu});
   }else{hideOverlay();Sfx.resume();}
@@ -322,7 +323,7 @@ function endMatch(){
   if(matchCtx&&matchCtx.tour){tourAfterMatch(a,b);return;}
   if(matchCtx&&matchCtx.pvp){showPvpEnd(a,b);return;}
   const res=a>b?['KAZANDIN!','var(--gold)']:a<b?['KAYBETTİN','var(--away-l)']:['BERABERE','var(--home-l)'];
-  showOverlay(`<div class="tip">MAÇ SONU${overtime?' · ALTIN GOL':''}</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${statsHTML(stats,0)}<div class="btnrow"><button class="cta" id="go">TEKRAR</button></div><button class="link" id="menu">Ana menü</button>`,
+  showOverlay(`<h2 style="color:${res[1]}">${res[0]}</h2>${overtime?'<div class="tip">UZATMADA ALTIN GOL</div>':''}<div class="big"><span style="color:var(--home-l)">${a}</span> – <span style="color:var(--away-l)">${b}</span></div>${statsHTML(stats,0)}<div class="btnrow"><button class="cta" id="go">TEKRAR</button></div><button class="link" id="menu">Ana menü</button>`,
   {go:start,menu:showMenu});
   $('obox').classList.add('wide','end');
 }

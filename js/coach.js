@@ -40,7 +40,12 @@ const Coach=(()=>{
     {at:()=>$('hand').querySelector('.card').getBoundingClientRect(),title:'Basılı tut, ayrıntıyı gör',demo:{enter(){teams[0].stars=STAR_MAX;},update:sandbox},
      text:'Bir kartın ne yaptığını görmek için ona <b>basılı tut</b>. Kart oynanmaz; ekranın ortasında ayrıntı penceresi açılır ve maç sen kapatana kadar durur.'},
     {at:el('next'),title:'Sıradaki kart',demo:every(2.8,t=>{if(t<.5)return;teams[0].stars=STAR_MAX;asPlay(()=>playCard(teams[0],0,handRect(0)));}),
-     text:'Oynadığın kart destenin sonuna gider, yerine buradaki kart gelir. 8 kartlık desteni menüdeki <b>DESTE</b> ekranında 16 kart arasından kurarsın.'},
+     text:'Oynadığın kart destenin sonuna gider, yerine yıldız çubuğunun yanındaki <b>sıradaki kart</b> gelir. 8 kartlık desteni menüdeki <b>DESTE</b> ekranında 16 kart arasından kurarsın.'},
+    {at:el('super'),title:'Süper kart',demo:{enter(){this.t0=0;teams[0].superUsed=false;teams[0].stars=0;},update(dt,t){sandbox(dt);const c=t-this.t0,tm=teams[0];
+       if(c<2.6)tm.stars=Math.min(STAR_MAX,c/2.6*CARDS[tm.superKey].cost+.2); // yıldız dolar, kart parlar
+       else if(!tm.superUsed&&c>3.2)asPlay(()=>playSuper(tm,$('superCard').querySelector('.card')?.getBoundingClientRect()));
+       if(c>7.5){this.t0=t;tm.superUsed=false;tm.stars=0;}}},
+     text:'Destende bir de <b>süper kart</b> var: çok güçlüdür ama maçta <b>sadece bir kez</b> oynanır, uzatmaya kalırsa bir hak daha gelir. Yıldızın yetince gökkuşağı çerçevesiyle parlar. Hangisinin olacağını <b>DESTE</b> ekranından seçersin.'},
     {at:()=>{const r=$('field').getBoundingClientRect();return{left:r.right-48,top:r.bottom-118,width:44,height:112};},title:'Aktif kartlar',demo:every(3,t=>{teams[0].stars=STAR_MAX;if(t<.5||!Object.values(teams[0].fx).some(v=>v>0))asPlay(()=>{playCard(teams[0],0,handRect(0));playCard(teams[0],1,handRect(1));});else swapBall();}),
      text:'Oynadığın kart sahaya uçar ve çarptığı an etkisi başlar. Süren kartlar sağ altta küçük ikonlar olarak durur; çevresindeki halka kalan süreyi gösterir. Hücum kartının süresi top rakipteyken, savunma kartınınki top sendeyken <b>yavaş akar</b> (ikon soluklaşır), yani kart boşa gitmez. Rakibinkiler sağ üstte.'},
     {at:()=>{const r=$('field').getBoundingClientRect();return{left:r.left+2,top:r.top+2,width:150,height:36};},title:'Rakibin kartları',demo:every(2.2,t=>{if(t<.4)return;teams[1].stars=STAR_MAX;asPlay(()=>playCard(teams[1],Math.random()*4|0));}),
@@ -98,6 +103,7 @@ const Coach=(()=>{
   }
   return{
     needed:()=>!done,
+    reset(){done=false;try{localStorage.removeItem('ta-coach');}catch(e){}},
     tick(dt){if(!root)return;demoT+=dt;if(cur&&cur.update)cur.update.call(cur,dt,demoT);else sandbox(dt);},
     run(cb){onDone=cb;i=0;if(!root)build();addEventListener('resize',place);show();},
   };

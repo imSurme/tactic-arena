@@ -147,11 +147,11 @@ function showTournament(){
     const champ=T.teams[T.champion];
     head=T.champion===0
       ?`<div class="trophy">🏆</div><h2 style="color:var(--gold)">ŞAMPİYON!</h2><p>Turnuvayı kazandın. 7 maçta kupayı kaldırdın.</p>`
-      :`<div class="tip">TURNUVA BİTTİ</div><h2>ELENDİN</h2><p>${T.out==='GRUP AŞAMASI'?'Gruptan çıkamadın.':T.out+' turunda elendin.'} Şampiyon: <b>${champ.name}</b></p>`;
+      :`<h2>ELENDİN</h2><p>${T.out==='GRUP AŞAMASI'?'Gruptan çıkamadın.':T.out+' turunda elendin.'} Şampiyon: <b>${champ.name}</b></p>`;
     buttons=`<button class="cta" id="go">YENİ TURNUVA</button><button class="link" id="menu">Ana menü</button>`;
   }else{
     const o=nx.opp;
-    head=`<div class="tip">TURNUVA</div><h2>${nx.label}</h2>
+    head=`<h2>${nx.label}</h2>
 <div class="vs"><div class="vt">${teamChip(T.teams[0],true)}</div><span class="vsx">VS</span><div class="vt">${teamChip(o,false)}<small>Güç ${'★'.repeat(strStars(o.str))}${'☆'.repeat(5-strStars(o.str))}</small></div></div>
 <p class="tip">${nx.knockout?'Eleme maçı: kaybeden turnuvaya veda eder. ':''}Berabere biterse altın gollü uzatma.</p>`;
     buttons=`<button class="cta" id="go">MAÇA ÇIK</button><button class="link" id="menu">Ana menü</button><button class="link danger" id="quit">Turnuvayı bırak</button>`;

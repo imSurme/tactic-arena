@@ -178,7 +178,7 @@ const Net=(()=>{
     ball.rot+=Math.hypot(ball.vx,ball.vy)*dt*.12;
     ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>12)ball.trail.shift();
     // ev sahibinden 1,5 sn haber yoksa uyar
-    if(state==='play'&&!stalled&&performance.now()-lastSnapAt>1500){stalled=true;showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANTI YAVAŞ</h2><p>Rakipten veri gelmiyor. Rakibin oyunu arka plana almış olabilir.</p><button class="link" id="menu">Maçtan çık</button>',{menu:leave});}
+    if(state==='play'&&!stalled&&performance.now()-lastSnapAt>1500){stalled=true;showOverlay('<h2>BAĞLANTI YAVAŞ</h2><p>Rakipten veri gelmiyor. Rakibin oyunu arka plana almış olabilir.</p><button class="link" id="menu">Maçtan çık</button>',{menu:leave});}
   }
 
   // ---------- bağlantı
@@ -192,7 +192,7 @@ const Net=(()=>{
   function lost(msg){
     const r=role;cleanup();
     if(r==='host'&&state==='play'){state='end';}
-    showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANTI KOPTU</h2><p>${msg}</p><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
+    showOverlay(`<h2>BAĞLANTI KOPTU</h2><p>${msg}</p><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
   }
   function cleanup(){
     role=null;matchCtx=null;
@@ -230,7 +230,7 @@ const Net=(()=>{
       :'Bağlantı zaman aşımına uğradı. Tekrar dene.';
     cleanup();
     const retry=r==='guest'&&c?()=>Net.join(c):r==='host'?()=>Net.host():null;
-    showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANAMADI</h2><p>'+msg+'</p>'+(retry?'<button class="cta" id="go">TEKRAR DENE</button><button class="link" id="menu">Ana menü</button>':'<button class="cta" id="menu">ANA MENÜ</button>'),retry?{go:retry,menu:showMenu}:{menu:showMenu});
+    showOverlay('<h2>BAĞLANAMADI</h2><p>'+msg+'</p>'+(retry?'<button class="cta" id="go">TEKRAR DENE</button><button class="link" id="menu">Ana menü</button>':'<button class="cta" id="menu">ANA MENÜ</button>'),retry?{go:retry,menu:showMenu}:{menu:showMenu});
   }
 
   // ---------- maçı başlat
@@ -261,7 +261,7 @@ const Net=(()=>{
     // oda kur ve linki göster
     async host(fixedCode){
       cleanup();role='host';hookHost();
-      showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA KURULUYOR…</h2><p>Bağlantı hazırlanıyor.</p><button class="link" id="menu">Vazgeç</button>',{menu:leave});
+      showOverlay('<h2>ODA KURULUYOR…</h2><p>Bağlantı hazırlanıyor.</p><button class="link" id="menu">Vazgeç</button>',{menu:leave});
       try{await loadPeer();}catch(e){netError({type:'network'});return;}
       code=fixedCode||newCode();
       const opts=await peerOpts();if(role!=='host')return;
@@ -275,7 +275,7 @@ const Net=(()=>{
         if(peer.__ready)return; // arka plandan dönüp yeniden bağlandı
         peer.__ready=true;
         const link=roomLink();
-        showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>ODA HAZIR</h2>
+        showOverlay(`<h2>ODA HAZIR</h2>
 <p>Linki arkadaşına gönder ya da oda kodunu söyle. Arkadaşın girdiği an maç başlar.</p>
 <div class="roomcode">${code}</div>
 <div class="linkbox"><input id="roomLink" readonly value="${link}"><button class="cta alt small" id="copyLink">KOPYALA</button></div>
@@ -305,7 +305,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     // linkteki odaya katıl
     async join(roomCode){
       cleanup();role='guest';code=roomCode.toUpperCase();
-      showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANIYOR…</h2><p>${code} odasına bağlanılıyor.</p><p class="tip" id="guestStatus"><span class="dotpulse"></span> Birkaç saniye sürebilir</p><button class="link" id="menu">Vazgeç</button>`,{menu:leave});
+      showOverlay(`<h2>BAĞLANIYOR…</h2><p>${code} odasına bağlanılıyor.</p><p class="tip" id="guestStatus"><span class="dotpulse"></span> Birkaç saniye sürebilir</p><button class="link" id="menu">Vazgeç</button>`,{menu:leave});
       try{await loadPeer();}catch(e){netError({type:'network'});return;}
       const opts=await peerOpts();if(role!=='guest')return;
       let attempt=0,timer=null;
@@ -331,7 +331,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
           timer=setTimeout(()=>{if(role==='guest'&&conn===c&&!c.open){if(attempt<6){status('Tekrar deneniyor ('+attempt+'/6)…');attemptJoin();}else netError({type:'timeout'});}},9000);
           watchIce(c,()=>{if(role==='guest'&&conn===c&&!c.open){clearTimeout(timer);netError({type:'ice'});}});
           c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),super:Deck.getSuper(),v:1});});
-          c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
+          c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
         });
       };
       attemptJoin();
@@ -370,7 +370,7 @@ let pvpStats=null; // misafirde: ev sahibinden gelen maç istatistikleri
 function showPvpEnd(a,b){
   state='end';
   const res=a>b?['KAZANDIN!','var(--gold)']:['KAYBETTİN','var(--away-l)'];
-  showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:${teams[0].light}">${a}</span> – <span style="color:${teams[1].light}">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}
+  showOverlay(`<h2 style="color:${res[1]}">${res[0]}</h2><div class="big"><span style="color:${teams[0].light}">${a}</span> – <span style="color:${teams[1].light}">${b}</span></div>${overtime?'<p class="tip">Uzatmada altın gol</p>':''}
 ${Net.isGuest()?(pvpStats?statsHTML(pvpStats,1):''):statsHTML(stats,0)}<button class="cta" id="go">RÖVANŞ</button><p class="tip" id="rmStatus"></p><button class="link" id="menu">Ana menü</button>`,
   {go:()=>{Net.rematch();},menu:()=>Net.leave()});
   $('obox').classList.add('wide','end');
