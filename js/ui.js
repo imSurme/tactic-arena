@@ -134,7 +134,7 @@ const CARD_DETAIL={
   gk:'10 sn boyunca kaleci daha geniş alanı kapatır, kurtarış şansı çok artar.',
   slide:'Topa en yakın oyuncun kayarak atılır. Rakibe yetişirse topu çoğunlukla alır, rakip pası çıkarırsa pası kesmeye çalışır. Kayarak müdahale bazen faul olur.',
   offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; pas anında hattın arkasında kalan oyuncu topu alınca ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
-  foul:'Top süren rakibe bilerek faul yapılır, atak orada kesilir. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Serbest vuruş orta sahaya yakın bir yerden kullanılır, rakibin atağı geri itilir.',
+  foul:'Top süren rakibe bilerek faul yapılır, atak orada kesilir. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Serbest vuruş faulün yapıldığı yerden kullanılır. Dikkat: ceza sahası içinde yapılan faul penaltıdır!',
   mark:'7 sn boyunca savunmacılar rakiplerini yakından tutar; pas arası ve top kapma şansı artar.',
   intercept:'6 sn boyunca rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
 };

@@ -72,9 +72,7 @@ function tacticalFoul(t){
   let best=null,bd=1e9;
   for(const p of t.players){if(p.role==='GK')continue;const d=dist(p,o);if(d<bd){bd=d;best=p;}}
   t.fx.foul=0;
-  // faul erken yapılır: serbest vuruş kalemize 240 px'ten yakın olamaz, atak orta sahaya itilir
-  const g=ownGoal(t),gd=dist(o,g);
-  if(gd<240){const k=240/(gd||1);o.x=clamp(g.x+(o.x-g.x)*k,FX+10,FX+FW-10);o.y=clamp(g.y+(o.y-g.y)*k,FY+10,FY+FH-10);}
+  // serbest vuruş faulün yapıldığı yerden; ceza sahası içindeyse penaltı
   best.x=clamp(o.x-dirY(opp)*10,FX+6,FX+FW-6);best.y=clamp(o.y-dirY(opp)*10,FY+6,FY+FH-6);
   callFoul(best,o,{delay:2.6,label:'TAKTİK FAUL!',indirect:true});
   for(const p of t.players)if(p.role!=='GK'&&p!==best)p.sprint=2.2; // savunmaya koş
@@ -106,7 +104,7 @@ function aiCards(dt){
       case'gk':s+=(opp&&by>.72)||(ball.shot&&ball.shotTeam!==t)?1.8:-.5;break;
       case'slide':s+=opp&&by>.5?1.3:opp?.5:-1;break;
       case'offside':s+=opp&&by>.35&&by<.7?1.3:0;break;
-      case'foul':s+=opp&&by>.65?1.6:-1;break;
+      case'foul':s+=opp&&by>.65&&!inBox(o,ownGoal(t))?1.6:-1;break; // ceza sahasında faul yapmaz (penaltı)
       case'mark':s+=opp?1.1:0;break;
       case'intercept':s+=opp&&by>.4?1.2:0;break;
     }
