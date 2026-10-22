@@ -17,7 +17,8 @@ const Sfx=(()=>{
   const ok=()=>ac&&ac.state!=='closed'&&!held;
   // tarayıcılar sesi ancak kullanıcı etkileşiminden sonra açar: ekrana ilk dokunuşta ses açılsın
   for(const ev of ['pointerdown','touchend','keydown'])addEventListener(ev,()=>init(),{capture:true,passive:true});
-  function applyVolume(){if(master)master.gain.setTargetAtTime(muted?0:Settings.get('sfx'),ac.currentTime,.05);}
+  // ses aç/kapa anında uygulanır (yavaş geçiş olsaydı açıp kapatırken çalan sesler yarım duyulurdu)
+  function applyVolume(){if(master){master.gain.cancelScheduledValues(ac.currentTime);master.gain.setValueAtTime(muted?0:Settings.get('sfx'),ac.currentTime);}}
 
   function env(g,t,a,peak,dec){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec);}
   function tone(f,dur,{type='sine',vol=.3,to=null,at=0,attack=.005}={}){

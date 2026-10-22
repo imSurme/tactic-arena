@@ -261,7 +261,7 @@ function showSettings(){
   $('obox').classList.add('wide');
   $('obox').querySelectorAll('input[name=diff]').forEach(el=>el.onchange=()=>{Settings.set('difficulty',el.value);$('diffDesc').textContent='· '+Settings.diff().desc;Sfx.click();});
   $('obox').querySelectorAll('input[name=len]').forEach(el=>el.onchange=()=>{Settings.set('length',+el.value);Sfx.click();});
-  $('optSound').onchange=e=>{Sfx.init();if(e.target.checked===Sfx.muted)Sfx.toggleMute();Sfx.click();updateMuteBtn();};
+  $('optSound').onchange=e=>{Sfx.init();if(e.target.checked===Sfx.muted)Sfx.toggleMute();if(!Sfx.muted)Sfx.click();updateMuteBtn();}; // kapatırken ses yok, açınca tık
   $('optShake').onchange=e=>{Settings.set('shake',e.target.checked);Sfx.click();};
 }
 function start(){
@@ -345,7 +345,7 @@ function updateMuteBtn(){
 }
 $('pauseBtn').innerHTML=UI_ICONS.pause;
 $('pauseBtn').onclick=()=>setPaused(!paused);
-$('muteBtn').onclick=()=>{Sfx.init();Sfx.toggleMute();updateMuteBtn();};
+$('muteBtn').onclick=()=>{Sfx.init();Sfx.toggleMute();if(!Sfx.muted)Sfx.click();updateMuteBtn();};
 updateMuteBtn();
 pressable($('super'),{
   tap:()=>trySuper(),
