@@ -27,16 +27,8 @@ function renderField(c){
   const x0=-offX-2,x1=W+offX+2,y0=viewCrop-offY-2,y1=H-viewCrop+offY+2;
   const st=c.createLinearGradient(0,y0,0,y1);st.addColorStop(0,'#141d48');st.addColorStop(.5,'#0e1636');st.addColorStop(1,'#141d48');
   c.fillStyle=st;c.fillRect(x0,y0,x1-x0,y1-y0);
-  // tribün basamakları: sahaya paralel koyu şeritler
-  c.strokeStyle='rgba(0,0,0,.22)';c.lineWidth=1;
-  for(let k=1;k<40;k++){const m=k*9;if(FX-10-m<x0&&FY-12-m<y0&&FX+FW+10+m>x1&&FY+FH+12+m>y1)break;rr(c,FX-10-m,FY-12-m,FW+20+2*m,FH+24+2*m,14+m);c.stroke();}
-  const crowd=['#2f80ff','#9cc4ff','#ff4d5e','#ffb0b8','#ffffff','#ffc83d','#3a4a8a','#3a4a8a'];
-  for(let y=Math.floor(y0/5)*5+3;y<y1;y+=5)for(let x=Math.floor(x0/5)*5+3;x<x1;x+=5){
-    if(x>FX-10&&x<FX+FW+10&&y>FY-12&&y<FY+FH+12)continue;
-    c.globalAlpha=.25+sr()*.35;c.fillStyle=crowd[(sr()*crowd.length)|0];
-    c.beginPath();c.arc(x+sr()*1.5,y+sr()*1.5,1.5,0,Math.PI*2);c.fill();
-  }
-  c.globalAlpha=1;
+  // tribün: koltuk sıraları, reklam panoları ve uzaktaki taraftarlar (yakındakiler her karede canlı çizilir)
+  Crowd.bake(c,x0,x1,y0,y1);
   // çim alanı (taşma payıyla)
   const ax=FX-10,ay=FY-12,aw=FW+20,ah=FH+24;
   c.save();c.shadowColor='rgba(0,0,0,.6)';c.shadowBlur=14;rr(c,ax,ay,aw,ah,14);c.fillStyle='#2fa855';c.fill();c.restore();
@@ -262,6 +254,7 @@ function draw(){
   ctx.save();
   if(shake>0)ctx.translate(rnd(-1,1)*shake*.5,rnd(-1,1)*shake*.5);
   if(bg.width&&bg.height)ctx.drawImage(bg,-offX,viewCrop-offY,bg.width/(scale*dpr),bg.height/(scale*dpr));
+  Crowd.draw(ctx);
   drawCrowdFlashes();
   drawZones();drawPassLine();drawRefFx();
   const ps=teams.flatMap(t=>t.players).sort((a,b)=>a.y-b.y);

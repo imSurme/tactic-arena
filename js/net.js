@@ -124,7 +124,7 @@ const Net=(()=>{
   }
   // misafirde gol anı (ev sahibindeki goal() ile aynı görüntü)
   function goalFx(tid){
-    const t=teams[tid];shake=12;
+    const t=teams[tid];shake=12;Crowd.goal(tid);
     for(let i=0;i<70;i++){const c=['#ffc83d','#fff',t.color,t.light,'#d23cff'][i%5];parts.push({x:ball.x,y:ball.y,vx:rnd(-230,230),vy:rnd(-230,230),life:rnd(.9,1.7),t:0,c,s:rnd(2,4.5),sq:true});}
     banners.push({type:'big',text:'GOL!',sub:overtime?'ALTIN GOL!':tid===0?'Harika vuruş!':'Rakip attı',color:t.color,t:0,life:2.2});
     Sfx.goal();
