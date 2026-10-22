@@ -14,7 +14,8 @@ function makeTeam(id){
   if(id===1&&matchOpp&&matchOpp.kit)Object.assign(t,matchOpp.kit);
   ROLES.forEach(([role,bx,by,num],i)=>{
     const pl={team:t,role,bx,by,num,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,
-      skin:SKIN[(i*2+id*3)%5],hair:HAIR[(i*3+id)%5],
+      skin:SKIN[(i*2+id*3+Math.random()*2|0)%5],hair:HAIR[Math.random()*HAIR.length|0],hairStyle:Math.random()*7|0,
+      boots:BOOTS[Math.random()*BOOTS.length|0],build:role==='DEF'?rnd(1,1.08):role==='GK'?1.04:rnd(.92,1.02),stride:rnd(.9,1.12),look:0,kickA:0,
       spd:role==='GK'?1:role==='DEF'?rnd(.94,1):rnd(1,1.07),stun:0,dash:0,sprint:0,kickCd:0,tackleCd:0,decT:0,anim:Math.random()*6};
     pl.fsm=new StateMachine(pl);t.players.push(pl);
   });

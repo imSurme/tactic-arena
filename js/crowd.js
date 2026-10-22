@@ -111,6 +111,7 @@ const Crowd=(()=>{
   return{
     bake,draw,
     goal(tid){cheer={tid,at:now};ex[tid]=1.35;},
+    cheering:()=>now-cheer.at<2.6?cheer.tid:-1, // golü atan takım (oyuncular sevinir)
     save(tid){ex[tid]=Math.max(ex[tid],.9);} // kaçan fırsat: "ooo"
   };
 })();

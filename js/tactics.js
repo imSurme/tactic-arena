@@ -63,7 +63,7 @@ function passOptions(p,t){
 function kick(p,tx,ty,sp){
   const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy)||1;
   Object.assign(ball,{owner:null,vx:dx/d*sp,vy:dy/d*sp,x:p.x+dx/d*9,y:p.y+dy/d*9,shot:false,passTo:null,passTeam:null,power:false,safe:false,tactical:false,offsideR:null,penalty:false,pen:false,header:false,kickoff:false,loft:null,passTarget:null,setT:0,rolled:new Set()});
-  p.kickCd=.35;p.fa=Math.atan2(dy,dx);
+  p.kickCd=.35;p.fa=Math.atan2(dy,dx);p.kickA=.28; // vuruş animasyonu
 }
 function pass(p,r,t,tg,sp){
   tg=tg||passTarget(r);

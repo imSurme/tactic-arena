@@ -65,5 +65,6 @@ const STAR_PATH='M12 1.6l3.1 6.5 7.1.9-5.2 4.9 1.3 7-6.3-3.5-6.3 3.5 1.3-7L1.8 9
 const STAR=`<svg viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="url(#sg)" stroke="#7a4a00" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 const ROLES=[['GK',.5,.955,1],['DEF',.3,.78,4],['DEF',.7,.78,5],['MID',.5,.62,8],['FWD',.5,.44,9]];
 const SKIN=['#f5cfa0','#e3a873','#c98652','#8f5a33','#ffe0bd'];
-const HAIR=['#2a1a10','#5a3418','#141414','#b8742a','#f0cf6e'];
+const HAIR=['#2a1a10','#5a3418','#141414','#b8742a','#e0a52a','#e9e1c4','#a8381c'];
+const BOOTS=['#1a1f36','#f4f6ff','#ff7a1a','#2fd36b','#ffd23f','#ff5fa8'];
 const FD='"Bowlby One SC",Impact,sans-serif',FB='"Baloo 2",sans-serif';
