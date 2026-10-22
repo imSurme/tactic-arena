@@ -594,3 +594,7 @@ canvas{border-radius:0;box-shadow:none}
 #half .ping.g{color:#2fd36b}#half .ping.y{color:#ffd23f}#half .ping.r{color:#ff4d5e}
 /* arkadaş maçında ping kısa ekranlarda da görünür (normalde orada süre altı yazısı gizlenir) */
 #half.net{display:block!important;font-size:9px;letter-spacing:.06em;margin-top:2px;line-height:1}
+
+/* oyun kutusu ekranın dört kenarına sabit: iPhone'da ana ekrana eklenmiş web uygulamasında 100dvh ekranı tam kapsamadığı
+   için üstte sıkışma / altta boşluk oluyordu. Çentik ve ev çubuğu payı skorbord ve kart panelindeki safe-area boşluklarıyla verilir */
+#app{position:fixed;inset:0;height:auto}
