@@ -483,3 +483,8 @@ canvas{border-radius:0;box-shadow:none}
 /* menü butonları büyüyünce yazı kırılmasın */
 .box.menu .cta{white-space:nowrap}
 .box.menu .menurow,.box.menu .cta.tour,.box.menu .pvpbtn{width:min(300px,100%)}
+
+/* başlık yazı tipi (Bowlby One SC) küçük harfleri küçük-büyük harf çizer ama "ı" harfini küçük çizer;
+   bu yazı tipiyle yazılan her şey Türkçe kurallarla büyük harfe çevrilir (ı→I, i→İ) */
+.side .sc,#timer,.box h1,.box h2,.box .big,.cta,.card .nm b,.card .cost span,#sicon span,#x2,
+#coach h3,.cinfo b,.cm-panel h3,.vsx,.roomcode{text-transform:uppercase}
