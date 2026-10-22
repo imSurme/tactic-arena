@@ -30,7 +30,10 @@ const Net=(()=>{
     return iceCache;
   }
   const peerOpts=async()=>({debug:0,config:{iceServers:await iceServers()}});
-  let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null,stalled=false;
+  let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null;
+  // kalp atışı: iki taraf 1,5 sn'de bir ping atar; rakipten 4 sn ses çıkmazsa oyun durur, 15 sn içinde dönmezse maç hükmen kazanılır
+  const GONE_AFTER=4000,FORFEIT_AFTER=15;
+  let lastHeard=0,gone=null;
   // hızlı kanal: konum güncellemeleri sırasız ve yeniden gönderimsiz gider; biri kaybolursa beklenmez, sonraki kullanılır
   let fast=null,snapN=0,lastN=-1,buf=[],offMin=null,pingMs=null,pingT=0,offs=[],delay=120,renderT=null;
   // misafir ekranı ev sahibinin gerisinden çizilir; gecikme ne kadar dalgalanıyorsa tampon o kadar uzun (80-320 ms)
@@ -162,7 +165,6 @@ const Net=(()=>{
   function applySnapshot(s){
     const prevState=state,prevOt=overtime,prevClock=clock;
     snap=s;lastSnapAt=performance.now();
-    if(stalled){stalled=false;hideOverlay();}
     // takımlar: ev sahibinin 1. takımı = misafirin kendi takımı (0)
     teams[0].score=s.sc[1];teams[1].score=s.sc[0];
     teams[0].stars=s.stars[1];teams[1].stars=s.stars[0];
@@ -227,9 +229,32 @@ const Net=(()=>{
     ball.trail.push({x:ball.x,y:ball.y});if(ball.trail.length>12)ball.trail.shift();
     // eski görüntüleri at (çizilen andan eski olanların sonuncusu kalsın)
     while(buf.length>2&&buf[1].ht<=T)buf.shift();
-    // ev sahibinden 1,5 sn haber yoksa uyar
-    if(state==='play'&&!stalled&&performance.now()-lastSnapAt>1500){stalled=true;showOverlay('<h2>BAĞLANTI YAVAŞ</h2><p>Rakipten veri gelmiyor. Rakibin oyunu arka plana almış olabilir.</p><button class="link" id="menu">Maçtan çık</button>',{menu:leave});}
+    checkPeer();
   }
+
+  // ---------- rakip sessiz kaldı mı?
+  function checkPeer(){
+    if(!role||!conn||!conn.open||(state!=='play'&&state!=='goal'))return;
+    const now0=performance.now();
+    if(!gone&&now0-lastHeard>GONE_AFTER){
+      gone={t0:now0};if(role==='host')paused=true; // ev sahibinde oyun bekler
+      showOverlay(`<h2>RAKİBİN BAĞLANTISI KOPTU</h2><p>Bekleniyor… <b id="goneLeft">${FORFEIT_AFTER}</b></p><p class="tip">Dönmezse maçı hükmen kazanırsın.</p><button class="link" id="menu">Maçtan çık</button>`,{menu:()=>{send({t:'bye'});leave();}});
+    }
+    if(gone){
+      const left=Math.max(0,Math.ceil(FORFEIT_AFTER-(now0-gone.t0)/1000)),el=$('goneLeft');
+      if(el&&el.textContent!==String(left))el.textContent=left;
+      if(left<=0)forfeitWin('Rakip geri dönmedi.');
+    }
+  }
+  function peerBack(){gone=null;if(role==='host')paused=false;if(state==='play'||state==='goal')hideOverlay();}
+  // rakip ayrıldı: maç hükmen bizim
+  function forfeitWin(why){
+    const sc=[teams[0].score,teams[1].score];
+    cleanup();state='end';
+    showOverlay(`<h2 style="color:var(--gold)">KAZANDIN!</h2><p>${why} Maçı hükmen kazandın.</p><div class="big">${sc[0]} – ${sc[1]}</div><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
+  }
+  // sekme kapanırken ya da sayfadan çıkarken rakibe haber ver (tarayıcı izin verdiği kadar)
+  addEventListener('pagehide',()=>{if(role){try{sendFast({t:'bye'});send({t:'bye'});}catch(e){}}});
 
   // ---------- bağlantı
   function wire(c){
@@ -249,12 +274,14 @@ const Net=(()=>{
     try{conn&&conn.close();}catch(e){}
     try{peer&&peer.destroy();}catch(e){}
     try{fast&&fast.close();}catch(e){}
+    gone=null;
     conn=null;peer=null;fast=null;events=[];snap=null;buf=[];offs=[];renderT=null;lastN=-1;offMin=null;pingMs=null;readyMe=readyThem=false;
     if(location.search.includes('oda='))history.replaceState(null,'',location.pathname);
   }
   function leave(){cleanup();showMenu();}
   function onData(m){
     if(!m||typeof m!=='object')return;
+    lastHeard=performance.now();if(gone)peerBack();
     if(m.t==='pi'){const r={t:'po',c:m.c};if(!sendFast(r))send(r);return;}
     if(m.t==='po'){const rtt=performance.now()-m.c;pingMs=pingMs==null?rtt:pingMs*.7+rtt*.3;return;}
     if(role==='host'){
@@ -264,7 +291,7 @@ const Net=(()=>{
         if(!playCard(teams[1],m.i,null))send({t:'deny'});
       }
       else if(m.t==='rematch'){readyThem=true;rematchStatus();if(readyMe)beginMatch();}
-      else if(m.t==='bye')lost('Rakip maçtan ayrıldı.');
+      else if(m.t==='bye'){if(state==='play'||state==='goal')forfeitWin('Rakip maçtan ayrıldı.');else lost('Rakip maçtan ayrıldı.');}
     }else if(role==='guest'){
       if(m.t==='start')guestBegin(m);
       else if(m.t==='s')receiveSnap(m);
@@ -272,7 +299,7 @@ const Net=(()=>{
       else if(m.t==='stats')pvpStats=m.s;
       else if(m.t==='deny')Sfx.deny();
       else if(m.t==='rematch'){readyThem=true;rematchStatus();}
-      else if(m.t==='bye')lost('Rakip maçtan ayrıldı.');
+      else if(m.t==='bye'){if(state==='play'||state==='goal')forfeitWin('Rakip maçtan ayrıldı.');else lost('Rakip maçtan ayrıldı.');}
     }
   }
   function netError(err){
@@ -292,7 +319,7 @@ const Net=(()=>{
     readyMe=readyThem=false;
     matchCtx={pvp:true,label:'ARKADAŞ MAÇI'};matchOpp=null;pvpOppDeck=guestDeck;
     Sfx.init();newMatch();paused=false;hideOverlay();applyOppHud();resize();
-    state='play';sendT=0;events=[];sentEnd=false;
+    state='play';sendT=0;events=[];sentEnd=false;lastHeard=performance.now();gone=null;
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
     if(ball.owner)ball.owner.decT=1.7; // santra yazı bitince yapılır
     Sfx.whistle();
@@ -303,7 +330,7 @@ const Net=(()=>{
     matchCtx={pvp:true,guest:true,label:'ARKADAŞ MAÇI'};matchOpp=null;
     Sfx.init();newMatch();swapKits();paused=false;hideOverlay();applyOppHud();resize();
     for(const t of teams)for(const p of t.players)p.fsm.current=null;
-    state='play';snap=null;buf=[];offs=[];renderT=null;offMin=null;lastSnapAt=performance.now();
+    state='play';snap=null;buf=[];offs=[];renderT=null;offMin=null;lastSnapAt=performance.now();lastHeard=performance.now();gone=null;
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
     Sfx.whistle();
   }
@@ -393,7 +420,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     // ev sahibi her karede çağırır: belli aralıklarla anlık görüntü gönder
     hostTick(dt){
       if(role!=='host'||!conn||!conn.open)return;
-      pingTick(dt);
+      pingTick(dt);checkPeer();
       if(events.length)send({t:'ev',ev:events.splice(0)}); // olaylar (gol, kart, ses) kaybolmamalı: güvenilir kanal
       if(state==='end'){if(!sentEnd){sentEnd=true;send({t:'stats',s:stats});send(snapshot());}return;} // maç sonu bir kez, güvenilir kanaldan
       sendT-=dt;
