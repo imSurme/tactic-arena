@@ -34,15 +34,23 @@ const CARDS={
   offside:{name:'Ofsayt Tuzağı',short:'OFSAYT',type:'def',cost:3,desc:'Hat çıkar, ofsayt yakalar',c1:'#fff3a0',c2:'#b58b00',col:'#ffe14d'},
   foul:{name:'Taktik Faul',short:'FAUL',type:'def',cost:2,desc:'Atağı kes, baştan kurdur',c1:'#ffa3a3',c2:'#b3122b',col:'#ff6b7a'},
   mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'7 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
+  // süper kartlar: destede bir tane seçilir, maçta bir kez (uzatmada bir hak daha) oynanır
+  total:{name:'Total Futbol',short:'TOTAL',type:'super',cost:7,desc:'10 sn tüm hücum gücü',c1:'#ffe27a',c2:'#d9431e',col:'#ffb52e'},
+  bus:{name:'Otobüsü Çek',short:'OTOBÜS',type:'super',cost:6,desc:'10 sn kaleyi kapat',c1:'#9fd8ff',c2:'#1f3fa8',col:'#5cb8ff'},
+  hero:{name:'Yıldız Oyuncu',short:'YILDIZ',type:'super',cost:7,desc:'Forvet 12 sn süperstar',c1:'#fff3a0',c2:'#c98a00',col:'#ffd23f'},
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
-const DUR={counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
+const DUR={total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
 // xG: şutun gol olma olasılığı. Simülasyondaki 18.153 şuttan lojistik regresyonla çıkarıldı.
 // mesafe dilimleri (px): <50, <80, <110, <150, <200, 200+ (her dilimin kendi sabiti);
 // sonra: açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×mesafe, vole, rakip kaleci kartı, rakip duvar kartı
 const XG={bins:[50,80,110,150,200],b:[0.391,-0.53,-0.864,-1.408,-1.878,-2.448],w:[-0.044,-0.099,0.108,0.838,-0.066,0.042,-1.47,-1.324],pen:.74};
+const SUPER_KEYS=['total','bus','hero'],DEFAULT_SUPER='total';
 const DEFAULT_DECK=['counter','through','power','wave','press','wall','gk','slide'];
 const ICONS={
+  total:'<path d="M12 1.5 15.5 6h-2.3v4.8H18V8.5L22.5 12 18 15.5v-2.3h-4.8V18h2.3L12 22.5 8.5 18h2.3v-4.8H6v2.3L1.5 12 6 8.5v2.3h4.8V6H8.5z"/>',
+  bus:'<rect x="3" y="3.5" width="18" height="14.5" rx="3.2"/><rect x="5.3" y="5.8" width="5.7" height="4.6" rx="1" fill="rgba(0,0,0,.4)"/><rect x="13" y="5.8" width="5.7" height="4.6" rx="1" fill="rgba(0,0,0,.4)"/><rect x="5.5" y="13" width="2.6" height="1.8" rx=".6" fill="rgba(0,0,0,.4)"/><rect x="15.9" y="13" width="2.6" height="1.8" rx=".6" fill="rgba(0,0,0,.4)"/><circle cx="7.5" cy="19.2" r="2"/><circle cx="16.5" cy="19.2" r="2"/>',
+  hero:'<path d="M12 1.8l3 6.2 6.8.8-5 4.7 1.3 6.8L12 17l-6.1 3.3 1.3-6.8-5-4.7L9 8z"/><path d="M8.5 1.5 12 4l3.5-2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
   counter:'<path d="M13.5 2 4.5 13.5h6L9.5 22l10-12h-6.2L14.5 2z"/>',
   through:'<circle cx="5" cy="19" r="2.8"/><path d="M7 16.5C9.5 10.5 13.5 7.5 17.5 6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1.5 4"/><path d="M15 2.8 21.5 5l-3.6 5.6z"/>',
   power:'<circle cx="15" cy="12" r="6.5"/><path d="M15 8.7l2.6 1.9-1 3h-3.2l-1-3z" fill="rgba(0,0,0,.35)"/><path d="M1.5 8h6M1 12h5.5M1.5 16h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',

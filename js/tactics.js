@@ -53,7 +53,7 @@ function passOptions(p,t){
     const prog=(tg.y-p.y)*dirY(t),open=Math.min(nearestOpp(tg,t).d,60);
     const near=Math.max(0,200-dist(tg,oppGoal(t)))*.25;
     const s=prog*.7+open*.8+near+Math.min(safe,30)*.4-d*.08+rnd(0,8)-(r.role==='GK'?25:0)
-      +(t.fx.overlap&&r.role==='DEF'?18:0)
+      +(t.fx.overlap&&r.role==='DEF'?18:0)+(r.superT>0?30:0)
       -(r===p.passFrom&&now-p.passFromT<2.5?(ball.kickoff===false&&p.hold<.3?40:24):0) // topu yeni verene hemen geri verme
       +(laneX(t)!==null&&Math.abs(tg.x-laneX(t))<60?14:0); // hücum kanadına pas
     res.push({r,tg,sp,s});
@@ -123,7 +123,7 @@ function xgOf(p,t){
   const g=oppGoal(t),opp=teams[1-t.id],dist0=dist(p,g);
   let nb=0;for(const o of opp.players)if(o.role!=='GK'&&segDist(o.x,o.y,p.x,p.y,CX,g.y)<9)nb++;
   let bi=0;while(bi<XG.bins.length&&dist0>=XG.bins[bi])bi++;
-  const pow=t.fx.power>0?1:0;
+  const pow=t.fx.power>0||p.superT>0&&!p.superShot?1:0;
   const x=[Math.abs(p.x-CX)/Math.max(dist0,1),Math.min(nb,2),nearestOpp(p,t).d<16?1:0,pow,pow*dist0/100,p.volley>0?1:0,opp.fx.gk>0?1:0,opp.fx.wall>0?1:0];
   return 1/(1+Math.exp(-(XG.b[bi]+x.reduce((s,v,i)=>s+v*XG.w[i],0))));
 }
@@ -131,14 +131,16 @@ function shoot(p,t){
   statShot(p,t,xgOf(p,t));
   const g=oppGoal(t),gk=teams[1-t.id].players[0],d=dist(p,g);
   let side=gk.x>CX?-1:gk.x<CX?1:Math.random()<.5?-1:1;if(Math.random()<.15)side=-side; // genelde kalecinin uzak köşesi
-  const pow=t.fx.power>0,pen=ball.penalty; // penaltı köşeye, temiz vurulur
+  const hero=p.superT>0&&!p.superShot; // yıldız oyuncunun ilk şutu güçlü şuttan da sert
+  const pow=t.fx.power>0||hero,pen=ball.penalty; // penaltı köşeye, temiz vurulur
   const head=!pow&&!pen&&t.fx.overlap>0&&p.volley>0; // bindirmeden gelen ortaya vuruş
   const tx=CX+side*(GW/2-9)*(pen?rnd(.2,.8):head?rnd(.75,1):rnd(.55,1))+rnd(-.5,.5)*d*(pow||pen||head?.04:.16);
-  const sp=pow?TEMPO.powerShot+d*.3:Math.min(450,rnd(...TEMPO.shot)+d*.4);
+  const sp=hero?TEMPO.powerShot+60+d*.3:pow?TEMPO.powerShot+d*.3:Math.min(450,rnd(...TEMPO.shot)+d*.4);
   kick(p,tx,g.y+dirY(t)*10,sp);
   ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;ball.pen=pen;ball.header=head;Sfx.shot(pow);
   ball.corner=Math.abs(tx-CX)>GW/2-16;ball.shotDist=d;
-  if(pow){t.fx.power=0;shake=8;burst(p.x,p.y,CARDS.power.col,18,160);floatText(p.x,p.y-20,'BOMBA!',CARDS.power.col);}
+  if(hero){p.superShot=true;shake=10;burst(p.x,p.y,CARDS.hero.col,24,190);floatText(p.x,p.y-20,'YILDIZ ŞUTU!',CARDS.hero.col);}
+  else if(pow){t.fx.power=0;shake=8;burst(p.x,p.y,CARDS.power.col,18,160);floatText(p.x,p.y-20,'BOMBA!',CARDS.power.col);}
   else if(head)floatText(p.x,p.y-20,'KAFA!',CARDS.overlap.col);
   else floatText(p.x,p.y-20,d>110?'UZAKTAN!':'ŞUT!',d>110?'#ffd23f':'#fff');
 }
@@ -209,7 +211,8 @@ function carrierThink(p,t,dt){
   // ortadan gelen topa vole, yakından kesin şut, uzaktan ise açı ve boşluk varsa şut
   const q=shotQuality(p,t);
   // Güçlü Şut: iyi pozisyonu bekle (165 px içi, önü çok kapalı değil); süre bitmek üzereyse uzaktan da vur
-  const powerReady=t.fx.power>0&&((dG<165&&q>-.3)||(t.fx.power<1.2&&dG<240));
+  const heroShot=p.superT>0&&!p.superShot;
+  const powerReady=t.fx.power>0&&((dG<165&&q>-.3)||(t.fx.power<1.2&&dG<240))||heroShot&&(dG<190&&q>-.45||p.superT<1.5&&dG<250);
   if(powerReady||p.volley>0&&dG<150||dG<58){shoot(p,t);return;}
   if(q>0&&Math.random()<q*(t.fx.wave?.75:.56)+(press<26?.1:0)){shoot(p,t);return;}
   // ceza sahası içinde önü kapalı da olsa vur; ceza sahası önünde topu uzun süre tutma

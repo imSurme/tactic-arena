@@ -95,6 +95,7 @@ function simBall(dt,live){
       const ax=p.x-o.x,ay=p.y-o.y,dirC=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1); // >0 önden, <0 arkadan
       if(p.dash<=0)ch*=dirC>.3?1.6:dirC<-.3?.45:1.9; // önden karşılama ve omuz omuza mücadele iyi, arkadan zor
       if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası
+      if(o.superT>0)ch*=p.dash>0?.35:0; // yıldız oyuncudan top alınmaz (kayarak ancak zor)
       if(o.team.fx.tiki&&p.dash<=0)ch*=.45;
       if(t.id===1)ch*=oppMod().skill; // rakip zorluğu
       if(Math.random()<ch){

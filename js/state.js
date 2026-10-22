@@ -12,6 +12,7 @@ function makeTeam(id){
     color:id?'#ff4d5e':'#2f80ff',dark:id?'#b81f35':'#1747b5',light:id?'#ffb0b8':'#9cc4ff',trim:id?'#7a0f22':'#ffffff',
     gkColor:id?'#ffa21f':'#b6f23a',gkTrim:id?'#7a3d00':'#2e5a00'};
   if(id===1&&matchOpp&&matchOpp.kit)Object.assign(t,matchOpp.kit);
+  t.superKey=id===0?Deck.getSuper():matchCtx&&matchCtx.pvp&&pvpOppSuper?pvpOppSuper:Deck.randomSuper();t.superUsed=false;
   ROLES.forEach(([role,bx,by,num],i)=>{
     const pl={team:t,role,bx,by,num,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,
       skin:SKIN[(i*2+id*3+Math.random()*2|0)%5],hair:HAIR[Math.random()*HAIR.length|0],hairStyle:Math.random()*7|0,
@@ -23,7 +24,7 @@ function makeTeam(id){
 }
 function newMatch(){
   teams=[makeTeam(0),makeTeam(1)];
-  clock=Settings.get('length');stats=freshStats();refFx=[];pendingCards=[];lastPossessor=null;doubleShown=false;overtime=false;paused=false;oppLog=[];aiT=2.5;parts=[];floats=[];banners=[];handKey='';lastAfford=[];
+  clock=Settings.get('length');stats=freshStats();refFx=[];pendingCards=[];lastPossessor=null;doubleShown=false;overtime=false;paused=false;oppLog=[];aiT=2.5;parts=[];floats=[];banners=[];handKey='';lastAfford=[];superKeyShown='';
   kickoff(Math.random()<.5?0:1);
 }
 function kickoff(tid){

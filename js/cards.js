@@ -2,12 +2,17 @@
 const Deck=(()=>{
   let deck=null;
   try{deck=JSON.parse(localStorage.getItem('ta-deck'));}catch(e){}
-  const valid=d=>Array.isArray(d)&&d.length===DECK_SIZE&&new Set(d).size===DECK_SIZE&&d.every(k=>CARDS[k]);
+  const valid=d=>Array.isArray(d)&&d.length===DECK_SIZE&&new Set(d).size===DECK_SIZE&&d.every(k=>CARDS[k]&&CARDS[k].type!=='super');
   if(!valid(deck))deck=DEFAULT_DECK.slice();
+  let sup=null;try{sup=localStorage.getItem('ta-super');}catch(e){}
+  if(!SUPER_KEYS.includes(sup))sup=DEFAULT_SUPER;
   return{
     get:()=>deck.slice(),
     valid,
     set(d){if(!valid(d))return;deck=d.slice();try{localStorage.setItem('ta-deck',JSON.stringify(deck));}catch(e){}},
+    getSuper:()=>sup,
+    setSuper(k){if(!SUPER_KEYS.includes(k))return;sup=k;try{localStorage.setItem('ta-super',k);}catch(e){}},
+    randomSuper:()=>SUPER_KEYS[Math.random()*SUPER_KEYS.length|0],
     // rakip: her maç 4 hücum + 4 savunma kartından rastgele deste
     random(){
       const pick=type=>shuffle(Object.keys(CARDS).filter(k=>CARDS[k].type===type)).slice(0,DECK_SIZE/2);
@@ -45,13 +50,41 @@ function playCard(t,i,from){
 }
 // süreli kartın sayacı işe yaramadığı anda yavaş akar: hücum kartı rakip topa sahipken, savunma kartı top bizdeyken
 const FX_IDLE=.6;
-const fxLive=(t,k)=>CARDS[k].type==='atk'?!attacking(teams[1-t.id]):!attacking(t);
+const fxLive=(t,k)=>CARDS[k].type==='atk'?!attacking(teams[1-t.id]):CARDS[k].type==='def'?!attacking(t):true;
+// süper kart: maçta bir kez (uzatmada bir hak daha); kendi yuvasından oynanır
+function playSuper(t,from){
+  if(state!=='play'||t.superUsed)return false;
+  const k=t.superKey,c=CARDS[k];if(!c||t.stars<c.cost)return false;
+  t.stars-=c.cost;t.superUsed=true;statCard(t,k);
+  pendingCards.push({team:t,key:k,t:CARD_FLIGHT});
+  CardFx.play(t,k,from);
+  if(t.id===0)Sfx.card('atk');else{Sfx.oppCard();oppLog.unshift(k);oppLog.length=Math.min(oppLog.length,3);}
+  superBanner(t.id===0,k);
+  return true;
+}
+function superBanner(mine,k){banners.push({type:'info',text:CARDS[k].name.toLocaleUpperCase('tr'),sub:mine?'SÜPER KART!':'Rakip süper kart oynadı!',color:CARDS[k].col,t:0,life:1.7});}
 function applyCard(t,k){
   const o=ball.owner,mine=o&&o.team===t,theirs=o&&o.team!==t;
   switch(k){
     case'through':if(mine&&throughPass(o,t))return;break;
     case'longball':if(mine&&longBall(o,t))return;break;
     case'foul':if(theirs){tacticalFoul(t);return;}break;
+    case'total':{ // Kontra Atak + Hücum Dalgası + Çalım Ustası
+      for(const x of ['counter','wave','dribble'])t.fx[x]=Math.max(t.fx[x]||0,DUR.total);
+      for(const p of t.players)if(p.role!=='GK')ring(p.x,p.y,CARDS.total.col);
+      return;
+    }
+    case'bus':{ // Savunma Duvarı + Kaleci Refleksi
+      t.fx.wall=Math.max(t.fx.wall||0,DUR.bus);t.fx.gk=Math.max(t.fx.gk||0,DUR.bus);
+      for(const p of t.players)ring(p.x,p.y,CARDS.bus.col);
+      return;
+    }
+    case'hero':{ // forvet süperstar: top kaptırmaz, hızlı, ilk şutu çok sert
+      const f=t.players.find(p=>p.role==='FWD');
+      f.superT=DUR.hero;f.superShot=false;t.fx.hero=DUR.hero;
+      ring(f.x,f.y,CARDS.hero.col);burst(f.x,f.y,CARDS.hero.col,18,140);floatText(f.x,f.y-22,'YILDIZ!',CARDS.hero.col);
+      return;
+    }
     case'slide':{
       const tgt=theirs?o:ball;
       let best=null,bd=1e9;
@@ -86,6 +119,11 @@ function aiCards(dt){
   const t=teams[1],o=ball.owner,own=o&&o.team===t,opp=o&&o.team!==t;
   const by=toN(t,ball.x,ball.y).y,late=clock<40;
   const lead=t.score-teams[0].score;
+  if(!t.superUsed&&t.stars>=CARDS[t.superKey].cost&&!pendingCards.length&&Math.random()<.6){
+    const k=t.superKey,lateS=overtime||clock<45;
+    const go=k==='total'?own&&by<.65:k==='bus'?opp&&by>.55&&(lead>=0||lateS):own&&by<.8;
+    if(go){playSuper(t);return;}
+  }
   let best=-1,bs=-1e9;
   t.hand.forEach((k,i)=>{
     if(CARDS[k].cost>t.stars||(t.fx[k]>0)||pendingCards.some(c=>c.team===t&&c.key===k))return;
@@ -110,5 +148,7 @@ function aiCards(dt){
     }
     if(s>bs){bs=s;best=i;}
   });
-  if(best>=0&&(bs>1.5||t.stars>=9.5))playCard(t,best);
+  // süper kart henüz oynanmadıysa maçın ikinci yarısında yıldız biriktirir; sadece çok iyi fırsatta normal kart oynar
+  const saving=!t.superUsed&&(overtime||clock<100)&&t.stars<CARDS[t.superKey].cost+1;
+  if(best>=0&&(bs>(saving?2.4:1.5)||t.stars>=9.5))playCard(t,best);
 }

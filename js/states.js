@@ -93,6 +93,7 @@ function playerGlobal(p,t,dt){
   p.stun=Math.max(0,p.stun-dt);if(p.volley>0)p.volley-=dt;p.dash=Math.max(0,p.dash-dt);
   p.sprint=Math.max(0,p.sprint-dt);p.run=Math.max(0,p.run-dt);
   p.kickCd=Math.max(0,p.kickCd-dt);p.tackleCd=Math.max(0,p.tackleCd-dt);
+  if(p.superT>0)p.superT=Math.max(0,p.superT-dt);
   if(!(attacking(t)&&p.role!=='GK'&&ball.owner!==p)){p.spot=null;p.spotT=0;p.run=0;}
 }
 

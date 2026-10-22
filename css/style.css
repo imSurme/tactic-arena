@@ -488,3 +488,31 @@ canvas{border-radius:0;box-shadow:none}
    bu yazı tipiyle yazılan her şey Türkçe kurallarla büyük harfe çevrilir (ı→I, i→İ) */
 .side .sc,#timer,.box h1,.box h2,.box .big,.cta,.card .nm b,.card .cost span,#sicon span,#x2,
 #coach h3,.cinfo b,.cm-panel h3,.vsx,.roomcode{text-transform:uppercase}
+
+/* süper kart */
+.card.super{--frame:#ffd23f}
+.card.super .tag{background:linear-gradient(90deg,#ffd23f,#ff8a4d);color:#3a1d00}
+#sidecol{width:48px;flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+#sidecol #next{width:auto}
+#super{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px;font-weight:800;letter-spacing:.1em;color:var(--gold);cursor:pointer}
+#super .card{width:46px;padding:2px;border-radius:9px;box-shadow:0 0 0 2px #ffd23f,0 0 14px rgba(255,210,63,.55)}
+#super .card .nm,#super .card .tag,#super .card .key{display:none}
+#super .card .art{border-radius:7px}
+#super .card .cost{width:20px;height:20px;top:-6px;left:-6px}
+#super .card .cost span{font-size:8.5px;inset:6px 0 0}
+#super .card.ready{animation:superGlow 1.2s ease-in-out infinite}
+@keyframes superGlow{50%{box-shadow:0 0 0 2px #fff3a0,0 0 22px rgba(255,210,63,.95)}}
+#super.used{color:var(--muted)}
+#super.used .card{filter:grayscale(1) brightness(.5);box-shadow:none}
+#superGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
+.supopt{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:5px;padding:4px 6px 4px 4px;border-radius:12px;background:rgba(11,18,48,.6);border:1.5px solid var(--line);cursor:pointer;min-width:0;line-height:1.05;opacity:.65}
+.supopt i{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(160deg,var(--c1),var(--c2));color:#fff}
+.supopt i svg{width:15px;height:15px}
+.supopt b{flex:1;min-width:0;font-family:var(--display);font-weight:400;font-size:9.5px;text-transform:uppercase;color:#fff}
+.supopt em{font-style:normal;font-size:10px;font-weight:800;color:var(--gold)}
+.supopt.in{opacity:1;border-color:#ffd23f;box-shadow:0 0 12px rgba(255,210,63,.45);background:rgba(255,210,63,.12)}
+.supopt:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.supertip{color:var(--gold)!important;margin-top:4px}
+@media (prefers-reduced-motion:reduce){#super .card.ready{animation:none}}
+
+@media (max-height:700px){.box .dtip{display:none}.supertip{margin-top:0}}

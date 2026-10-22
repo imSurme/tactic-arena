@@ -4,6 +4,7 @@ let last=performance.now();
 function timeUp(){
   if(teams[0].score===teams[1].score){
     overtime=true;clock=0;
+    for(const t of teams)t.superUsed=false; // uzatmada süper kart hakkı yenilenir
     banners.push({type:'info',text:'UZATMA',sub:'Altın gol: ilk atan kazanır',color:'#ffc83d',t:0,life:2.2});
     Sfx.overtime();
   }else endMatch();

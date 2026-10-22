@@ -16,7 +16,7 @@ function assignRoles(t){
 }
 // hedefe doğru hızlanarak koş, takım arkadaşlarından uzak dur, yüzünü hareket yönüne ya da topa çevir
 function steer(p,t,tg,dt){
-  let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.25:1)*tg.sp;
+  let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.25:1)*(p.superT>0?1.3:1)*tg.sp;
   if(ball.owner===p)sp*=t.fx.dribble>0?1:.82;
   if(p.sprint>0)sp*=1.45;else if(p.run>0)sp*=1.2;
   if(t.fx.offside>0&&p.role==='DEF'&&!attacking(t))sp*=1.25; // tuzak: hat hızla çıkar

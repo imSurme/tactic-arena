@@ -10,7 +10,7 @@ function cardHTML(k,i){
   const c=CARDS[k];
   return `<button class="card ${c.type}" data-i="${i}" style="--c1:${c.c1};--c2:${c.c2}" aria-label="${c.name}, ${c.cost} yıldız" ${i<0?'tabindex="-1"':''}>
     <span class="cost">${STAR}<span>${c.cost}</span></span>
-    <span class="art">${iconSvg(k)}<span class="tag">${c.type==='atk'?'HÜCUM':'SAVUNMA'}</span></span>
+    <span class="art">${iconSvg(k)}<span class="tag">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER'}</span></span>
     <span class="nm"><b>${c.name}</b></span><span class="lock"></span></button>`;
 }
 // top kimdeyse ona uygun kart türü parlar
@@ -20,7 +20,7 @@ function suggestedType(){
   if(attacking(teams[1]))return'def';
   return null;
 }
-let oppKey='',lastWhole=0;
+let oppKey='',lastWhole=0,superKeyShown='';
 function updateFxChips(t){
   const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&DUR[k]&&!['through','longball','foul'].includes(k));
   for(const el of [...box.children])if(!keys.includes(el.dataset.k))el.remove();
@@ -53,6 +53,11 @@ function updateHud(){
     lastAfford[i]=can;
     el.querySelector('.lock').style.height=(t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';
   });
+  // süper kart yuvası
+  const sk=t.superKey+'|'+t.superUsed;
+  if(sk!==superKeyShown){superKeyShown=sk;$('superCard').innerHTML=cardHTML(t.superKey,-2);$('super').classList.toggle('used',t.superUsed);$('superLbl').textContent=t.superUsed?'KULLANILDI':'SÜPER';}
+  {const el=$('superCard').querySelector('.card'),c=CARDS[t.superKey],can=!t.superUsed&&t.stars>=c.cost&&state==='play'&&!paused;
+    if(el){el.classList.toggle('off',!can);el.classList.toggle('ready',can);el.querySelector('.lock').style.height=(t.superUsed?100:t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';}}
   $('sfill').style.width=t.stars/STAR_MAX*100+'%';$('sbar').setAttribute('aria-valuenow',Math.floor(t.stars));
   const whole=Math.floor(t.stars);
   if(whole!==lastWhole){if(whole>lastWhole){const si=$('sicon');si.classList.remove('gain');void si.offsetWidth;si.classList.add('gain');}lastWhole=whole;$('snum').textContent=whole;}
@@ -64,6 +69,12 @@ function updateHud(){
     $('oppCards').innerHTML=oppLog.map((k,i)=>`<span class="mini ${CARDS[k].type}${i===0?' new':''}" title="${CARDS[k].name}" style="--c1:${CARDS[k].c1};--c2:${CARDS[k].c2}"><i>${iconSvg(k)}</i></span>`).join('');
     $('oppLog').hidden=!oppLog.length;
   }
+}
+function trySuper(){
+  if(paused||state!=='play')return;
+  const el=$('superCard').querySelector('.card'),rect=el?el.getBoundingClientRect():null;
+  if(Net.isGuest()){Net.guestSuper(rect);return;}
+  if(!playSuper(teams[0],rect))Sfx.deny();
 }
 function tryCard(i){
   if(paused||state!=='play')return;
@@ -136,15 +147,18 @@ const CARD_DETAIL={
   offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; pas anında hattın arkasında kalan oyuncu topu alınca ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
   foul:'Top süren rakibe bilerek faul yapılır, atak orada kesilir. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Serbest vuruş faulün yapıldığı yerden kullanılır. Dikkat: ceza sahası içinde yapılan faul penaltıdır!',
   mark:'7 sn boyunca savunmacılar rakiplerini yakından tutar; pas arası ve top kapma şansı artar.',
+  total:'10 sn boyunca Kontra Atak, Hücum Dalgası ve Çalım Ustası aynı anda: takım hızlanır, herkes ileri çıkar, topu süren oyuncudan top almak çok zorlaşır.',
+  bus:'10 sn boyunca Savunma Duvarı ve Kaleci Refleksi aynı anda: takım kaleye yaslanır, şutların önüne atlar, kaleci çok daha geniş alanı kapatır.',
+  hero:'Forvetin 12 sn süperstar olur: ondan top alınamaz, %30 hızlı koşar, takım topu ona akıtır ve çektiği ilk şut Güçlü Şut\'tan da serttir.',
   intercept:'6 sn boyunca rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
 };
 function cardInfoHTML(k){
   const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','slide','power'].includes(k)?DUR[k]+' sn':'Anlık';
   return `<div class="cinfo ${c.type}"><span class="cart" style="--c1:${c.c1};--c2:${c.c2}">${iconSvg(k)}</span>
-<div><b>${c.name}</b><div class="cmeta"><span class="ctype">${c.type==='atk'?'HÜCUM':'SAVUNMA'}</span><span>${c.cost}★</span><span>${dur}</span></div><p>${CARD_DETAIL[k]}</p></div></div>`;
+<div><b>${c.name}</b><div class="cmeta"><span class="ctype">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER · maçta 1 kez'}</span><span>${c.cost}★</span><span>${dur}</span></div><p>${CARD_DETAIL[k]}</p></div></div>`;
 }
 // dokun = tap, basılı tut = hold; basılı tutulan kart oynanmaz/seçilmez
-function pressable(root,{tap,hold,release}){
+function pressable(root,{tap,hold,release},sel='.card'){
   let p=null;
   const end=fire=>{
     if(!p)return;clearTimeout(p.timer);
@@ -153,7 +167,7 @@ function pressable(root,{tap,hold,release}){
     p=null;
   };
   root.addEventListener('pointerdown',e=>{
-    const el=e.target.closest('.card');if(!el||e.button>0)return;
+    const el=e.target.closest(sel);if(!el||e.button>0)return;
     p={el,long:false,timer:setTimeout(()=>{if(p){p.long=true;hold(p.el);}},420)};
   });
   root.addEventListener('pointerup',()=>end(true));
@@ -166,7 +180,7 @@ function openCardModal(k){
   const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','slide','power'].includes(k)?DUR[k]+' saniye':'Anlık';
   $('cmBody').innerHTML=`<div class="cm-card">${cardHTML(k,-1)}</div>
 <h3 id="cmTitle">${c.name}</h3>
-<div class="cmeta ${c.type}"><span class="ctype">${c.type==='atk'?'HÜCUM':'SAVUNMA'}</span><span>${c.cost} ★</span><span>${dur}</span></div>
+<div class="cmeta ${c.type}"><span class="ctype">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER · maçta 1 kez'}</span><span>${c.cost} ★</span><span>${dur}</span></div>
 <p>${CARD_DETAIL[k]}</p>`;
   $('cardModal').hidden=false;modalOpenedAt=performance.now();
   if(state==='play'&&!paused&&!(matchCtx&&matchCtx.pvp)){paused=true;modalPaused=true;}
@@ -183,18 +197,21 @@ $('cardModal').addEventListener('click',e=>{if(e.target===$('cardModal')&&perfor
 addEventListener('keydown',e=>{if(e.key==='Escape')closeCardModal();});
 // deste ekranı: 16 karttan 8'ini seç
 function showDeck(){
-  let sel=Deck.get();
-  const keys=Object.keys(CARDS).sort((a,b)=>CARDS[a].type.localeCompare(CARDS[b].type)||CARDS[a].cost-CARDS[b].cost);
+  let sel=Deck.get(),selSuper=Deck.getSuper();
+  const keys=Object.keys(CARDS).filter(k=>CARDS[k].type!=='super').sort((a,b)=>CARDS[a].type.localeCompare(CARDS[b].type)||CARDS[a].cost-CARDS[b].cost);
   const grid=keys.map(k=>cardHTML(k,-1).replace('data-i="-1"','data-k="'+k+'"').replace('tabindex="-1"','')).join('');
   showOverlay(`<div class="tip">KART KOLEKSİYONU</div><h2>DESTEN</h2>
 <div class="deckbar"><span>Seçili <b id="deckCount"></b></span><span>Hücum <b id="deckAtk"></b> · Savunma <b id="deckDef"></b></span><span>Ortalama <b id="deckAvg"></b>★</span></div>
-<div class="tip">Dokun: desteye ekle ya da çıkar · Basılı tut: kart ayrıntısı</div>
+<div class="tip dtip">Dokun: desteye ekle ya da çıkar · Basılı tut: kart ayrıntısı</div>
 <div id="deckGrid">${grid}</div>
+<div class="tip supertip">SÜPER KART · maçta 1 kez (uzatmada +1)</div>
+<div id="superGrid">${SUPER_KEYS.map(k=>`<button class="supopt" data-k="${k}" style="--c1:${CARDS[k].c1};--c2:${CARDS[k].c2}"><i>${iconSvg(k)}</i><b>${CARDS[k].name}</b><em>${CARDS[k].cost}★</em></button>`).join('')}</div>
 <button class="cta" id="go">KAYDET</button><button class="link" id="back">Vazgeç</button>`,
-  {go:()=>{Deck.set(sel);showMenu();},back:showMenu});
+  {go:()=>{Deck.set(sel);Deck.setSuper(selSuper);showMenu();},back:showMenu});
   $('obox').classList.add('wide');
   const render=()=>{
     $('deckGrid').querySelectorAll('.card').forEach(el=>el.classList.toggle('in',sel.includes(el.dataset.k)));
+    $('superGrid').querySelectorAll('.supopt').forEach(el=>el.classList.toggle('in',el.dataset.k===selSuper));
     $('deckCount').textContent=sel.length+'/'+DECK_SIZE;
     $('deckAtk').textContent=sel.filter(k=>CARDS[k].type==='atk').length;
     $('deckDef').textContent=sel.filter(k=>CARDS[k].type==='def').length;
@@ -210,6 +227,7 @@ function showDeck(){
     render();
   };
   pressable($('deckGrid'),{tap:toggle,hold:el=>openCardModal(el.dataset.k)});
+  pressable($('superGrid'),{tap:el=>{selSuper=el.dataset.k;Sfx.click();render();},hold:el=>openCardModal(el.dataset.k)},'.supopt');
   $('deckGrid').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest('.card');if(el){e.preventDefault();toggle(el);}}};
   render();
 }
@@ -314,6 +332,10 @@ $('pauseBtn').innerHTML=UI_ICONS.pause;
 $('pauseBtn').onclick=()=>setPaused(!paused);
 $('muteBtn').onclick=()=>{Sfx.init();Sfx.toggleMute();updateMuteBtn();};
 updateMuteBtn();
+pressable($('super'),{
+  tap:()=>trySuper(),
+  hold:()=>{if(state==='play'||state==='coach'||state==='menu')openCardModal(teams[0].superKey);},
+});
 pressable($('hand'),{
   tap:el=>tryCard(+el.dataset.i),
   hold:el=>{if(state==='play'||state==='coach')openCardModal(teams[0].hand[+el.dataset.i]);},

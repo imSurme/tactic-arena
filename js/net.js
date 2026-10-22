@@ -89,6 +89,7 @@ const Net=(()=>{
     const _cf=callFoul;callFoul=function(a,b,o){_cf(a,b,o);const f=refFx[refFx.length-1];if(f)emit(['ref',f]);};
     const _pen=penalty;penalty=function(t){_pen(t);emit(['pen',t.id]);};
     const _go=goal;goal=function(tid){_go(tid);emit(['goal',tid]);};
+    const _psu=playSuper;playSuper=function(t,from){const ok=_psu(t,from);if(ok)emit(['play',t.id,t.superKey]);return ok;};
     const _pc=playCard;playCard=function(t,i,from){const k=t.hand[i],ok=_pc(t,i,from);if(ok)emit(['play',t.id,k]);return ok;};
     const _imp=CardFx.impact;CardFx.impact=function(t,k,at){_imp(t,k,at);emit(['imp',t.id,k,r1(at.x),r1(at.y)]);};
     for(const n of ['pass','shot','tackle','save','whistle','whistleEnd','overtime'])
@@ -102,7 +103,7 @@ const Net=(()=>{
       p:P.map(p=>[r1(p.x),r1(p.y),r1(p.fa),r1(p.vx),r1(p.vy),(p.stun>0?1:0)|(p.dash>0?2:0)|(p.sprint>0?4:0)]),
       b:[r1(b.x),r1(b.y),r1(b.z||0),r1(b.vx),r1(b.vy),b.owner?P.indexOf(b.owner):-1,b.shot?1:0,b.power?1:0,b.setT>0?1:0,b.kickoff?1:0,
         b.passTo?P.indexOf(b.passTo):-1,b.passTeam?b.passTeam.id:-1,b.passTarget?r1(b.passTarget.x):0,b.passTarget?r1(b.passTarget.y):0],
-      ev:events.splice(0)};
+      su:[teams[0].superUsed?1:0,teams[1].superUsed?1:0],ev:events.splice(0)};
   }
 
   // ---------- misafir: gelen durumu kendi tarafına çevirip uygula
@@ -117,7 +118,7 @@ const Net=(()=>{
     else if(k==='goal')goalFx(1-e[1]);
     else if(k==='pen')banners.push({type:'info',text:'PENALTI!',sub:e[1]===1?'Kaleye vur!':'Kaleci, hazır ol!',color:'#ffe14d',t:0,life:1.6});
     else if(k==='play'){
-      if(e[1]===0){const t=teams[1];CardFx.play(t,e[2],null);Sfx.oppCard();oppLog.unshift(e[2]);oppLog.length=Math.min(oppLog.length,3);}
+      if(e[1]===0){const t=teams[1];CardFx.play(t,e[2],null);Sfx.oppCard();oppLog.unshift(e[2]);oppLog.length=Math.min(oppLog.length,3);if(CARDS[e[2]].type==='super')superBanner(false,e[2]);}
     }
     else if(k==='imp')CardFx.impact(localTeam(e[1]),e[2],{x:mx(e[3]),y:my(e[4])});
     else if(k==='sfx'){const n=e[1];if(Sfx[n])Sfx[n](...e.slice(2));if(n==='shot'&&e[2])shake=8;}
@@ -139,6 +140,7 @@ const Net=(()=>{
     teams[0].stars=s.stars[1];teams[1].stars=s.stars[0];
     teams[0].hand=s.hand;teams[0].queue=[s.next];
     teams[0].fx=s.fx[1];teams[1].fx=s.fx[0];
+    if(s.su){teams[0].superUsed=!!s.su[1];teams[1].superUsed=!!s.su[0];}
     overtime=!!s.ot;clock=s.c;
     for(const e of s.ev)applyEvent(e);
     if(s.st!==prevState){
@@ -203,7 +205,8 @@ const Net=(()=>{
   function onData(m){
     if(!m||typeof m!=='object')return;
     if(role==='host'){
-      if(m.t==='hello'){guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();beginMatch();}
+      if(m.t==='hello'){guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();pvpOppSuper=SUPER_KEYS.includes(m.super)?m.super:Deck.randomSuper();beginMatch();}
+      else if(m.t==='super'&&state==='play'&&!paused){if(!playSuper(teams[1],null))send({t:'deny'});}
       else if(m.t==='card'&&state==='play'&&!paused){
         if(!playCard(teams[1],m.i,null))send({t:'deny'});
       }
@@ -327,7 +330,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
           // istek bazen sunucuda askıda kalır: 9 sn'de açılmazsa temiz bir bağlantıyla yeniden dene
           timer=setTimeout(()=>{if(role==='guest'&&conn===c&&!c.open){if(attempt<6){status('Tekrar deneniyor ('+attempt+'/6)…');attemptJoin();}else netError({type:'timeout'});}},9000);
           watchIce(c,()=>{if(role==='guest'&&conn===c&&!c.open){clearTimeout(timer);netError({type:'ice'});}});
-          c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),v:1});});
+          c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),super:Deck.getSuper(),v:1});});
           c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
         });
       };
@@ -342,6 +345,13 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     },
     guestFrame,
     // misafir kart oynar: isteği gönder, kartın uçuşunu hemen göster
+    guestSuper(rect){
+      const t=teams[0],k=t.superKey;
+      if(t.superUsed||state!=='play'||t.stars<CARDS[k].cost||performance.now()<cardLock){Sfx.deny();return;}
+      cardLock=performance.now()+350;
+      send({t:'super'});
+      CardFx.play(t,k,rect);Sfx.card('atk');superBanner(true,k);
+    },
     guestCard(i,rect){
       const t=teams[0],k=t.hand[i];
       if(!k||state!=='play'||t.stars<CARDS[k].cost||performance.now()<cardLock){Sfx.deny();return;}
@@ -354,7 +364,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
   };
 })();
 // ev sahibinde misafirin destesi (state.js'deki makeTeam kullanır)
-let pvpOppDeck=null;
+let pvpOppDeck=null,pvpOppSuper=null;
 let pvpStats=null; // misafirde: ev sahibinden gelen maç istatistikleri
 // maç sonu ekranı (iki taraf da kendi gözünden görür)
 function showPvpEnd(a,b){
