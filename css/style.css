@@ -575,3 +575,16 @@ canvas{border-radius:0;box-shadow:none}
 .tourbtn small{display:block;font-family:var(--body);font-size:10px;font-weight:800;opacity:.8;margin-top:1px}
 .box.menu .tourbtn{background:linear-gradient(#5be38b,#1e9e52);box-shadow:0 4px 0 #136a37,0 10px 18px rgba(0,0,0,.35)}
 .box.menu .tourbtn:active{box-shadow:0 1px 0 #136a37}
+
+/* deste sekmeleri */
+.decktabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;width:100%;background:rgba(11,18,48,.6);border:1px solid var(--line);border-radius:12px;padding:4px}
+.dtab{all:unset;box-sizing:border-box;text-align:center;padding:7px 4px 6px;border-radius:9px;font-family:var(--display);font-size:12px;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.dtab b{font-family:var(--body);font-weight:800;font-size:11px;margin-left:2px;color:var(--text)}
+.dtab.on{background:linear-gradient(#7fb2ff,#2f6fe0);color:#fff;box-shadow:0 2px 0 #1a3f8f}
+.dtab[data-t="atk"].on{background:linear-gradient(#ffc66b,#ff8a1f);box-shadow:0 2px 0 #b3600a}
+.dtab.sup.on{background:linear-gradient(#ffe27a,#ff8a4d);color:#3a1d00;box-shadow:0 2px 0 #a8590a}
+.dtab:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#deckGrid.sup{grid-template-columns:repeat(3,minmax(0,1fr));width:min(300px,100%);margin-inline:auto}
+#deckGrid.sup{align-content:center}
+.dtab.sup.on{background:linear-gradient(90deg,#9b6bff,#ff5fa8 55%,#ffb52e);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 2px 0 #6a2fb0}
+#deckGrid .card .art{aspect-ratio:1/1}

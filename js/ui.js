@@ -198,22 +198,31 @@ $('cmClose').onclick=()=>{Sfx.click();closeCardModal();};
 $('cardModal').addEventListener('click',e=>{if(e.target===$('cardModal')&&performance.now()-modalOpenedAt>350)closeCardModal();});
 addEventListener('keydown',e=>{if(e.key==='Escape')closeCardModal();});
 // deste ekranı: 16 karttan 8'ini seç
+// deste ekranı: HÜCUM / SAVUNMA / SÜPER sekmeleri; her sekmede tek grup kart (mobilde kaydırmadan sığar)
 function showDeck(){
-  let sel=Deck.get(),selSuper=Deck.getSuper();
-  const keys=Object.keys(CARDS).filter(k=>CARDS[k].type!=='super').sort((a,b)=>CARDS[a].type.localeCompare(CARDS[b].type)||CARDS[a].cost-CARDS[b].cost);
-  const grid=keys.map(k=>cardHTML(k,-1).replace('data-i="-1"','data-k="'+k+'"').replace('tabindex="-1"','')).join('');
+  let sel=Deck.get(),selSuper=Deck.getSuper(),tab='atk';
+  const ofType=type=>Object.keys(CARDS).filter(k=>CARDS[k].type===type).sort((x,y)=>CARDS[x].cost-CARDS[y].cost);
   showOverlay(`<h2>DESTEN</h2>
-<div class="deckbar"><span>Seçili <b id="deckCount"></b></span><span>Hücum <b id="deckAtk"></b> · Savunma <b id="deckDef"></b></span><span>Ortalama <b id="deckAvg"></b>★</span></div>
-<div class="tip dtip">Dokun: desteye ekle ya da çıkar · Basılı tut: kart ayrıntısı</div>
-<div id="deckGrid">${grid}</div>
-<div class="tip supertip">SÜPER KART · maçta 1 kez (uzatmada +1)</div>
-<div id="superGrid">${SUPER_KEYS.map(k=>`<button class="supopt" data-k="${k}" style="--c1:${CARDS[k].c1};--c2:${CARDS[k].c2}"><i>${iconSvg(k)}</i><b>${CARDS[k].name}</b><em>${CARDS[k].cost}★</em></button>`).join('')}</div>
+<div class="deckbar"><span>Seçili <b id="deckCount"></b></span><span>Ortalama <b id="deckAvg"></b>★</span></div>
+<div class="decktabs" role="tablist">
+<button class="dtab" data-t="atk" role="tab">HÜCUM <b id="deckAtk"></b></button>
+<button class="dtab" data-t="def" role="tab">SAVUNMA <b id="deckDef"></b></button>
+<button class="dtab sup" data-t="super" role="tab">SÜPER</button></div>
+<div class="tip dtip" id="deckHint"></div>
+<div id="deckGrid"></div>
 <button class="cta" id="go">KAYDET</button><button class="link" id="back">Vazgeç</button>`,
   {go:()=>{Deck.set(sel);Deck.setSuper(selSuper);showMenu();},back:showMenu});
   $('obox').classList.add('wide');
+  const draw=()=>{
+    const keys=tab==='super'?SUPER_KEYS:ofType(tab);
+    $('deckGrid').className=tab==='super'?'sup':'';
+    $('deckGrid').innerHTML=keys.map(k=>cardHTML(k,-1).replace('data-i="-1"','data-k="'+k+'"').replace('tabindex="-1"','')).join('');
+    $('deckHint').textContent=tab==='super'?'Maçta 1 kez oynanır, uzatmada +1 hak. Birini seç.':'Dokun: desteye ekle ya da çıkar · Basılı tut: ayrıntı';
+    document.querySelectorAll('.dtab').forEach(el=>{el.classList.toggle('on',el.dataset.t===tab);el.setAttribute('aria-selected',el.dataset.t===tab);});
+    render();
+  };
   const render=()=>{
-    $('deckGrid').querySelectorAll('.card').forEach(el=>el.classList.toggle('in',sel.includes(el.dataset.k)));
-    $('superGrid').querySelectorAll('.supopt').forEach(el=>el.classList.toggle('in',el.dataset.k===selSuper));
+    $('deckGrid').querySelectorAll('.card').forEach(el=>el.classList.toggle('in',tab==='super'?el.dataset.k===selSuper:sel.includes(el.dataset.k)));
     $('deckCount').textContent=sel.length+'/'+DECK_SIZE;
     $('deckAtk').textContent=sel.filter(k=>CARDS[k].type==='atk').length;
     $('deckDef').textContent=sel.filter(k=>CARDS[k].type==='def').length;
@@ -222,16 +231,19 @@ function showDeck(){
   };
   const toggle=el=>{
     const k=el.dataset.k;
+    if(tab==='super'){selSuper=k;Sfx.click();render();return;}
     if(sel.includes(k))sel=sel.filter(x=>x!==k);
     else if(sel.length<DECK_SIZE)sel.push(k);
     else{Sfx.deny();el.classList.remove('full');void el.offsetWidth;el.classList.add('full');return;} // deste dolu
     Sfx.click();
     render();
   };
+  document.querySelectorAll('.dtab').forEach(el=>el.onclick=()=>{if(tab===el.dataset.t)return;tab=el.dataset.t;Sfx.click();draw();});
   pressable($('deckGrid'),{tap:toggle,hold:el=>openCardModal(el.dataset.k)});
-  pressable($('superGrid'),{tap:el=>{selSuper=el.dataset.k;Sfx.click();render();},hold:el=>openCardModal(el.dataset.k)},'.supopt');
   $('deckGrid').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest('.card');if(el){e.preventDefault();toggle(el);}}};
-  render();
+  draw();
+  // sekme değişince ekran zıplamasın: ızgara iki sıralık kart yüksekliğinde sabit kalır
+  $('deckGrid').style.minHeight=$('deckGrid').offsetHeight+'px';
 }
 function showSettings(){
   const seg=(name,items,cur)=>'<div class="seg" role="radiogroup">'+items.map(([v,l])=>
