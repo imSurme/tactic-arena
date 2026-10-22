@@ -48,7 +48,8 @@ function updateHud(){
     const p=Net.ping(),lbl=overtime?'UZATMA · ':clock<=FAST_TIME&&state==='play'?'SON DK · ':'';
     const html=lbl+(p==null?'<span class="ping">● …</span>':'<span class="ping '+(p<80?'g':p<150?'y':'r')+'">● '+p+' ms</span>');
     if($('half').innerHTML!==html)$('half').innerHTML=html;
-  }else $('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';
+    $('half').classList.add('net');
+  }else{$('half').classList.remove('net');$('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';}
   const t=teams[0],key=t.hand.join()+'|'+t.queue[0],sug=suggestedType();
   if(key!==handKey){handKey=key;$('hand').innerHTML=t.hand.map(cardHTML).join('');$('nextCard').innerHTML=miniCard(t.queue[0],-1);lastAfford=[];}
   document.querySelectorAll('#hand .card').forEach(el=>{
