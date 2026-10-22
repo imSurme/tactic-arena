@@ -37,7 +37,7 @@ function updateFxChips(t){
 }
 function updateHud(){
   $('s0').textContent=teams[0].score;$('s1').textContent=teams[1].score;
-  const live=state==='play';
+  const live=state==='play'||state==='coach';
   $('side0').classList.toggle('has',live&&attacking(teams[0]));$('side1').classList.toggle('has',live&&attacking(teams[1]));
   const s=overtime?Math.floor(clock):Math.ceil(clock);$('timer').textContent=(overtime?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
   const fast=overtime||clock<=FAST_TIME;
@@ -48,7 +48,7 @@ function updateHud(){
   document.querySelectorAll('#hand .card').forEach(el=>{
     const i=+el.dataset.i,c=CARDS[t.hand[i]],can=t.stars>=c.cost&&(state==='play'||state==='coach')&&!paused;
     el.classList.toggle('off',!can);
-    el.classList.toggle('hint',can&&state==='play'&&c.type===sug);
+    el.classList.toggle('hint',can&&(state==='play'||state==='coach')&&c.type===sug);
     if(can&&lastAfford[i]===false){el.classList.remove('ready');void el.offsetWidth;el.classList.add('ready');Sfx.ready();}
     lastAfford[i]=can;
     el.querySelector('.lock').style.height=(t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';

@@ -26,6 +26,8 @@ function frame(ts){
         updatePendingCards(dt);aiCards(dt);simPlayers(dt);if(state==='play')simBall(dt,true);
         Tutorial.update(dt);
       }
+    }else if(state==='coach'){
+      Coach.tick(dt);
     }else if(state==='goal'){
       goalT-=dt;simBall(dt,false);
       for(const t of teams)for(const p of t.players){p.vx*=.9;p.vy*=.9;p.x+=p.vx*dt;p.y+=p.vy*dt;}
