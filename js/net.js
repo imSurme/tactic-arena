@@ -6,6 +6,30 @@ const Net=(()=>{
   const ID_PREFIX='tactic-arena-',CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const PUBLIC_URL='https://imsurme.github.io/tactic-arena/'; // dosyadan açılınca paylaşılacak adres
   const SNAP_EVERY=.05; // saniye
+  // Bağlantı: önce cihazlar doğrudan buluşmaya çalışır (STUN). Farklı ağlarda (mobil veri, operatör NAT'ı)
+  // bu çoğu zaman olmaz; o zaman trafik bir TURN sunucusu üzerinden aktarılır.
+  // TURN bilgileri repoda tutulmaz: yayın sırasında GitHub Secrets'tan js/turn-config.js dosyasına yazılır
+  // (.github/workflows/pages.yml). Dosya yoksa sadece STUN kullanılır.
+  //   window.TURN_CONFIG={api:'kimlik bilgisi veren adres', servers:[{urls:'turn:sunucu:3478',username:'...',credential:'...'}]}
+  const TURN_CFG=window.TURN_CONFIG||{};
+  const TURN_API=TURN_CFG.api||'';
+  const TURN_SERVERS=Array.isArray(TURN_CFG.servers)?TURN_CFG.servers:[];
+  const STUN=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'}];
+  let iceCache=null;
+  async function iceServers(){
+    if(iceCache)return iceCache;
+    let turn=TURN_SERVERS.slice();
+    if(TURN_API){
+      try{
+        const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),4000);
+        const r=await fetch(TURN_API,{signal:ctl.signal});clearTimeout(t);
+        const list=await r.json();if(Array.isArray(list))turn=turn.concat(list);
+      }catch(e){}
+    }
+    iceCache=STUN.concat(turn);
+    return iceCache;
+  }
+  const peerOpts=async()=>({debug:0,config:{iceServers:await iceServers()}});
   let role=null,peer=null,conn=null,code='',sendT=0,events=[],lastSnapAt=0,snap=null,snapAt=0,stalled=false;
   let readyMe=false,readyThem=false,guestDeck=null,cardLock=0,sentEnd=false;
 
@@ -33,6 +57,23 @@ const Net=(()=>{
   const SWAP={'#9cc4ff':'#ffb0b8','#ffb0b8':'#9cc4ff','#2f80ff':'#ff4d5e','#ff4d5e':'#2f80ff','#b6f23a':'#ffa21f','#ffa21f':'#b6f23a'};
   const sc=c=>SWAP[c]||c;
   const send=m=>{if(conn&&conn.open)conn.send(m);};
+  function keepAlive(p){
+    p.on('disconnected',()=>{if(role&&p===peer&&!p.destroyed)setTimeout(()=>{try{if(p===peer&&!p.destroyed&&p.disconnected)p.reconnect();}catch(e){}},800);});
+  }
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden||!peer||peer.destroyed)return;
+    if(peer.disconnected){try{peer.reconnect();}catch(e){}}
+  });
+  // WebRTC bağlantısı kurulamazsa (ağlar birbirine ulaşamıyor) beklemeden haber ver
+  function watchIce(c,onFail){
+    let tries=0;
+    const hook=()=>{
+      const pc=c.peerConnection;
+      if(!pc){if(++tries<50)setTimeout(hook,100);return;}
+      pc.addEventListener('iceconnectionstatechange',()=>{if(pc.iceConnectionState==='failed')onFail();});
+    };
+    hook();
+  }
   const emit=e=>{if(role==='host')events.push(e);};
 
   // ---------- ev sahibi: oyundaki görsel/ses olaylarını misafire aktar
@@ -140,8 +181,9 @@ const Net=(()=>{
   function wire(c){
     conn=c;
     c.on('data',onData);
-    c.on('close',()=>{if(role)lost('Rakip maçtan ayrıldı.');});
-    c.on('error',()=>{if(role)lost('Bağlantı hatası oluştu.');});
+    let opened=false;c.on('open',()=>{opened=true;});
+    c.on('close',()=>{if(role&&opened&&conn===c)lost('Rakip maçtan ayrıldı ya da bağlantısı koptu.');});
+    c.on('error',()=>{if(role&&opened&&conn===c)lost('Bağlantı hatası oluştu.');});
   }
   function lost(msg){
     const r=role;cleanup();
@@ -174,13 +216,15 @@ const Net=(()=>{
     }
   }
   function netError(err){
-    const t=err&&err.type;
-    const msg=t==='peer-unavailable'?'Bu oda bulunamadı. Link eskimiş olabilir ya da arkadaşın odayı kapatmış.'
+    const t=err&&err.type,r=role,c=code;
+    const msg=t==='peer-unavailable'?'Bu oda bulunamadı. Arkadaşının oda ekranı açık kalmalı; link eskiyse yeni oda kurmasını iste.'
       :t==='network'||t==='server-error'||t==='socket-error'?'Eşleştirme sunucusuna ulaşılamadı. İnternet bağlantını kontrol et.'
-      :t==='browser-incompatible'?'Bu tarayıcı arkadaş maçını desteklemiyor.'
-      :'Bağlantı kurulamadı. Mobil veride sorun olabilir; Wi-Fi\'ye geçip tekrar dene.';
+      :t==='browser-incompatible'?'Bu tarayıcı arkadaş maçını desteklemiyor. Chrome ya da Safari ile dene.'
+      :t==='ice'?"Cihazlarınız birbirine ulaşamadı. Farklı ağlarda (ör. biri mobil veride) bu olabilir; ikiniz aynı Wi-Fi'ya geçip tekrar deneyin."
+      :'Bağlantı zaman aşımına uğradı. Tekrar dene.';
     cleanup();
-    showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANAMADI</h2><p>${msg}</p><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
+    const retry=r==='guest'&&c?()=>Net.join(c):r==='host'?()=>Net.host():null;
+    showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANAMADI</h2><p>'+msg+'</p>'+(retry?'<button class="cta" id="go">TEKRAR DENE</button><button class="link" id="menu">Ana menü</button>':'<button class="cta" id="menu">ANA MENÜ</button>'),retry?{go:retry,menu:showMenu}:{menu:showMenu});
   }
 
   // ---------- maçı başlat
@@ -214,9 +258,16 @@ const Net=(()=>{
       showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA KURULUYOR…</h2><p>Bağlantı hazırlanıyor.</p><button class="link" id="menu">Vazgeç</button>',{menu:leave});
       try{await loadPeer();}catch(e){netError({type:'network'});return;}
       code=fixedCode||newCode();
-      peer=new Peer(ID_PREFIX+code);
-      peer.on('error',e=>{if(e.type==='unavailable-id'){peer.destroy();role='host';Net.host();}else if(role)netError(e);});
+      const opts=await peerOpts();if(role!=='host')return;
+      peer=new Peer(ID_PREFIX+code,opts);keepAlive(peer);
+      peer.on('error',e=>{
+        if(e.type==='unavailable-id'){peer.destroy();role='host';Net.host();}
+        else if(peer&&peer.__ready&&(e.type==='peer-unavailable'||e.type==='disconnected'||e.type==='network'||e.type==='server-error'||e.type==='socket-error'))return; // oda kurulduktan sonra geçici: sunucuya yeniden bağlanılır
+        else if(role&&!(conn&&conn.open))netError(e);
+      });
       peer.on('open',()=>{
+        if(peer.__ready)return; // arka plandan dönüp yeniden bağlandı
+        peer.__ready=true;
         const link=roomLink();
         showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>ODA HAZIR</h2>
 <p>Bu linki arkadaşına gönder. Linke girdiği an maç başlar.</p>
@@ -234,25 +285,50 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
         if($('shareLink'))$('shareLink').onclick=()=>navigator.share({title:'Tactic Arena',text:'Tactic Arena\'da benimle maç yap!',url:link}).catch(()=>{});
       });
       peer.on('connection',c=>{
-        if(conn){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300);});return;} // oda dolu
+        if(conn&&conn.open){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300);});return;} // oda dolu
+        if(conn){try{conn.close();}catch(e){}} // yarım kalmış önceki deneme
         wire(c);
-        c.on('open',()=>{const st=$('netStatus');if(st)st.textContent='Arkadaşın bağlandı, maç başlıyor…';});
+        const say=h=>{const el=$('netStatus');if(el)el.innerHTML=h;};
+        say('<span class="dotpulse"></span> Arkadaşın bulundu, bağlanılıyor…');
+        const drop=txt=>{if(conn===c&&!c.open){clearTimeout(t);try{c.close();}catch(e){}conn=null;say('<span class="dotpulse"></span> '+txt);}};
+        const t=setTimeout(()=>drop('Bağlantı kurulamadı, arkadaşın tekrar denemeli…'),25000);
+        watchIce(c,()=>drop('Cihazlar birbirine ulaşamadı, arkadaşın tekrar denesin…'));
+        c.on('open',()=>{clearTimeout(t);say('Arkadaşın bağlandı, maç başlıyor…');});
       });
     },
     // linkteki odaya katıl
     async join(roomCode){
       cleanup();role='guest';code=roomCode.toUpperCase();
-      showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANIYOR…</h2><p>${code} odasına bağlanılıyor.</p><p class="tip"><span class="dotpulse"></span> Birkaç saniye sürebilir</p><button class="link" id="menu">Vazgeç</button>`,{menu:leave});
+      showOverlay(`<div class="tip">ARKADAŞ MAÇI</div><h2>BAĞLANIYOR…</h2><p>${code} odasına bağlanılıyor.</p><p class="tip" id="guestStatus"><span class="dotpulse"></span> Birkaç saniye sürebilir</p><button class="link" id="menu">Vazgeç</button>`,{menu:leave});
       try{await loadPeer();}catch(e){netError({type:'network'});return;}
-      peer=new Peer();
-      peer.on('error',e=>{if(role)netError(e);});
-      peer.on('open',()=>{
-        const c=peer.connect(ID_PREFIX+code,{reliable:true});
-        wire(c);
-        const t=setTimeout(()=>{if(role==='guest'&&!(conn&&conn.open))netError({type:'timeout'});},15000);
-        c.on('open',()=>{clearTimeout(t);c.send({t:'hello',deck:Deck.get(),v:1});});
-        c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
-      });
+      const opts=await peerOpts();if(role!=='guest')return;
+      let attempt=0,timer=null;
+      const status=txt=>{const el=$('guestStatus');if(el)el.innerHTML='<span class="dotpulse"></span> '+txt;};
+      const attemptJoin=()=>{
+        if(role!=='guest')return;
+        attempt++;
+        if(peer){try{peer.destroy();}catch(e){}}
+        conn=null;clearTimeout(timer);
+        const p=peer=new Peer(opts);keepAlive(p);
+        p.on('error',e=>{
+          if(!role||p!==peer)return;
+          // oda henüz yok: ev sahibi linki paylaşırken sunucudan kopmuş olabilir, birkaç kez yeniden dene
+          if(e.type==='peer-unavailable'&&attempt<6){status('Oda aranıyor ('+attempt+'/6)…');clearTimeout(timer);setTimeout(attemptJoin,1500);return;}
+          if(e.type==='disconnected'||(conn&&conn.open))return; // maç sürerken eşleştirme sunucusu kopsa da bağlantı yaşar
+          clearTimeout(timer);netError(e);
+        });
+        p.on('open',()=>{
+          if(p!==peer||conn)return;
+          const c=p.connect(ID_PREFIX+code,{reliable:true});
+          wire(c);
+          // istek bazen sunucuda askıda kalır: 9 sn'de açılmazsa temiz bir bağlantıyla yeniden dene
+          timer=setTimeout(()=>{if(role==='guest'&&conn===c&&!c.open){if(attempt<6){status('Tekrar deneniyor ('+attempt+'/6)…');attemptJoin();}else netError({type:'timeout'});}},9000);
+          watchIce(c,()=>{if(role==='guest'&&conn===c&&!c.open){clearTimeout(timer);netError({type:'ice'});}});
+          c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),v:1});});
+          c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<div class="tip">ARKADAŞ MAÇI</div><h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
+        });
+      };
+      attemptJoin();
     },
     // ev sahibi her karede çağırır: belli aralıklarla anlık görüntü gönder
     hostTick(dt){

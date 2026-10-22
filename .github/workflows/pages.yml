@@ -1,0 +1,52 @@
+# Siteyi GitHub Pages'e yayınlar. TURN bilgileri repo yerine Secrets'ta durur ve
+# yayın sırasında js/turn-config.js dosyasına yazılır.
+# Gerekli secrets (Settings -> Secrets and variables -> Actions):
+#   TURN_URLS        virgülle ayrılmış adresler, ör. turn:relay1.expressturn.com:3478,turn:relay1.expressturn.com:3478?transport=tcp
+#   TURN_USERNAME    kullanıcı adı
+#   TURN_CREDENTIAL  şifre
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write TURN config
+        env:
+          TURN_URLS: ${{ secrets.TURN_URLS }}
+          TURN_USERNAME: ${{ secrets.TURN_USERNAME }}
+          TURN_CREDENTIAL: ${{ secrets.TURN_CREDENTIAL }}
+        run: |
+          node -e '
+            const urls=(process.env.TURN_URLS||"").split(",").map(s=>s.trim()).filter(Boolean);
+            const cfg=urls.length?{servers:[{urls,username:process.env.TURN_USERNAME||"",credential:process.env.TURN_CREDENTIAL||""}]}:{};
+            require("fs").writeFileSync("js/turn-config.js","window.TURN_CONFIG="+JSON.stringify(cfg)+";\n");
+            console.log("TURN servers:",urls.length);
+          '
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
