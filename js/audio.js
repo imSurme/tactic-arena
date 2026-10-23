@@ -18,7 +18,8 @@ const Sfx=(()=>{
   // maç sırasında uyutulmaz: iPhone dokunuş olmadan uyanmasına izin vermeyebilir, oyun sessiz kalırdı
   let lastUse=0;
   const inMatch=()=>typeof state!=='undefined'&&(state==='play'||state==='goal'||state==='coach');
-  function wake(){lastUse=performance.now();if(ac&&!held&&!muted&&ac.state==='suspended')ac.resume();}
+  // iPhone arka plandan dönünce motor 'interrupted' durumunda kalabilir: çalışmıyorsa her durumda uyandır
+  function wake(){lastUse=performance.now();if(ac&&!held&&!muted&&ac.state!=='running'&&ac.state!=='closed')ac.resume().catch(()=>{});}
   setInterval(()=>{if(ac&&ac.state==='running'&&(muted||!inMatch()&&performance.now()-lastUse>3000))ac.suspend();},1000);
   const ok=()=>{if(!ac||ac.state==='closed'||held||muted)return false;wake();return true;};
   // tarayıcılar sesi ancak kullanıcı etkileşiminden sonra açar: ekrana ilk dokunuşta ses açılsın

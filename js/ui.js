@@ -115,7 +115,7 @@ function applyOppHud(){
   $('who1').textContent=matchOpp?matchOpp.short:'RAKİP';
 }
 function showMenu(){
-  state='menu';paused=false;Tutorial.hide();matchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
+  state='menu';paused=false;Sfx.resume();Tutorial.hide(); // duraklatılmış maçtan çıkılınca ses kapalı kalmasınmatchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
   showOverlay(`<h1>TACTIC<br>ARENA</h1><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
 <button class="cta tour" id="pvp">ARKADAŞINLA OYNA<small>Link ya da oda koduyla</small></button><div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div>${tourButton()}<button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
   {go:showTournament,pvp:showPvpMenu,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
@@ -273,7 +273,7 @@ function showSettings(){
   $('optShake').onchange=e=>{Settings.set('shake',e.target.checked);Sfx.click();};
 }
 function start(){
-  Sfx.init();
+  Sfx.init();Sfx.resume(); // "Yeniden başla" duraklatma ekranından gelir
   newMatch();paused=false;hideOverlay();applyOppHud();resize();
   if(Coach.needed()){state='coach';Coach.run(kickOffMatch);}
   else kickOffMatch();
