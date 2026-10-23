@@ -198,7 +198,7 @@ function drawPlayer(p){
   }
   const aura=['wave','counter','press','wall'].find(k=>t.fx[k]>0);
   if(aura&&!gk){ctx.strokeStyle=t.color;ctx.globalAlpha=.5+Math.sin(now*8+p.num)*.25;ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.lineDashOffset=-now*20;ell(x,y+2,17,11);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
-  if(t.fouler===p){ctx.strokeStyle=CARDS.foul.col;ctx.globalAlpha=.75+Math.sin(now*12)*.2;ctx.lineWidth=2.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-now*30;ell(x,y+2,16,10.5);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;} // taktik faule koşan
+  if(t.fouler===p||t.slider===p){ctx.strokeStyle=CARDS[t.fouler===p?'foul':'slide'].col;ctx.globalAlpha=.75+Math.sin(now*12)*.2;ctx.lineWidth=2.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-now*30;ell(x,y+2,16,10.5);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;} // taktik faule ya da kaymaya koşan
   if(gk&&t.fx.gk>0){ctx.strokeStyle=t.color;ctx.globalAlpha=.45+Math.sin(now*6)*.2;ctx.lineWidth=2.5;ell(x,y,26,26);ctx.stroke();ctx.globalAlpha=.08;ctx.fillStyle=t.color;ctx.fill();ctx.globalAlpha=1;}
   if(p.dash>0||p.sprint>0){ctx.strokeStyle='rgba(255,255,255,.65)';ctx.lineWidth=2;ctx.lineCap='round';const a=p.fa+Math.PI;for(const o of [-6,0,6]){const ox=Math.cos(a+Math.PI/2)*o,oy=Math.sin(a+Math.PI/2)*o;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*13+ox,y+Math.sin(a)*13+oy);ctx.lineTo(x+Math.cos(a)*(22+Math.abs(o))+ox,y+Math.sin(a)*(22+Math.abs(o))+oy);ctx.stroke();}ctx.lineCap='butt';}
   drawBody(p,x,y,jersey,trim,gk,run,sw);

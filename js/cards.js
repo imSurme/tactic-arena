@@ -84,11 +84,8 @@ function applyCard(t,k){
       ring(f.x,f.y,CARDS.hero.col);burst(f.x,f.y,CARDS.hero.col,18,140);floatAbove(f.x,f.y,22,'YILDIZ!',CARDS.hero.col);
       return;
     }
-    case'slide':{
-      const tgt=theirs?o:ball;
-      let best=null,bd=1e9;
-      for(const p of t.players){if(p.role==='GK'||p.stun>0||p===o)continue;const d=dist(p,tgt);if(d<bd){bd=d;best=p;}}
-      if(best){best.dash=1;best.tackleCd=0;burst(best.x,best.y,CARDS.slide.col,10,90);}
+    case'slide':{ // en yakın oyuncu önce koşar, yakınına gelince kayar (ai.js assignRoles, states.js slideRun)
+      t.fx.slide=SLIDE_WAIT;
       return;
     }
   }

@@ -12,6 +12,8 @@ function assignRoles(t){
   else if(!o)t.chasers=ball.passTo&&ball.passTo.team===t?[ball.passTo]:out.slice(0,n);
   else if(o.team!==t)t.chasers=o.role==='GK'?[]:out.slice(0,n); // topu tutan kaleciye basılmaz
   else t.chasers=[];
+  // Kayan Müdahale kartı: rakip topçuya ya da boştaki topa en yakın oyuncu koşar (topu tutan kaleciye ve duran topta yapılmaz)
+  t.slider=t.fx.slide>0&&!ball.kickoff&&!(ball.setT>0)&&(o?o.team!==t&&o.role!=='GK':true)?out[0]||null:null;
   // Taktik Faul kartı: topçuya en yakın oyuncu faul için koşar (topu tutan kaleciye ve duran topta yapılmaz)
   t.fouler=t.fx.foul>0&&o&&o.team!==t&&o.role!=='GK'&&!ball.kickoff&&!(ball.setT>0)?out[0]||null:null;
   assignMarks(t);
@@ -24,7 +26,7 @@ function steer(p,t,tg,dt){
   if(t.fx.offside>0&&p.role==='DEF'&&!attacking(t))sp*=1.25; // tuzak: hat hızla çıkar
   if(teams[1-t.id].fx.tiki>0&&attacking(teams[1-t.id]))sp*=.8; // tiki-taka: top peşinde koşan rakip yorulur
   if(ball.tactical&&ball.setT>0&&ball.owner&&ball.owner.team===t&&ball.owner!==p)sp*=.35; // taktik faul sonrası atak durur
-  if(p.dash>0)sp=265;
+  if(p.dash>0)sp=SLIDE_SPEED;
   if(p.stun>0)sp=0;
   const dx=clamp(tg.x,FX+6,FX+FW-6)-p.x,dy=clamp(tg.y,FY+6,FY+FH-6)-p.y,d=Math.hypot(dx,dy);
   let ax=0,ay=0;

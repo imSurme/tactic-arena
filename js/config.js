@@ -40,6 +40,7 @@ const CARDS={
   hero:{name:'Yıldız Oyuncu',short:'YILDIZ',type:'super',cost:7,desc:'Forvet 12 sn süperstar',c1:'#fff3a0',c2:'#c98a00',col:'#ffd23f'},
   intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
+const SLIDE_WAIT=6,SLIDE_RANGE=75,SLIDE_SPEED=265; // kayan müdahale: yaklaşmak için süre, kaymaya başlama mesafesi ve kayış hızı
 const DUR={total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
 // xG: şutun gol olma olasılığı. Simülasyondaki 18.153 şuttan lojistik regresyonla çıkarıldı.
 // mesafe dilimleri (px): <50, <80, <110, <150, <200, 200+ (her dilimin kendi sabiti);

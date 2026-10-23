@@ -56,6 +56,18 @@ const FieldStates={
     return{x:o.x+dx/d*14,y:o.y+dy/d*14,sp:1.12}; // arkada ya da uzakta: önüne dolan
   }},
   mark:{name:'Markaj',short:'MRK',execute:p=>markSpot(p,p.team)},
+  // Kayan Müdahale: hedefe depar at, yakınına gelince kay; kayış süresi kalan mesafeye göre (hedefi aşıp uzağa kaymasın)
+  slideRun:{name:'Kaymaya hazırlan',short:'KYM',execute(p){
+    const o=ball.owner,t=p.team;
+    if(o&&o.team===t)return formation(p,t); // bu karede top bize geçti
+    const tg=o||ball,d=dist(p,tg);
+    if(d<SLIDE_RANGE){
+      p.dash=clamp(d/SLIDE_SPEED+.2,.3,.45);p.tackleCd=0;t.fx.slide=0;t.slider=null; // hızlanma payı dahil: hedefe ulaşacak kadar, fazlası değil
+      burst(p.x,p.y,CARDS.slide.col,10,90);
+      return{x:tg.x,y:tg.y,sp:1};
+    }
+    return{x:tg.x+(o?0:ball.vx*.25),y:tg.y+(o?0:ball.vy*.25),sp:1.9}; // depar: topçuya yetişebilsin
+  }},
   // Taktik Faul: topçuya depar at, yetişince faulü yap. Rakip yapay zeka ceza sahasında faul yapmaz (penaltı olur), bekler
   foulRun:{name:'Taktik faul',short:'FAL',execute(p){
     const o=ball.owner,t=p.team;
@@ -118,6 +130,7 @@ function chooseFieldState(p,t){
   if(ball.kickoff&&p===t.koRecv&&attacking(t))return S.kickoffWait;
   if(o===p)return S.dribble;
   if(t.fouler===p)return S.foulRun;
+  if(t.slider===p)return S.slideRun;
   if(ball.passTo===p&&!o)return S.receive;
   if(t.chasers.includes(p))return o?S.press:S.chase;
   if(p.mark)return S.mark;
