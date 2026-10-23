@@ -33,15 +33,15 @@ const CARDS={
   slide:{name:'Kayan Müdahale',short:'KAYMA',type:'def',cost:3,desc:'Kayarak topa dalar',c1:'#d4f78a',c2:'#4c9a1f',col:'#b4e85a'},
   offside:{name:'Ofsayt Tuzağı',short:'OFSAYT',type:'def',cost:3,desc:'Hat çıkar, ofsayt yakalar',c1:'#fff3a0',c2:'#b58b00',col:'#ffe14d'},
   foul:{name:'Taktik Faul',short:'FAUL',type:'def',cost:2,desc:'Atağı kes, baştan kurdur',c1:'#ffa3a3',c2:'#b3122b',col:'#ff6b7a'},
-  mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'7 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
+  mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'8 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
   // süper kartlar: destede bir tane seçilir, maçta bir kez (uzatmada bir hak daha) oynanır
   total:{name:'Total Futbol',short:'TOTAL',type:'super',cost:7,desc:'10 sn tüm hücum gücü',c1:'#ffe27a',c2:'#d9431e',col:'#ffb52e'},
   bus:{name:'Otobüsü Çek',short:'OTOBÜS',type:'super',cost:6,desc:'10 sn kaleyi kapat',c1:'#9fd8ff',c2:'#1f3fa8',col:'#5cb8ff'},
   hero:{name:'Yıldız Oyuncu',short:'YILDIZ',type:'super',cost:7,desc:'Forvet 12 sn süperstar',c1:'#fff3a0',c2:'#c98a00',col:'#ffd23f'},
-  intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'6 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
+  intercept:{name:'Pas Arası',short:'PAS ARASI',type:'def',cost:2,desc:'7 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
 const SLIDE_WAIT=6,SLIDE_RANGE=75,SLIDE_SPEED=265; // kayan müdahale: yaklaşmak için süre, kaymaya başlama mesafesi ve kayış hızı
-const DUR={total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:7,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:7,intercept:6};
+const DUR={total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:8,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:8,intercept:7};
 // xG: şutun gol olma olasılığı. Simülasyondaki 18.153 şuttan lojistik regresyonla çıkarıldı.
 // mesafe dilimleri (px): <50, <80, <110, <150, <200, 200+ (her dilimin kendi sabiti);
 // sonra: açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×mesafe, vole, rakip kaleci kartı, rakip duvar kartı

@@ -53,7 +53,7 @@ function passOptions(p,t){
     const prog=(tg.y-p.y)*dirY(t),open=Math.min(nearestOpp(tg,t).d,60);
     const near=Math.max(0,200-dist(tg,oppGoal(t)))*.25;
     const s=prog*.7+open*.8+near+Math.min(safe,30)*.4-d*.08+rnd(0,8)-(r.role==='GK'?25:0)
-      +(t.fx.overlap&&r.role==='DEF'?18:0)+(r.superT>0?30:0)
+      +(t.fx.overlap&&r.role==='DEF'?40:0)+(r.superT>0?30:0)
       -(r===p.passFrom&&now-p.passFromT<2.5?(ball.kickoff===false&&p.hold<.3?40:24):0) // topu yeni verene hemen geri verme
       +(laneX(t)!==null&&Math.abs(tg.x-laneX(t))<60?14:0); // hücum kanadına pas
     res.push({r,tg,sp,s});
@@ -219,7 +219,7 @@ function carrierThink(p,t,dt){
   if(dG<90&&q>-.45&&Math.random()<.7){shoot(p,t);return;}
   if(dG<130&&p.hold>1.1&&q>-.25){shoot(p,t);return;}
   // kanatta ve son üçte birdeyse ortala
-  if(Math.abs(p.x-CX)>85&&ny<(t.fx.overlap?.42:.3)&&Math.random()<(ny<.18||t.fx.overlap&&p.role==='DEF'?.75:.4)&&cross(p,t))return;
+  if(Math.abs(p.x-CX)>85&&ny<(t.fx.overlap?.42:.3)&&Math.random()<(t.fx.overlap?.9:ny<.18?.75:.4)&&cross(p,t))return;
   const dd=dribbleDir(p,t);p.drib=dd.a;
   const best=passOptions(p,t)[0];
   // sürmeye devam etmenin değeri: önü ne kadar açık, ne kadar baskı var, topu ne zamandır tutuyor
@@ -240,7 +240,7 @@ function formation(p,t){
       if(p.role==='DEF'&&(p.bx-.5)*t.lane>0){ny-=.12;nx=t.lane>0?.88:.12;} // kanat tarafındaki bek bindirir
     }
     if(t.fx.overlap&&p.role==='DEF'){ny-=.22;nx=p.bx<.5?.08:.92;} // bekler bindirir
-    if(t.fx.overlap&&p.role!=='DEF'&&p.role!=='GK')ny-=.1; // orta saha ve forvet ortaya hazırlanır
+    if(t.fx.overlap&&p.role!=='DEF'&&p.role!=='GK')ny-=.16; // orta saha ve forvet ortaya hazırlanır
   }else if(t.fx.offside&&p.role!=='GK')ny-=p.role==='DEF'?.16:.07; // ofsayt tuzağı: hat aniden öne çıkar
   if(t.fx.wave)ny-=has?.2:.1;
   if(t.fx.wall&&!has){ny=.7+(p.by-.44)*.45+(b.y-.5)*.08;nx=.5+(nx-.5)*.75;}
@@ -288,9 +288,10 @@ function markSpot(p,t){
   const q=p.mark,g=ownGoal(t);
   const dx=g.x-q.x,dy=g.y-q.y,d=Math.hypot(dx,dy)||1;
   const bx=ball.x-q.x,by=ball.y-q.y,bd=Math.hypot(bx,by)||1;
-  const tight=t.fx.mark>0,md=tight?12:16;
+  const tight=t.fx.mark>0,md=tight?11:16;
   // kale tarafı ile top tarafının ortası, rakipten hep md kadar uzakta (top arkadaysa da üstüne binmez)
-  let ox=dx/d*md+bx/bd*7,oy=dy/d*md+by/bd*7;const ol=Math.hypot(ox,oy)||1;ox*=md/ol;oy*=md/ol;
+  const lane=t.fx.intercept>0?16:7; // pas arası: savunmacı pas yoluna doğru kayar
+  let ox=dx/d*md+bx/bd*lane,oy=dy/d*md+by/bd*lane;const ol=Math.hypot(ox,oy)||1;ox*=md/ol;oy*=md/ol;
   const mx=q.x+ox,my=q.y+oy;
   const base=formation(p,t),w=tight?1:clamp(1-(d-110)/220,.25,1)*(t.fx.wall?.55:1);
   return{x:base.x+(mx-base.x)*w,y:base.y+(my-base.y)*w,sp:.95};

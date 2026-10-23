@@ -46,7 +46,7 @@ function simBall(dt,live){
         b.gkRolled=true;
         // uzaktan gelen şutu görüp hazırlanmak için kalecinin daha çok zamanı olur
         // kurtarış şansı (kaleci yetişirse): yakından ~%68, uzaktan ~%95; köşeye ve güçlü şut daha zor
-        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0)-(b.header?.18:0),.12,.95);
+        const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0)-(b.header?.28:0),.12,.95);
         if(Math.random()<ch){
           burst(b.x,b.y,'#fff',12,120);floatAbove(gk.x,gk.y,20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           stats.saves[t.id]++;statOnTarget(b.shotTeam.id);Crowd.save(b.shotTeam.id);
@@ -61,14 +61,14 @@ function simBall(dt,live){
       if(p.stun>0||p.kickCd>0)continue;
       if(b.shot&&b.gkRolled&&p.role==='GK'&&p.team!==b.shotTeam)continue; // kurtarışı kaçıran kaleci aynı şutu tutamaz
       const foe=b.passTeam&&b.passTeam!==p.team;
-      const d=dist(p,b),reach=(p.role==='GK'?13:p.dash>0?13:10)+(foe&&p.team.fx.intercept?4:0);
+      const d=dist(p,b),reach=(p.role==='GK'?13:p.dash>0?13:10)+(foe&&p.team.fx.intercept?8:0);
       if(d>=reach||d>=bd)continue;
       // canlı pası sadece alıcı alır; rakip ancak şansla keser ya da top neredeyse durmuşsa alır
       let ok=b.passTo===p||(b.shot?(p.role==='GK'||sp<150):p.role==='GK'||(foe?sp<70:sp<230));
       // pas arası: hızlı pası da kesebilir ama şansa bağlı (her oyuncu bir kez dener)
-      if(!ok&&!b.shot&&!b.safe&&foe&&sp<TEMPO.interceptMaxSpeed&&!b.rolled.has(p)){
+      if(!ok&&!b.shot&&!b.safe&&foe&&sp<(p.team.fx.intercept?420:TEMPO.interceptMaxSpeed)&&!b.rolled.has(p)){
         b.rolled.add(p);
-        let ch=p.team.fx.intercept?.7:TEMPO.intercept+(p.team.fx.mark?.3:0);
+        let ch=p.team.fx.intercept?.8:TEMPO.intercept+(p.team.fx.mark?.4:0);
         if(p.dash>0)ch=Math.max(ch,.65); // kayarak gelen oyuncu çıkan pası da keser
         if(b.passTeam.fx.tiki)ch*=.3;
         if(p.team.id===1)ch*=oppMod().skill;
@@ -91,7 +91,7 @@ function simBall(dt,live){
       if(dist(p,o)>(dashing?18:13))continue;
       p.tackleCd=TEMPO.tackleCd;
       if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
-      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.1:0);
+      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.3:0);
       const ax=p.x-o.x,ay=p.y-o.y,dirC=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1); // >0 önden, <0 arkadan
       if(p.dash<=0)ch*=dirC>.3?1.6:dirC<-.3?.45:1.9; // önden karşılama ve omuz omuza mücadele iyi, arkadan zor
       if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası

@@ -147,7 +147,7 @@ const CARD_DETAIL={
   through:'En öndeki oyuncuya savunmanın arkasına derin pas atılır. Bu pas yolda kesilemez, topu alan oyuncu ilk dokunuşta kaleye vurur. Top rakipteyse, topu geri aldığın an atılır.',
   power:'15 sn içinde takımın çektiği ilk şut güçlü şut olur: oyuncu iyi bir pozisyon kollar, çok sert ve isabetli vurur, kaleci zor kurtarır.',
   wave:'7 sn boyunca kaleci hariç herkes ileri çıkar, %25 hızlanır ve çok daha sık şut çeker. Arkada boşluk kalır.',
-  overlap:'7 sn boyunca iki bek kanatlardan hücuma bindirir, orta saha ve forvet ceza sahasına yaklaşır; paslar kanatlara akar ve sık orta yapılır. Ortaya yapılan kafa ve voleler köşeye, çok isabetli gider.',
+  overlap:'8 sn boyunca iki bek kanatlardan depar atıp hücuma bindirir, orta saha ve forvet ceza sahasına yaklaşır; paslar kanatlara akar ve sık orta yapılır. Ortaya yapılan kafa ve voleler köşeye, çok isabetli gider.',
   longball:'Top savunmanın arkasına havadan gönderilir, havadayken kesilemez. Topu alan oyuncu ilk dokunuşta kaleye vurur. Top rakipteyse, topu geri aldığın an atılır.',
   dribble:'6 sn boyunca top süren oyuncundan top kapmak çok zorlaşır, daha cesur sürer.',
   tiki:'8 sn boyunca top hızlı paslarla dolaşır. Rakip pasları zor keser, topu kapmakta zorlanır ve peşinden koşarken yavaşlar. Her isabetli pas +0,25★.',
@@ -157,11 +157,11 @@ const CARD_DETAIL={
   slide:'Topa en yakın oyuncun depar atar, yakınına gelince kayarak atılır. Rakip pas verirse yeni topçunun ya da pasın peşine düşer (6 sn içinde yaklaşamazsa kart boşa gider). Rakibe yetişirse topu çoğunlukla alır, rakip pası çıkarırsa pası kesmeye çalışır. Kayarak müdahale bazen faul olur.',
   offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; pas anında hattın arkasında kalan oyuncu topu alınca ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
   foul:'Topçuya en yakın oyuncun depar atar ve yetişince bilerek faul yapar, atak orada kesilir. 5 sn içinde yetişemezse kart boşa gider. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Serbest vuruş faulün yapıldığı yerden kullanılır. Dikkat: ceza sahası içinde yapılan faul penaltıdır!',
-  mark:'7 sn boyunca savunmacılar rakiplerini yakından tutar; pas arası ve top kapma şansı artar.',
+  mark:'8 sn boyunca savunmacılar rakiplerini yapışık tutar; pas arası ve top kapma şansı çok artar.',
   total:'10 sn boyunca Kontra Atak, Hücum Dalgası ve Çalım Ustası aynı anda: takım hızlanır, herkes ileri çıkar, topu süren oyuncudan top almak çok zorlaşır.',
   bus:'10 sn boyunca Savunma Duvarı ve Kaleci Refleksi aynı anda: takım kaleye yaslanır, şutların önüne atlar, kaleci çok daha geniş alanı kapatır.',
   hero:'Forvetin 12 sn süperstar olur: ondan top alınamaz, %30 hızlı koşar, takım topu ona akıtır ve çektiği ilk şut Güçlü Şut\'tan da serttir.',
-  intercept:'6 sn boyunca rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
+  intercept:'7 sn boyunca savunmacılar pas yollarına hızla kayar; rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
 };
 function cardInfoHTML(k){
   const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','slide','power'].includes(k)?DUR[k]+' sn':'Anlık';

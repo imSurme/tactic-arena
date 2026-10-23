@@ -23,6 +23,7 @@ function steer(p,t,tg,dt){
   let sp=TEMPO.run*p.spd*(t.fx.counter?1.3:1)*(t.fx.wave?1.25:1)*(p.superT>0?1.3:1)*tg.sp;
   if(ball.owner===p)sp*=t.fx.dribble>0?1:.82;
   if(p.sprint>0)sp*=1.45;else if(p.run>0)sp*=1.2;
+  if(t.fx.intercept>0&&attacking(teams[1-t.id])&&p.role!=='GK')sp*=1.15; // pas arası: savunma pas yollarına hızla kayar
   if(t.fx.offside>0&&p.role==='DEF'&&!attacking(t))sp*=1.25; // tuzak: hat hızla çıkar
   if(teams[1-t.id].fx.tiki>0&&attacking(teams[1-t.id]))sp*=.8; // tiki-taka: top peşinde koşan rakip yorulur
   if(ball.tactical&&ball.setT>0&&ball.owner&&ball.owner.team===t&&ball.owner!==p)sp*=.35; // taktik faul sonrası atak durur

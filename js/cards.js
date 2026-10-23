@@ -91,6 +91,11 @@ function applyCard(t,k){
   }
   // süreli etkiler; ara pas, uzun top ve faul top uygun ana kadar bekler
   t.fx[k]=DUR[k];
+  // Kanat Bindirme: bekler kanattan derine depar atar (ofsayta düşmeden)
+  if(k==='overlap')for(const p of t.players)if(p.role==='DEF'){
+    const w=toW(t,p.bx<.5?.08:.92,.24),lim=offsideLimit(t)-6;
+    p.run=2.4;p.sprint=1.6;p.runTo={x:w.x,y:adv(t,w.y)>lim?lim*dirY(t):w.y};
+  }
   if(k==='gk')ring(t.players[0].x,t.players[0].y,CARDS.gk.col);
   else for(const p of t.players)if(p.role!=='GK')ring(p.x,p.y,CARDS[k].col);
 }
