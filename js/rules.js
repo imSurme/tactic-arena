@@ -30,7 +30,7 @@ let refFx=[];
 function callOffside(r,t){
   const def=teams[1-t.id];
   refFx.push({type:'flag',y:r.y,line:offsideLine(t)*dirY(t),t:0,life:1.6});
-  floatText(r.x,r.y-20,'OFSAYT!',CARDS.offside.col);Sfx.whistle();
+  floatAbove(r.x,r.y,20,'OFSAYT!',CARDS.offside.col);Sfx.whistle();
   stats.offside++;stats.offT[t.id]++;
   if(def.fx.offside>0){def.fx.offside=0;addStars(def,1,r.x,r.y);} // tuzak tuttu
   setPiece(def,{x:r.x,y:r.y},1.2);
@@ -39,7 +39,7 @@ function callOffside(r,t){
 function callFoul(fouler,victim,{delay=1.3,label='FAUL!',indirect=false}={}){
   const t=victim.team;
   refFx.push({type:'card',x:fouler.x,y:fouler.y,t:0,life:1.4});
-  floatText(fouler.x,fouler.y-22,label,'#ffe14d');Sfx.whistle();
+  floatAbove(fouler.x,fouler.y,22,label,'#ffe14d');Sfx.whistle();
   stats.fouls++;stats.foulsT[fouler.team.id]++;
   fouler.stun=Math.max(fouler.stun,.5);
   const spot={x:victim.x,y:victim.y},g=oppGoal(t);
@@ -60,7 +60,7 @@ function setPiece(t,spot,delay,indirect=false){
   taker.freeKick=!indirect&&dg<150&&Math.random()<(dg<110?.45:.25);
   taker.setPass=!taker.freeKick;
   taker.resetPass=indirect; // taktik fauldan sonra vuruş geriye oynanır, atak yeniden kurulur
-  if(taker.freeKick)floatText(spot.x,spot.y+18,'SERBEST VURUŞ','#fff');
+  if(taker.freeKick)floatAbove(spot.x,spot.y,-18,'SERBEST VURUŞ','#fff');
 }
 // müdahale faul mü? Kayarak ve arkadan müdahale daha riskli; ceza sahası içinde faul çalınmaz
 function tackleFoul(tackler,carrier){

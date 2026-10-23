@@ -23,7 +23,7 @@ const Deck=(()=>{
 const avgCost=d=>d.reduce((s,k)=>s+CARDS[k].cost,0)/d.length;
 function addStars(t,n,x,y){
   t.stars=Math.min(STAR_MAX,t.stars+n);
-  if(x!==undefined)floatText(x,y-30,'+'+(n%1?n.toFixed(1):n)+'★','#ffd23f');
+  if(x!==undefined)floatAbove(x,y,30,'+'+(n%1?n.toFixed(1):n)+'★','#ffd23f');
 }
 // uçuşu süren kartlar: etkileri çarpma anında uygulanır (oyun duraklayınca bekler)
 const CARD_FLIGHT=.5;
@@ -82,7 +82,7 @@ function applyCard(t,k){
     case'hero':{ // forvet süperstar: top kaptırmaz, hızlı, ilk şutu çok sert
       const f=t.players.find(p=>p.role==='FWD');
       f.superT=DUR.hero;f.superShot=false;t.fx.hero=DUR.hero;
-      ring(f.x,f.y,CARDS.hero.col);burst(f.x,f.y,CARDS.hero.col,18,140);floatText(f.x,f.y-22,'YILDIZ!',CARDS.hero.col);
+      ring(f.x,f.y,CARDS.hero.col);burst(f.x,f.y,CARDS.hero.col,18,140);floatAbove(f.x,f.y,22,'YILDIZ!',CARDS.hero.col);
       return;
     }
     case'slide':{

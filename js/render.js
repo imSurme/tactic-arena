@@ -3,19 +3,28 @@ const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const bg=document.createElement('canvas'),bctx=bg.getContext('2d');
 let scale=1,dpr=1,viewCrop=0; // viewCrop: tuvalin üstünden ve altından kırpılan oyun pikseli
 let offX=0,offY=0; // tuval sahneyi tamamen doldurur; oyun alanı ortalanır, kalan yer tribündür (oyun pikseli)
+// yatay ekranda (masaüstü, yatay tablet) saha 90° döndürülüp soldan sağa çizilir: sen soldan sağa hücum edersin.
+// oyun koordinatları değişmez, yalnızca çizim döner; yazılar ve tribündeki taraftarlar ekranda düz kalır
+let landscape=false;
+const upOff=d=>landscape?{x:-d,y:0}:{x:0,y:-d}; // ekranda d oyun pikseli yukarısı
+const upright=c=>{if(landscape)c.rotate(-Math.PI/2);};
+// oyun koordinatından tuval üzerindeki CSS pikseline
+function w2s(x,y){return landscape?{x:(H+offY-y)*scale,y:(x+offX)*scale}:{x:(x+offX)*scale,y:(y-viewCrop+offY)*scale};}
 function resize(){
   const st=document.getElementById('stage').getBoundingClientRect();
   // pencere henüz boyutlanmadıysa (ilk açılış) tuvali 0 boyutla kurma; boyut gelince tekrar denenir
   if(st.width<10||st.height<10)return;
-  viewCrop=matchMedia('(max-aspect-ratio:3/4)').matches?10:0;
-  const vh=H-viewCrop*2;
   const cw=Math.floor(st.width),ch=Math.floor(st.height);
-  scale=Math.min(cw/W,ch/vh);dpr=Math.min(2,window.devicePixelRatio||1); // 3x ekranda fark görünmez ama 2,25 kat fazla piksel çizilir
-  offX=(cw/scale-W)/2;offY=(ch/scale-vh)/2;
+  landscape=cw>ch*1.15&&ch>=300; // dikey telefon ve tablet olduğu gibi kalır
+  viewCrop=!landscape&&matchMedia('(max-aspect-ratio:3/4)').matches?10:0;
+  const vh=H-viewCrop*2;
+  dpr=Math.min(2,window.devicePixelRatio||1); // 3x ekranda fark görünmez ama 2,25 kat fazla piksel çizilir
+  if(landscape){scale=Math.min(cw/vh,ch/W);offX=(ch/scale-W)/2;offY=(cw/scale-vh)/2;}
+  else{scale=Math.min(cw/W,ch/vh);offX=(cw/scale-W)/2;offY=(ch/scale-vh)/2;}
   cv.style.width=cw+'px';cv.style.height=ch+'px';
   cv.width=bg.width=Math.round(cw*dpr);cv.height=bg.height=Math.round(ch*dpr);
-  ctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
-  bctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
+  const k=scale*dpr,m=landscape?[0,k,-k,0,(H-viewCrop+offY)*k,offX*k]:[k,0,0,k,offX*k,(offY-viewCrop)*k];
+  ctx.setTransform(...m);bctx.setTransform(...m);
   renderField(bctx);
   if(typeof redraw==='function')redraw(); // boyut değişince tuval silinir, donmuşsa da yeniden çizilsin
 }
@@ -59,7 +68,7 @@ function renderField(c){
   c.restore();
   // orta yuvarlakta soluk amblem
   c.fillStyle='rgba(255,255,255,.06)';c.beginPath();c.arc(CX,CY,44,0,Math.PI*2);c.fill();
-  c.save();c.globalAlpha=.1;c.font='14px '+FD;c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText('ARENA',CX,CY+20);c.restore();
+  {const u=upOff(-20);c.save();c.globalAlpha=.1;c.font='14px '+FD;c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.translate(CX+u.x,CY+u.y);upright(c);c.fillText('ARENA',0,0);c.restore();}
   // köşe bayrakları
   for(const [x,y] of [[FX,FY],[FX+FW,FY],[FX,FY+FH],[FX+FW,FY+FH]]){
     c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(x+2,y+2,3,1.5,0,0,Math.PI*2);c.fill();
@@ -98,7 +107,7 @@ function drawBody(p,x,y,jersey,trim,gk,run,sw){
   const bob=(run*Math.abs(Math.sin(phase))*.8)+(joy?Math.abs(Math.sin(now*9+p.num))*3:0);
   const breathe=1+(1-run)*Math.sin(now*2.2+p.num)*.03;
   const bw=8.4*p.build*breathe*(sad?.92:1),bh=5.8*p.build;
-  ctx.save();ctx.translate(x,y-1-bob);ctx.rotate(p.fa); // +x: baktığı yön
+  const bu=upOff(1+bob);ctx.save();ctx.translate(x+bu.x,y+bu.y);ctx.rotate(p.fa); // +x: baktığı yön
   ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=1.5;ctx.strokeStyle=OUT;
   // bacaklar ve kramponlar: koşarken adım, vuruşta sağ bacak öne uzanır
   const kick=p.kickA>0?Math.sin((1-p.kickA/.28)*Math.PI):0;
@@ -131,9 +140,10 @@ function drawBody(p,x,y,jersey,trim,gk,run,sw){
   drawHead(p,hx,hr,run,phase);
   ctx.restore();
   // forma numarası rozeti
+  ctx.save();ctx.translate(x,y);upright(ctx); // rozet ekranda oyuncunun sağ altında, rakam düz
   ctx.font='800 7.5px '+FB;ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillStyle=t.dark;ctx.beginPath();ctx.arc(x+9,y+8.5,4.4,0,Math.PI*2);ctx.fill();ctx.lineWidth=1.3;ctx.strokeStyle='#fff';ctx.stroke();
-  ctx.fillStyle='#fff';ctx.fillText(p.num,x+9,y+9);
+  ctx.fillStyle=t.dark;ctx.beginPath();ctx.arc(9,8.5,4.4,0,Math.PI*2);ctx.fill();ctx.lineWidth=1.3;ctx.strokeStyle='#fff';ctx.stroke();
+  ctx.fillStyle='#fff';ctx.fillText(p.num,9,9);ctx.restore();
 }
 // kafa ve saç modelleri (+x yüzün baktığı yön): 0 kısa, 1 dikenli, 2 afro, 3 mohikan, 4 topuz, 5 at kuyruğu, 6 kel
 function drawHead(p,hx,hr,run,phase){
@@ -198,13 +208,13 @@ function drawBall(){
   const b=ball,sp=Math.hypot(b.vx,b.vy),z=b.z||0;
   const lift=z>0?z:!b.owner&&b.shot?Math.min(6,sp/80):!b.owner&&sp>200?2:0,r=5.4*(1+lift/45);
   if(!b.owner&&sp>180&&z<=0){
-    b.trail.forEach((q,i)=>{const k=i/b.trail.length;ctx.globalAlpha=k*.55;ctx.fillStyle=b.power?'#ff6fbf':'#fff';ctx.beginPath();ctx.arc(q.x,q.y-lift*k,4.4*k+.8,0,Math.PI*2);ctx.fill();});
+    b.trail.forEach((q,i)=>{const k=i/b.trail.length,u=upOff(lift*k);ctx.globalAlpha=k*.55;ctx.fillStyle=b.power?'#ff6fbf':'#fff';ctx.beginPath();ctx.arc(q.x+u.x,q.y+u.y,4.4*k+.8,0,Math.PI*2);ctx.fill();});
     ctx.globalAlpha=1;
   }
   const sh=1/(1+lift/25);
   ctx.fillStyle='rgba(0,15,5,'+(.35*sh+.08)+')';ell(b.x+2+lift*.5,b.y+3+lift*.35,4.4*sh+1,2.6*sh+.6);ctx.fill();
-  const y=b.y-lift;
-  ctx.save();ctx.translate(b.x,y);
+  const lu=upOff(lift),x=b.x+lu.x,y=b.y+lu.y; // havadaki top ekranda yukarı kalkar
+  ctx.save();ctx.translate(x,y);
   if(!ballGrad){ballGrad=ctx.createRadialGradient(-1.6,-1.9,.4,0,0,5.9);ballGrad.addColorStop(0,'#ffffff');ballGrad.addColorStop(.7,'#eef2fb');ballGrad.addColorStop(1,'#b9c3dc');}
   ctx.save();ctx.scale(r/5.4,r/5.4);ctx.fillStyle=ballGrad;ctx.beginPath();ctx.arc(0,0,5.4,0,Math.PI*2);ctx.fill();ctx.restore();
   ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();
@@ -218,7 +228,7 @@ function drawBall(){
   ctx.fillStyle='rgba(255,255,255,.85)';ell(-r*.38,-r*.42,r*.26,r*.17);ctx.fill();
   ctx.lineWidth=1.4;ctx.strokeStyle=OUT;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
   ctx.restore();
-  if(b.power&&b.shot){ctx.strokeStyle='#ff6fbf';ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,y,8+Math.sin(now*30)*1.5,0,Math.PI*2);ctx.stroke();}
+  if(b.power&&b.shot){ctx.strokeStyle='#ff6fbf';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,8+Math.sin(now*30)*1.5,0,Math.PI*2);ctx.stroke();}
 }
 // hakem işaretleri: ofsaytta yan hakem bayrağı ve çizgi, faulde sarı kart, serbest vuruşta mesafe halkası
 function drawRefFx(){
@@ -235,8 +245,8 @@ function drawRefFx(){
       ctx.fillStyle='#ffe14d';ctx.beginPath();ctx.moveTo(fx,top);ctx.lineTo(fx+11,top+3+wave*.4);ctx.lineTo(fx+10,top+9+wave);ctx.lineTo(fx,top+8);ctx.fill();
       ctx.fillStyle='#ff4d5e';ctx.beginPath();ctx.moveTo(fx,top);ctx.lineTo(fx+5.5,top+1.5+wave*.2);ctx.lineTo(fx+5,top+8.5+wave*.5);ctx.lineTo(fx,top+8);ctx.fill();
     }else if(f.type==='card'){
-      const y=f.y-28-f.t*10;
-      ctx.translate(f.x,y);ctx.rotate(-.15);
+      const u=upOff(28+f.t*10);
+      ctx.translate(f.x+u.x,f.y+u.y);upright(ctx);ctx.rotate(-.15);
       ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-4,-5,10,13);
       ctx.fillStyle='#ffd23f';ctx.fillRect(-5,-7,10,13);
       ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(-5,-7,10,13);
@@ -303,8 +313,9 @@ function drawCrowdFlashes(){
   ctx.fillStyle='#fff';
   for(let i=0;i<n;i++){
     if(Math.random()>.5)continue;
-    const top=Math.random()<.5,x=rnd(4-offX,W+offX-4),y=Math.random()<.7?(top?rnd(viewCrop-offY,FY-14):rnd(FY+FH+14,H-viewCrop+offY)):rnd(FY,FY+FH);
-    const xx=y>FY-12&&y<FY+FH+12?(Math.random()<.5?rnd(-offX,FX-11):rnd(FX+FW+11,W+offX)):x;
+    const mx=Math.min(offX,Crowd.DEPTH-10),my=Math.min(offY-viewCrop,Crowd.DEPTH-18); // tribün bandının içinde
+    const top=Math.random()<.5,x=rnd(4-mx,W+mx-4),y=Math.random()<.7?(top?rnd(-my,FY-14):rnd(FY+FH+14,H+my)):rnd(FY,FY+FH);
+    const xx=y>FY-12&&y<FY+FH+12?(Math.random()<.5?rnd(-mx,FX-11):rnd(FX+FW+11,W+mx)):x;
     ctx.globalAlpha=rnd(.5,1);ctx.beginPath();ctx.arc(xx,y,rnd(.8,1.8),0,Math.PI*2);ctx.fill();
   }
   ctx.globalAlpha=1;
@@ -314,7 +325,7 @@ function drawBanners(){
     const k=b.t/b.life;
     if(b.type==='big'){
       const s=k<.15?k/.15*1.2:k<.25?1.2-(k-.15)*2:1,a=k>.8?(1-k)/.2:1;
-      ctx.save();ctx.globalAlpha=a;ctx.translate(CX,CY-10);ctx.scale(s,s);ctx.rotate(-.06);
+      ctx.save();ctx.globalAlpha=a;ctx.translate(CX,CY);upright(ctx);ctx.translate(0,-10);ctx.scale(s,s);ctx.rotate(-.06);
       ctx.font='70px '+FD;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.lineJoin='round';ctx.lineWidth=12;ctx.strokeStyle='#0b1230';ctx.strokeText(b.text,0,0);
       ctx.fillStyle='#0b1230';ctx.fillText(b.text,0,5);ctx.fillStyle=b.color;ctx.fillText(b.text,0,0);
@@ -323,9 +334,9 @@ function drawBanners(){
       ctx.restore();
     }else if(b.type==='info'){
       const a=k<.1?k/.1:k>.8?(1-k)/.2:1;
-      ctx.save();ctx.globalAlpha=a;ctx.font='36px '+FD;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
-      ctx.lineWidth=9;ctx.strokeStyle='#0b1230';ctx.strokeText(b.text,CX,CY-30);ctx.fillStyle=b.color;ctx.fillText(b.text,CX,CY-30);
-      if(b.sub){ctx.font='800 15px '+FB;ctx.lineWidth=5;ctx.strokeText(b.sub,CX,CY+4);ctx.fillStyle='#fff';ctx.fillText(b.sub,CX,CY+4);}
+      ctx.save();ctx.globalAlpha=a;ctx.translate(CX,CY);upright(ctx);ctx.font='36px '+FD;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
+      ctx.lineWidth=9;ctx.strokeStyle='#0b1230';ctx.strokeText(b.text,0,-30);ctx.fillStyle=b.color;ctx.fillText(b.text,0,-30);
+      if(b.sub){ctx.font='800 15px '+FB;ctx.lineWidth=5;ctx.strokeText(b.sub,0,4);ctx.fillStyle='#fff';ctx.fillText(b.sub,0,4);}
       ctx.restore();
     }
   }
@@ -333,18 +344,20 @@ function drawBanners(){
 }
 function draw(){
   ctx.save();
-  if(shake>0)ctx.translate(rnd(-1,1)*shake*.5,rnd(-1,1)*shake*.5);
-  if(bg.width&&bg.height)ctx.drawImage(bg,-offX,viewCrop-offY,bg.width/(scale*dpr),bg.height/(scale*dpr));
+  const sx=shake>0?rnd(-1,1)*shake*.5:0,sy=shake>0?rnd(-1,1)*shake*.5:0;
+  ctx.translate(sx,sy);
+  // arka plan tuvali ekran pikseliyle birebir kopyalanır (yatay ekranda da dönmeden), sarsıntı ekran yönüne çevrilir
+  if(bg.width&&bg.height){const k=scale*dpr;ctx.save();ctx.setTransform(1,0,0,1,(landscape?-sy:sx)*k,(landscape?sx:sy)*k);ctx.drawImage(bg,0,0);ctx.restore();}
   Crowd.draw(ctx);
   drawCrowdFlashes();
   drawZones();drawPassLine();drawRefFx();
-  const ps=teams.flatMap(t=>t.players).sort((a,b)=>a.y-b.y);
+  const ps=teams.flatMap(t=>t.players).sort(landscape?(a,b)=>a.x-b.x:(a,b)=>a.y-b.y); // ekranda üstteki önce çizilir
   // oyuncular biraz daha büyük ve okunaklı
   for(const p of ps){ctx.save();ctx.translate(p.x,p.y);ctx.scale(1.22,1.22);ctx.translate(-p.x,-p.y);drawPlayer(p);ctx.restore();}
   drawBall();
   if(DEBUG){
     ctx.font='800 7px '+FB;ctx.textAlign='center';ctx.textBaseline='middle';
-    for(const p of ps){const st=p.fsm.current;if(!st)continue;ctx.fillStyle='rgba(11,18,48,.8)';rr(ctx,p.x-11,p.y-25,22,10,4);ctx.fill();ctx.fillStyle=p.team.light;ctx.fillText(st.short,p.x,p.y-19.6);}
+    for(const p of ps){const st=p.fsm.current;if(!st)continue;ctx.save();ctx.translate(p.x,p.y);upright(ctx);ctx.fillStyle='rgba(11,18,48,.8)';rr(ctx,-11,-25,22,10,4);ctx.fill();ctx.fillStyle=p.team.light;ctx.fillText(st.short,0,-19.6);ctx.restore();}
   }
   for(const p of parts){
     const k=p.t/p.life;ctx.globalAlpha=1-k;
@@ -354,7 +367,7 @@ function draw(){
   }
   ctx.globalAlpha=1;
   ctx.font='12px '+FD;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
-  for(const f of floats){const k=f.t/f.life,s=k<.15?.6+k/.15*.4:1;ctx.save();ctx.globalAlpha=1-k*k;ctx.translate(f.x,f.y);ctx.scale(s,s);ctx.lineWidth=4;ctx.strokeStyle='#0b1230';ctx.strokeText(f.text,0,0);ctx.fillStyle=f.c;ctx.fillText(f.text,0,0);ctx.restore();}
+  for(const f of floats){const k=f.t/f.life,s=k<.15?.6+k/.15*.4:1;const u=upOff(f.up);ctx.save();ctx.globalAlpha=1-k*k;ctx.translate(f.x+u.x,f.y+u.y);upright(ctx);ctx.scale(s,s);ctx.lineWidth=4;ctx.strokeStyle='#0b1230';ctx.strokeText(f.text,0,0);ctx.fillStyle=f.c;ctx.fillText(f.text,0,0);ctx.restore();}
   drawBanners();
   ctx.restore();
 }

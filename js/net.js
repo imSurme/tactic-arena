@@ -105,7 +105,7 @@ const Net=(()=>{
   let hooked=false;
   function hookHost(){
     if(hooked)return;hooked=true;
-    const _ft=floatText;floatText=function(x,y,t,c){_ft(x,y,t,c);emit(['f',r1(x),r1(y),t,c]);};
+    const _ft=floatText;floatText=function(x,y,t,c,up){_ft(x,y,t,c,up);emit(['f',r1(x),r1(y),t,c,up||0]);};
     const _bu=burst;burst=function(x,y,c,n,s){_bu(x,y,c,n,s);emit(['b',r1(x),r1(y),c,n,s]);};
     const _ri=ring;ring=function(x,y,c){_ri(x,y,c);emit(['r',r1(x),r1(y),c]);};
     const _co=callOffside;callOffside=function(r,t){_co(r,t);const f=refFx[refFx.length-1];if(f)emit(['ref',f]);};
@@ -135,7 +135,7 @@ const Net=(()=>{
   const localPlayer=idx=>idx<0?null:localTeam(idx<5?0:1).players[idx%5];
   function applyEvent(e){
     const [k]=e;
-    if(k==='f')floatText(mx(e[1]),my(e[2]),e[3],sc(e[4]));
+    if(k==='f')floatText(mx(e[1]),my(e[2]),e[3],sc(e[4]),e[5]||0);
     else if(k==='b')burst(mx(e[1]),my(e[2]),sc(e[3]),e[4],e[5]);
     else if(k==='r')ring(mx(e[1]),my(e[2]),sc(e[3]));
     else if(k==='ref'){const f={...e[1]};if(f.type==='flag'){f.y=my(f.y);f.line=my(f.line);}else{f.x=mx(f.x);f.y=my(f.y);}refFx.push(f);}

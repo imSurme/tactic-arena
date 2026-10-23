@@ -108,13 +108,13 @@ function sendRun(p,t,lofted){
 function longBall(p,t){
   if(!sendRun(p,t,true))return false;
   t.fx.longball=0;
-  floatText(p.x,p.y-20,'UZUN TOP!',CARDS.longball.col);
+  floatAbove(p.x,p.y,20,'UZUN TOP!',CARDS.longball.col);
   return true;
 }
 // Ara Pas: savunmanın arasından koşu yolundaki boşluğa yerden pas
 function throughPass(p,t){
   if(!sendRun(p,t,false))return false;
-  floatText(p.x,p.y-20,'ARA PAS!',CARDS.through.col);
+  floatAbove(p.x,p.y,20,'ARA PAS!',CARDS.through.col);
   return true;
 }
 // şutun xG'si (şut çekildiği anki duruma göre)
@@ -139,10 +139,10 @@ function shoot(p,t){
   kick(p,tx,g.y+dirY(t)*10,sp);
   ball.shot=true;ball.shotTeam=t;ball.power=pow;ball.gkRolled=false;ball.pen=pen;ball.header=head;Sfx.shot(pow);
   ball.corner=Math.abs(tx-CX)>GW/2-16;ball.shotDist=d;
-  if(hero){p.superShot=true;shake=10;burst(p.x,p.y,CARDS.hero.col,24,190);floatText(p.x,p.y-20,'YILDIZ ŞUTU!',CARDS.hero.col);}
-  else if(pow){t.fx.power=0;shake=8;burst(p.x,p.y,CARDS.power.col,18,160);floatText(p.x,p.y-20,'BOMBA!',CARDS.power.col);}
-  else if(head)floatText(p.x,p.y-20,'KAFA!',CARDS.overlap.col);
-  else floatText(p.x,p.y-20,d>110?'UZAKTAN!':'ŞUT!',d>110?'#ffd23f':'#fff');
+  if(hero){p.superShot=true;shake=10;burst(p.x,p.y,CARDS.hero.col,24,190);floatAbove(p.x,p.y,20,'YILDIZ ŞUTU!',CARDS.hero.col);}
+  else if(pow){t.fx.power=0;shake=8;burst(p.x,p.y,CARDS.power.col,18,160);floatAbove(p.x,p.y,20,'BOMBA!',CARDS.power.col);}
+  else if(head)floatAbove(p.x,p.y,20,'KAFA!',CARDS.overlap.col);
+  else floatAbove(p.x,p.y,20,d>110?'UZAKTAN!':'ŞUT!',d>110?'#ffd23f':'#fff');
 }
 
 // takımın seçtiği hücum kanadının dünya x'i (orta için null)
@@ -173,7 +173,7 @@ function cross(p,t){
   pass(p,best,t,tg,clamp(d*1.2,190,300));
   ball.loft={t:0,T:Math.min(1.1,d/190),h:clamp(d/7,14,30)};
   best.volley=1.5; // gelen ortaya ilk vuruş
-  floatText(p.x,p.y-20,'ORTA!','#fff');
+  floatAbove(p.x,p.y,20,'ORTA!','#fff');
   return true;
 }
 // önü en açık sürüş yönü
@@ -193,7 +193,7 @@ function dribbleDir(p,t){
 }
 function carrierThink(p,t,dt){
   p.hold+=dt;p.decT-=dt;if(p.decT>0)return;p.decT=rnd(...TEMPO.think)*(t.fx.tiki>0?.6:1);
-  if(ball.kickoff){pass(p,t.koRecv||t.players[3],t);floatText(p.x,p.y-20,'SANTRA','#fff');return;}
+  if(ball.kickoff){pass(p,t.koRecv||t.players[3],t);floatAbove(p.x,p.y,20,'SANTRA','#fff');return;}
   if(p.penalty){p.penalty=false;shoot(p,t);return;}
   if(p.freeKick){p.freeKick=false;if(shotQuality(p,t)>-.45){shoot(p,t);return;}}
   if(p.setPass&&!p.resetPass){p.setPass=false;const o=passOptions(p,t)[0];if(o){pass(p,o.r,t,o.tg,o.sp);return;}}

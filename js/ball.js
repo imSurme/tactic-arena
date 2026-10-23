@@ -33,7 +33,7 @@ function simBall(dt,live){
         b.rolled.add(p);
         if(Math.random()<.75){
           b.vx=-b.vx*.35+rnd(-1,1)*90;b.vy=-b.vy*.35;b.shot=false;
-          burst(b.x,b.y,CARDS.wall.col,12,110);floatText(p.x,p.y-20,'BLOK!',dt2.light);Sfx.tackle();addStars(dt2,REWARD.tackle,p.x,p.y);
+          burst(b.x,b.y,CARDS.wall.col,12,110);floatAbove(p.x,p.y,20,'BLOK!',dt2.light);Sfx.tackle();addStars(dt2,REWARD.tackle,p.x,p.y);
           return;
         }
       }
@@ -48,7 +48,7 @@ function simBall(dt,live){
         // kurtarış şansı (kaleci yetişirse): yakından ~%68, uzaktan ~%95; köşeye ve güçlü şut daha zor
         const ch=b.pen?(t.fx.gk?.42:.25):clamp(.68+clamp(((b.shotDist||0)-50)/150,0,1)*.27-(sp-380)/900+(t.fx.gk?.3:0)+(t.fx.wall?.1:0)-(b.corner?.1:0)+(b.power?.04:0)-(b.header?.18:0),.12,.95);
         if(Math.random()<ch){
-          burst(b.x,b.y,'#fff',12,120);floatText(gk.x,gk.y-20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
+          burst(b.x,b.y,'#fff',12,120);floatAbove(gk.x,gk.y,20,'KURTARIŞ!',t.gkColor);Sfx.save();addStars(t,REWARD.save,gk.x,gk.y+10);
           stats.saves[t.id]++;statOnTarget(b.shotTeam.id);Crowd.save(b.shotTeam.id);
           if(sp<430&&Math.random()<.6){take(gk);gk.decT=.9;}
           else{b.vy=-b.vy*.45;b.vx=rnd(-1,1)*200;b.shot=false;gk.kickCd=.3;}
@@ -79,7 +79,7 @@ function simBall(dt,live){
     if(best){
       const pt=b.passTeam;take(best);
       if(pt&&ball.owner===best){if(pt===best.team)stats.passOk[pt.id]++;else stats.ints[best.team.id]++;}
-      if(pt&&pt!==best.team){floatText(best.x,best.y-20,'ARAYA GİRDİ',best.team.light);addStars(best.team,REWARD.intercept,best.x,best.y);}
+      if(pt&&pt!==best.team){floatAbove(best.x,best.y,20,'ARAYA GİRDİ',best.team.light);addStars(best.team,REWARD.intercept,best.x,best.y);}
       else if(pt&&pt.fx.tiki)addStars(pt,REWARD.tiki);
     }
   }else if(!(b.setT>0)){
@@ -101,13 +101,13 @@ function simBall(dt,live){
       if(Math.random()<ch){
         o.stun=.7;o.kickCd=.5;p.dash=0;
         burst((o.x+p.x)/2,(o.y+p.y)/2,'#ffe066',10,110);
-        floatText(p.x,p.y-20,'KAPTI!',t.light);Sfx.tackle();addStars(t,REWARD.tackle,p.x,p.y);
+        floatAbove(p.x,p.y,20,'KAPTI!',t.light);Sfx.tackle();addStars(t,REWARD.tackle,p.x,p.y);
         stats.tackles[t.id]++;
         if(Math.random()<.75)take(p);
         else{b.owner=null;const a=rnd(0,Math.PI*2);b.vx=Math.cos(a)*130;b.vy=Math.sin(a)*130;}
         break;
       }
-      if(o.team.fx.dribble&&p.dash<=0){floatText(o.x,o.y-20,'ÇALIM!',CARDS.dribble.col);burst(o.x,o.y,CARDS.dribble.col,6,70);} // müdahale boşa çıktı
+      if(o.team.fx.dribble&&p.dash<=0){floatAbove(o.x,o.y,20,'ÇALIM!',CARDS.dribble.col);burst(o.x,o.y,CARDS.dribble.col,6,70);} // müdahale boşa çıktı
       if(p.dash<=0&&dirC<=.3)p.stun=Math.max(p.stun,.3); // yandan/arkadan giren ve topu alamayan savunmacı geçilir, bir an dengesini kaybeder
     }
   }

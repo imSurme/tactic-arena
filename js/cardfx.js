@@ -3,7 +3,7 @@
 const CardFx=(()=>{
   const canAnimate=()=>typeof Element!=='undefined'&&!!Element.prototype.animate;
   // oyun koordinatını #field içindeki piksele çevir
-  function toPx(x,y){return{x:(x+offX)*scale,y:(y-viewCrop+offY)*scale};}
+  const toPx=(x,y)=>w2s(x,y);
   // kartın sahada düşeceği nokta: hedefli kartlar topa, kaleci kartı kaleciye, diğerleri takımın ortasına
   function landing(t,k){
     if(['slide','foul','press','through','longball','intercept','offside'].includes(k)){
