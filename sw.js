@@ -12,7 +12,7 @@ self.addEventListener('install',e=>{
     const html=await res.clone().text();
     await c.put('index.html',res.clone());await c.put('./',res);
     const urls=[...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m=>m[1]).filter(u=>!/^(https?:|data:|#)/.test(u));
-    for(const u of ['icons/icon-192.png','icons/icon-512.png'])if(!urls.includes(u))urls.push(u);
+    for(const u of ['icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png'])if(!urls.includes(u))urls.push(u);
     await Promise.all(urls.map(u=>fetch(u,{cache:'no-cache'}).then(r=>{if(r.ok)return c.put(u,r);}).catch(()=>{})));
     // yazı tipleri: ilk açılışta sayfa onları service worker'dan önce indirir, kendiliğinden kaydedilmez.
     // stil dosyası ve içindeki font dosyaları burada indirilip kaydedilir, yoksa çevrimdışında yedek font görünür.
