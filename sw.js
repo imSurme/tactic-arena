@@ -14,6 +14,17 @@ self.addEventListener('install',e=>{
     const urls=[...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m=>m[1]).filter(u=>!/^(https?:|data:|#)/.test(u));
     for(const u of ['icons/icon-192.png','icons/icon-512.png'])if(!urls.includes(u))urls.push(u);
     await Promise.all(urls.map(u=>fetch(u,{cache:'no-cache'}).then(r=>{if(r.ok)return c.put(u,r);}).catch(()=>{})));
+    // yazı tipleri: ilk açılışta sayfa onları service worker'dan önce indirir, kendiliğinden kaydedilmez.
+    // stil dosyası ve içindeki font dosyaları burada indirilip kaydedilir, yoksa çevrimdışında yedek font görünür.
+    const fontCss=[...html.matchAll(/href="(https:\/\/fonts\.googleapis\.com\/[^"]+)"/g)].map(m=>m[1].replace(/&amp;/g,'&'));
+    await Promise.all(fontCss.map(async u=>{
+      try{
+        const r=await fetch(u,{mode:'cors'});if(!r.ok)return;
+        const css=await r.clone().text();await c.put(u,r);
+        const files=[...new Set([...css.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map(m=>m[1]))];
+        await Promise.all(files.map(f=>fetch(f,{mode:'cors'}).then(fr=>{if(fr.ok)return c.put(f,fr);}).catch(()=>{})));
+      }catch(e){}
+    }));
     self.skipWaiting();
   })());
 });
@@ -28,7 +39,7 @@ self.addEventListener('fetch',e=>{
 });
 // yazı tipleri değişmez: kayıtlıysa oradan, değilse indirip kaydet
 async function fromCacheFirst(req){
-  const hit=await caches.match(req);if(hit)return hit;
+  const hit=await caches.match(req,{ignoreVary:true});if(hit)return hit; // Google yanıtları Sec-Fetch-* ile Vary döner, eşleşmeyi bozmasın
   const res=await fetch(req);
   if(res.ok||res.type==='opaque'){const c=await caches.open(CACHE);c.put(req,res.clone());}
   return res;
