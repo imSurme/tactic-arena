@@ -5,7 +5,7 @@ const Sfx=(()=>{
 
   // ilk kullanıcı tıklamasında çağrılır (tarayıcılar sesi ancak etkileşimden sonra açar)
   function init(){
-    if(ac){if(ac.state==='suspended')ac.resume();return;}
+    if(ac){wake();return;}
     const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
     ac=new AC();if(ac.state==='suspended')ac.resume();
     master=ac.createGain();master.gain.value=muted?0:Settings.get('sfx');master.connect(ac.destination);
@@ -14,7 +14,13 @@ const Sfx=(()=>{
   }
   // ses motoru ilk dokunuşta oluşur ve bir an sonra çalışmaya başlar; o arada istenen sesler (ör. santra düdüğü) atılmaz, motor açılınca çalar
   let held=false; // oyun duraklatıldı: bu sırada istenen sesler birikip sonradan çalmasın
-  const ok=()=>ac&&ac.state!=='closed'&&!held;
+  // pil: ses kapalıyken ya da maç dışında (menü, maç sonu) birkaç saniye ses çalmayınca ses motoru uyutulur.
+  // maç sırasında uyutulmaz: iPhone dokunuş olmadan uyanmasına izin vermeyebilir, oyun sessiz kalırdı
+  let lastUse=0;
+  const inMatch=()=>typeof state!=='undefined'&&(state==='play'||state==='goal'||state==='coach');
+  function wake(){lastUse=performance.now();if(ac&&!held&&!muted&&ac.state==='suspended')ac.resume();}
+  setInterval(()=>{if(ac&&ac.state==='running'&&(muted||!inMatch()&&performance.now()-lastUse>3000))ac.suspend();},1000);
+  const ok=()=>{if(!ac||ac.state==='closed'||held||muted)return false;wake();return true;};
   // tarayıcılar sesi ancak kullanıcı etkileşiminden sonra açar: ekrana ilk dokunuşta ses açılsın
   for(const ev of ['pointerdown','touchend','keydown'])addEventListener(ev,()=>init(),{capture:true,passive:true});
   // ses aç/kapa anında uygulanır (yavaş geçiş olsaydı açıp kapatırken çalan sesler yarım duyulurdu)
@@ -43,12 +49,12 @@ const Sfx=(()=>{
     get muted(){return muted;},
     toggleMute(){
       muted=!muted;try{localStorage.setItem('ta-muted',muted?'1':'0');}catch(e){}
-      applyVolume();
+      applyVolume();if(muted){if(ac&&ac.state==='running')ac.suspend();}else wake();
       return muted;
     },
     applyVolume,
     suspend(){held=true;if(ac&&ac.state==='running')ac.suspend();},
-    resume(){held=false;if(ac&&ac.state==='suspended')ac.resume();},
+    resume(){held=false;wake();},
     pass(){tone(170,.09,{to:60,vol:.35});noise(.03,{type:'highpass',freq:2500,vol:.08});},
     shot(power){
       if(power){tone(110,.45,{to:30,vol:.6});noise(.35,{type:'lowpass',freq:900,vol:.35});noise(.12,{type:'highpass',freq:3000,vol:.12});}

@@ -559,18 +559,26 @@ canvas{border-radius:0;box-shadow:none}
 #super .card .art{flex:1;aspect-ratio:auto;min-height:0}
 @media (max-aspect-ratio:3/4) and (max-height:720px){#super .card .art{aspect-ratio:auto}}
 /* süper kart: dönen gökkuşağı çerçeve ve üzerinden geçen parıltı; yıldız yetmezken de renkli kalır */
-@property --sang{syntax:'<angle>';inherits:false;initial-value:0deg}
-#super .card{background:conic-gradient(from var(--sang),#ff4d5e,#ffd23f,#5be38b,#5cb8ff,#b18cff,#ff4d5e);animation:superSpin 3s linear infinite;box-shadow:0 0 14px rgba(255,210,63,.6)}
-@keyframes superSpin{to{--sang:360deg}}
+/* gökkuşağı ayrı bir katmanda bir kez boyanır, ekran kartı yalnızca döndürür (renk geçişini her karede baştan boyamak pil yer) */
+.card .spin{display:none}
+#super .card{background:#2a1d00;box-shadow:0 0 14px rgba(255,210,63,.6)}
+#super .card .spin{display:block;position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+#super .card .spin i{position:absolute;left:50%;top:50%;width:400%;aspect-ratio:1;background:conic-gradient(#ff4d5e,#ffd23f,#5be38b,#5cb8ff,#b18cff,#ff4d5e);transform:translate(-50%,-50%);animation:superSpin 3s linear infinite;will-change:transform}
+#super .card>.art,#super .card>.nm{position:relative}
+@keyframes superSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 #super .card .art{overflow:hidden}
 #super .card .art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:superShine 2.4s ease-in-out infinite}
 @keyframes superShine{60%,100%{transform:translateX(120%)}}
 #super .card.off{filter:none}
 #super .card.off .art{filter:saturate(.55) brightness(.75)}
-#super .card.ready{animation:superSpin 1.6s linear infinite;box-shadow:0 0 0 2px #fff3a0,0 0 24px rgba(255,210,63,.95)}
+#super .card.ready{animation:none;box-shadow:0 0 0 2px #fff3a0,0 0 24px rgba(255,210,63,.95)}
+#super .card.ready .spin i{animation-duration:1.6s}
 #super.used .card{animation:none;filter:grayscale(1) brightness(.5)}
+#super.used .card .spin i{animation:none}
 #super.used .card .art::after{display:none}
-@media (prefers-reduced-motion:reduce){#super .card,#super .card .art::after{animation:none}}
+@media (prefers-reduced-motion:reduce){#super .card .spin i,#super .card .art::after{animation:none}}
+/* menü, duraklatma ve maç sonu ekranı sahayı kapatırken arkadaki kartların ve çiplerin sürekli animasyonları durur */
+.idle #panel *,.idle #panel *::before,.idle #panel *::after,.idle #field .fxchip{animation-play-state:paused!important}
 /* menüde turnuva ikincil (yeşil) buton; alt satır yazısı küçük */
 .tourbtn small{display:block;font-family:var(--body);font-size:10px;font-weight:800;opacity:.8;margin-top:1px}
 .box.menu .tourbtn{background:linear-gradient(#5be38b,#1e9e52);box-shadow:0 4px 0 #136a37,0 10px 18px rgba(0,0,0,.35)}

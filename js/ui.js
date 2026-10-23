@@ -8,7 +8,7 @@ const UI_ICONS={
 };
 function cardHTML(k,i){
   const c=CARDS[k];
-  return `<button class="card ${c.type}" data-i="${i}" style="--c1:${c.c1};--c2:${c.c2}" aria-label="${c.name}, ${c.cost} yıldız" ${i<0?'tabindex="-1"':''}>
+  return `<button class="card ${c.type}" data-i="${i}" style="--c1:${c.c1};--c2:${c.c2}" aria-label="${c.name}, ${c.cost} yıldız" ${i<0?'tabindex="-1"':''}>${c.type==='super'?'<span class="spin" aria-hidden="true"><i></i></span>':''}
     <span class="cost">${STAR}<span>${c.cost}</span></span>
     <span class="art">${iconSvg(k)}<span class="tag">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER'}</span></span>
     <span class="nm"><b>${c.name}</b></span><span class="lock"></span></button>`;

@@ -46,8 +46,12 @@ function frame(ts){
   Net.hostTick(dt);
   show(ts);
 }
+// pencere sahayı kapatınca arkadaki CSS animasyonları da durur (yalnız değişince sayfaya yazılır)
+let idleOn=false;
+function setIdle(v){if(v!==idleOn){idleOn=v;document.documentElement.classList.toggle('idle',v);}}
 function show(ts){
-  if(document.getElementById('overlay').hidden&&document.getElementById('cardModal').hidden){drawn=false;updateHud();draw();return;}
+  if(document.getElementById('overlay').hidden&&document.getElementById('cardModal').hidden){setIdle(false);drawn=false;updateHud();draw();return;}
+  setIdle(true);
   if(!drawn){drawn=true;updateHud();draw();lastHud=ts;}
   else if(ts-lastHud>250){lastHud=ts;updateHud();} // pencere açıkken skorbord seyrek güncellenir
 }
