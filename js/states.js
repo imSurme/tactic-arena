@@ -25,10 +25,14 @@ const FieldStates={
     const t0=ball.loft?Math.max(0,ball.loft.T-ball.loft.t):0; // havadaki top inmeden alınamaz
     // boşluğa atılan pas (ara pas, koşu yoluna pas): oraya toptan önce yetişebiliyorsa koşusunu sürdürür
     const pt=ball.passTarget,v=Math.hypot(ball.vx,ball.vy);
-    if(pt){
-      const D=Math.hypot(pt.x-ball.x,pt.y-ball.y),q=1-D*f/Math.max(v,1);
-      const tBall=q>.05?-Math.log(q)/f:9,tMe=Math.hypot(pt.x-p.x,pt.y-p.y)/run;
-      if(tMe<=tBall+.15)return{x:pt.x,y:pt.y,sp:1.25};
+    // top o noktayı geçtiyse, yolundan saptıysa (kenara çarptı) ya da oraya varamadan duracaksa noktada bekleme, topa koş
+    if(pt&&v>1){
+      const ux=ball.vx/v,uy=ball.vy/v,ax=pt.x-ball.x,ay=pt.y-ball.y;
+      const D=ax*ux+ay*uy,side=Math.abs(ax*uy-ay*ux),q=1-D*f/v;
+      if(D>0&&side<12&&q>.05){
+        const tBall=-Math.log(q)/f,tMe=Math.hypot(pt.x-p.x,pt.y-p.y)/run;
+        if(tMe<=tBall+.15)return{x:pt.x,y:pt.y,sp:1.25};
+      }
     }
     let tg=null;
     for(let T=Math.max(.05,t0);T<=1.8;T+=.05){
