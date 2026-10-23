@@ -65,6 +65,8 @@ function show(ts){
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){fit();setTimeout(fit,300);}});
   }
 }
+// çevrimdışı oyun için dosyaları kaydeden service worker (dosyayı çift tıklayıp açınca çalışmaz, gerek de yok)
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 resize();addEventListener('resize',resize);
 // saha alanının boyutu değişince (pencere ilk kez boyutlanınca, yazı tipleri geç yüklenince) yeniden ölç
 if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>resize()).observe(document.getElementById('stage'));
