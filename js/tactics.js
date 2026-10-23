@@ -244,7 +244,7 @@ function formation(p,t){
   }else if(t.fx.offside&&p.role!=='GK')ny-=p.role==='DEF'?.16:.07; // ofsayt tuzağı: hat aniden öne çıkar
   if(t.fx.wave)ny-=has?.2:.1;
   if(t.fx.wall&&!has){ny=.7+(p.by-.44)*.45+(b.y-.5)*.08;nx=.5+(nx-.5)*.75;}
-  if(ball.kickoff)ny=Math.max(ny,has?.52:.6);
+  if(ball.kickoff){ny=Math.max(ny,has?.52:.6);if(!has&&p.role==='MID')ny=Math.max(ny,.7);} // santrada orta saha forvetin arkasında bekler, üst üste binmez
   nx+=Math.sin(now*.9+p.num)*.015;
   return{...toW(t,clamp(nx,.07,.93),clamp(ny,.1,.93)),sp:.85};
 }
@@ -288,8 +288,10 @@ function markSpot(p,t){
   const q=p.mark,g=ownGoal(t);
   const dx=g.x-q.x,dy=g.y-q.y,d=Math.hypot(dx,dy)||1;
   const bx=ball.x-q.x,by=ball.y-q.y,bd=Math.hypot(bx,by)||1;
-  const tight=t.fx.mark>0,md=tight?9:14;
-  const mx=q.x+dx/d*md+bx/bd*7,my=q.y+dy/d*md+by/bd*7;
+  const tight=t.fx.mark>0,md=tight?12:16;
+  // kale tarafı ile top tarafının ortası, rakipten hep md kadar uzakta (top arkadaysa da üstüne binmez)
+  let ox=dx/d*md+bx/bd*7,oy=dy/d*md+by/bd*7;const ol=Math.hypot(ox,oy)||1;ox*=md/ol;oy*=md/ol;
+  const mx=q.x+ox,my=q.y+oy;
   const base=formation(p,t),w=tight?1:clamp(1-(d-110)/220,.25,1)*(t.fx.wall?.55:1);
   return{x:base.x+(mx-base.x)*w,y:base.y+(my-base.y)*w,sp:.95};
 }

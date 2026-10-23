@@ -48,7 +48,9 @@ const FieldStates={
   }},
   // rakiple kale arasına gir ve önünde karşıla: taşıyan üstüne sürerken topa müdahale et
   press:{name:'Baskı',short:'BSK',execute(p){
-    const o=ball.owner,g=ownGoal(p.team),dx=g.x-o.x,dy=g.y-o.y,d=Math.hypot(dx,dy)||1;
+    const o=ball.owner,g=ownGoal(p.team);let dx=g.x-o.x,dy=g.y-o.y,d=Math.hypot(dx,dy)||1;
+    // ikinci baskıcı aynı noktaya değil, taşıyanın yan önüne gelir (ikisi üst üste binmez)
+    if(p.team.chasers.indexOf(p)===1){const s=p.x<o.x?-1:1,c=Math.cos(.9),n=Math.sin(.9)*s;[dx,dy]=[dx*c-dy*n,dx*n+dy*c];}
     const front=((p.x-o.x)*dx+(p.y-o.y)*dy)/d; // >0: oyuncu taşıyanın kale tarafında
     if(front>4&&dist(p,o)<28)return{x:o.x+dx/d*11,y:o.y+dy/d*11,sp:1.05}; // önünde: mesafeyi koruyup karşıla
     return{x:o.x+dx/d*14,y:o.y+dy/d*14,sp:1.12}; // arkada ya da uzakta: önüne dolan

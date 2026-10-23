@@ -50,4 +50,18 @@ function simPlayers(dt){
     if(ball.penalty&&ball.setT>0&&p!==ball.owner&&!(p.role==='GK'&&t!==ball.owner.team)){const g=oppGoal(ball.owner.team);if(inBox(tg,g))tg={...tg,y:g.y-dirY(ball.owner.team)*86};}
     steer(p,t,tg,dt);
   }
+  separate();
+}
+// oyuncular birbirinin içinden geçmez: gövdeler çakışırsa ikisi de geri itilir (top süren daha az kayar)
+const BODY=11;
+function separate(){
+  const all=teams[0].players.concat(teams[1].players);
+  for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){
+    const a=all[i],b=all[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+    if(d>=BODY)continue;
+    const nx=d>0?dx/d:1,ny=d>0?dy/d:0,o=BODY-d;
+    const wa=a===ball.owner?.25:b===ball.owner?.75:.5;
+    a.x=clamp(a.x-nx*o*wa,FX+6,FX+FW-6);a.y=clamp(a.y-ny*o*wa,FY+6,FY+FH-6);
+    b.x=clamp(b.x+nx*o*(1-wa),FX+6,FX+FW-6);b.y=clamp(b.y+ny*o*(1-wa),FY+6,FY+FH-6);
+  }
 }
