@@ -23,6 +23,9 @@ function suggestedType(){
   return null;
 }
 let oppKey='',lastWhole=0,superKeyShown='';
+// her karede çağrılır: değer değişmediyse sayfaya dokunma (gereksiz yeniden düzen ve boyama olmasın)
+const setText=(el,v)=>{v=String(v);if(el.textContent!==v)el.textContent=v;};
+const setCss=(el,p,v)=>{const c=el._css||(el._css={});if(c[p]!==v){c[p]=v;el.style.setProperty(p,v);}};
 function updateFxChips(t){
   const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&DUR[k]&&!['through','longball','foul'].includes(k));
   for(const el of [...box.children])if(!keys.includes(el.dataset.k))el.remove();
@@ -33,15 +36,15 @@ function updateFxChips(t){
       el.style.cssText='--c1:'+c.c1+';--c2:'+c.c2+';--col:'+c.col+';--team:'+t.color;
       el.innerHTML='<i>'+iconSvg(k)+'</i>';box.appendChild(el);
     }
-    el.style.setProperty('--p',(t.fx[k]/DUR[k]*100).toFixed(1)+'%');
+    setCss(el,'--p',(t.fx[k]/DUR[k]*100).toFixed(1)+'%');
     el.classList.toggle('ending',t.fx[k]<1.5);el.classList.toggle('wait',!fxLive(t,k));
   }
 }
 function updateHud(){
-  $('s0').textContent=teams[0].score;$('s1').textContent=teams[1].score;
+  setText($('s0'),teams[0].score);setText($('s1'),teams[1].score);
   const live=state==='play'||state==='coach';
   $('side0').classList.toggle('has',live&&attacking(teams[0]));$('side1').classList.toggle('has',live&&attacking(teams[1]));
-  const s=overtime?Math.floor(clock):Math.ceil(clock);$('timer').textContent=(overtime?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  const s=overtime?Math.floor(clock):Math.ceil(clock);setText($('timer'),(overtime?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'));
   const fast=overtime||clock<=FAST_TIME;
   $('timer').classList.toggle('hot',fast);
   if(Net.active()&&matchCtx&&matchCtx.pvp){ // arkadaş maçı: süre altında bağlantı gecikmesi (yeşil iyi, sarı orta, kırmızı kötü)
@@ -49,7 +52,7 @@ function updateHud(){
     const html=lbl+(p==null?'<span class="ping">● …</span>':'<span class="ping '+(p<80?'g':p<150?'y':'r')+'">● '+p+' ms</span>');
     if($('half').innerHTML!==html)$('half').innerHTML=html;
     $('half').classList.add('net');
-  }else{$('half').classList.remove('net');$('half').textContent=overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ';}
+  }else{$('half').classList.remove('net');setText($('half'),overtime?'UZATMA · ALTIN GOL':clock<=FAST_TIME&&state==='play'?'SON DAKİKALAR':'MAÇ');}
   const t=teams[0],key=t.hand.join()+'|'+t.queue[0],sug=suggestedType();
   if(key!==handKey){handKey=key;$('hand').innerHTML=t.hand.map(cardHTML).join('');$('nextCard').innerHTML=miniCard(t.queue[0],-1);lastAfford=[];}
   document.querySelectorAll('#hand .card').forEach(el=>{
@@ -58,17 +61,17 @@ function updateHud(){
     el.classList.toggle('hint',can&&(state==='play'||state==='coach')&&c.type===sug);
     if(can&&lastAfford[i]===false){el.classList.remove('ready');void el.offsetWidth;el.classList.add('ready');Sfx.ready();}
     lastAfford[i]=can;
-    el.querySelector('.lock').style.height=(t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';
+    setCss(el.querySelector('.lock'),'height',(t.stars<c.cost?(1-t.stars/c.cost)*100:0).toFixed(1)+'%');
   });
   // süper kart yuvası
   const sk=t.superKey+'|'+t.superUsed;
   if(sk!==superKeyShown){superKeyShown=sk;$('superCard').innerHTML=miniCard(t.superKey,-2);$('super').classList.toggle('used',t.superUsed);$('superLbl').textContent=t.superUsed?'KULLANILDI':'SÜPER';}
   {const el=$('superCard').querySelector('.card'),c=CARDS[t.superKey],can=!t.superUsed&&t.stars>=c.cost&&state==='play'&&!paused;
-    if(el){el.classList.toggle('off',!can);el.classList.toggle('ready',can);el.querySelector('.lock').style.height=(t.superUsed?100:t.stars<c.cost?(1-t.stars/c.cost)*100:0)+'%';}}
-  $('sfill').style.width=t.stars/STAR_MAX*100+'%';$('sbar').setAttribute('aria-valuenow',Math.floor(t.stars));
+    if(el){el.classList.toggle('off',!can);el.classList.toggle('ready',can);setCss(el.querySelector('.lock'),'height',(t.superUsed?100:t.stars<c.cost?(1-t.stars/c.cost)*100:0).toFixed(1)+'%');}}
+  setCss($('sfill'),'width',(t.stars/STAR_MAX*100).toFixed(1)+'%');{const v=''+Math.floor(t.stars);if($('sbar').getAttribute('aria-valuenow')!==v)$('sbar').setAttribute('aria-valuenow',v);}
   const whole=Math.floor(t.stars);
   if(whole!==lastWhole){if(whole>lastWhole){const si=$('sicon');si.classList.remove('gain');void si.offsetWidth;si.classList.add('gain');}lastWhole=whole;$('snum').textContent=whole;}
-  $('x2').textContent=fast&&state==='play'?'x2':'';
+  setText($('x2'),fast&&state==='play'?'x2':'');
   for(const tm of teams)updateFxChips(tm);
   const ok=oppLog.join();
   if(ok!==oppKey){

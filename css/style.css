@@ -195,7 +195,7 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 #coach .btnrow{flex-wrap:nowrap}
 
 /* kart ayrıntı penceresi */
-#cardModal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,10,30,.72);backdrop-filter:blur(3px);animation:fadeIn .15s ease-out}
+#cardModal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,10,30,.8);animation:fadeIn .15s ease-out}
 #cardModal[hidden]{display:none}
 .cm-panel{width:min(320px,100%);background:linear-gradient(var(--panel-2),var(--panel));border-radius:20px;padding:22px 20px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 20px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;animation:cmIn .22s cubic-bezier(.2,1.4,.4,1)}
 .cm-card{width:118px;margin:4px 0 10px}

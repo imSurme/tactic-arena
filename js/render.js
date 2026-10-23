@@ -10,13 +10,14 @@ function resize(){
   viewCrop=matchMedia('(max-aspect-ratio:3/4)').matches?10:0;
   const vh=H-viewCrop*2;
   const cw=Math.floor(st.width),ch=Math.floor(st.height);
-  scale=Math.min(cw/W,ch/vh);dpr=window.devicePixelRatio||1;
+  scale=Math.min(cw/W,ch/vh);dpr=Math.min(2,window.devicePixelRatio||1); // 3x ekranda fark görünmez ama 2,25 kat fazla piksel çizilir
   offX=(cw/scale-W)/2;offY=(ch/scale-vh)/2;
   cv.style.width=cw+'px';cv.style.height=ch+'px';
   cv.width=bg.width=Math.round(cw*dpr);cv.height=bg.height=Math.round(ch*dpr);
   ctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
   bctx.setTransform(scale*dpr,0,0,scale*dpr,offX*scale*dpr,(offY-viewCrop)*scale*dpr);
   renderField(bctx);
+  if(typeof redraw==='function')redraw(); // boyut değişince tuval silinir, donmuşsa da yeniden çizilsin
 }
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
 // sabit saha: tribün, çim, çizgiler, kaleler — bir kez çizilir
@@ -191,6 +192,7 @@ function drawPlayer(p){
   drawBody(p,x,y,jersey,trim,gk,run,sw);
   if(p.stun>0){ctx.fillStyle='#ffe066';for(let i=0;i<3;i++){const a=now*7+i*2.1;ctx.beginPath();ctx.arc(x+Math.cos(a)*9,y-14+Math.sin(a)*3,1.8,0,Math.PI*2);ctx.fill();}}
 }
+let ballGrad=null; // topun parlaklığı bir kez oluşturulur, havadaki top için ölçeklenir
 function drawBall(){
   const b=ball,sp=Math.hypot(b.vx,b.vy),z=b.z||0;
   const lift=z>0?z:!b.owner&&b.shot?Math.min(6,sp/80):!b.owner&&sp>200?2:0,r=5.4*(1+lift/45);
@@ -202,8 +204,8 @@ function drawBall(){
   ctx.fillStyle='rgba(0,15,5,'+(.35*sh+.08)+')';ell(b.x+2+lift*.5,b.y+3+lift*.35,4.4*sh+1,2.6*sh+.6);ctx.fill();
   const y=b.y-lift;
   ctx.save();ctx.translate(b.x,y);
-  const g=ctx.createRadialGradient(-1.6,-1.9,.4,0,0,r+.5);g.addColorStop(0,'#ffffff');g.addColorStop(.7,'#eef2fb');g.addColorStop(1,'#b9c3dc');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+  if(!ballGrad){ballGrad=ctx.createRadialGradient(-1.6,-1.9,.4,0,0,5.9);ballGrad.addColorStop(0,'#ffffff');ballGrad.addColorStop(.7,'#eef2fb');ballGrad.addColorStop(1,'#b9c3dc');}
+  ctx.save();ctx.scale(r/5.4,r/5.4);ctx.fillStyle=ballGrad;ctx.beginPath();ctx.arc(0,0,5.4,0,Math.PI*2);ctx.fill();ctx.restore();
   ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();
   // dönen beşgen paneller (top yuvarlanıyormuş gibi kayar)
   ctx.fillStyle='#1b2142';

@@ -1,5 +1,7 @@
 // Oyun döngüsü ve açılış
-let last=performance.now();
+let last=performance.now(),nextAt=0,lastHud=0,drawn=false;
+// arayüz penceresi (menü, duraklatma, maç sonu) sahayı kapatırken tuval bir kez çizilip dondurulur: telefon ısınmasın, pil bitmesin
+function redraw(){drawn=false;}
 // süre bitince: berabereyse gol atılana kadar altın gollü uzatma, değilse maç biter
 function timeUp(){
   if(teams[0].score===teams[1].score){
@@ -11,8 +13,10 @@ function timeUp(){
 }
 function frame(ts){
   requestAnimationFrame(frame); // önce sıradaki kareyi iste: bir karede hata olsa da oyun donmasın
+  if(ts<nextAt-2)return; // 90/120 Hz ekranlarda da saniyede en fazla ~60 kare
+  nextAt=Math.max(nextAt,ts-1000/60)+1000/60;
   const dt=Math.min(.05,(ts-last)/1000);last=ts;
-  if(Net.isGuest()){Net.guestFrame(dt);updateHud();draw();return;} // misafir oyunu çalıştırmaz, ev sahibinden gelen durumu çizer
+  if(Net.isGuest()){Net.guestFrame(dt);show(ts);return;} // misafir oyunu çalıştırmaz, ev sahibinden gelen durumu çizer
   if(!paused){
     now+=dt;
     updateFx(dt);
@@ -40,7 +44,12 @@ function frame(ts){
     }
   }
   Net.hostTick(dt);
-  updateHud();draw();
+  show(ts);
+}
+function show(ts){
+  if(document.getElementById('overlay').hidden&&document.getElementById('cardModal').hidden){drawn=false;updateHud();draw();return;}
+  if(!drawn){drawn=true;updateHud();draw();lastHud=ts;}
+  else if(ts-lastHud>250){lastHud=ts;updateHud();} // pencere açıkken skorbord seyrek güncellenir
 }
 // iPhone ana ekran uygulaması: iOS açılışta ekran yüksekliğini ara sıra kısa bildirir ve düzeltmez (altta boşluk kalır).
 // Yükseklik birkaç kez ölçülür, en büyüğü oyun kutusuna verilir.
