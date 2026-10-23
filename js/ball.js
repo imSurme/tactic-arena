@@ -123,9 +123,6 @@ function take(p){
   if(p.team!==lastPossessor){lastPossessor=p.team;const r=Math.random();p.team.lane=r<.38?-1:r<.76?1:0;}
   // baskı altındaysa tek dokunuş
   p.decT=p.role==='GK'?.3:nearestOpp(p,p.team).d<25?.12:rnd(.25,.4);
-  // bekleyen Taktik Faul: rakip topu alır almaz kesilir
-  const ft=teams[1-p.team.id];
-  if(ft.fx.foul>0&&p.role!=='GK'&&state==='play'){ft.fx.foul=0;tacticalFoul(ft);}
 }
 function goal(tid){
   const t=teams[tid];t.score++;Crowd.goal(tid);

@@ -52,7 +52,7 @@ function setPiece(t,spot,delay,indirect=false){
   for(const p of t.players){if(p.role==='GK'&&dist(p,spot)>60)continue;const d=dist(p,spot);if(d<bd){bd=d;taker=p;}}
   spot={x:clamp(spot.x,FX+8,FX+FW-8),y:clamp(spot.y,FY+10,FY+FH-10)};
   taker.x=spot.x;taker.y=spot.y-dirY(t)*8;taker.vx=taker.vy=0;taker.fa=dirY(t)*Math.PI/2; // topun arkasına geç
-  for(const q of teams[1-t.id].players){const d=dist(q,spot);if(d<30){const k=30/(d||1);q.x=clamp(spot.x+(q.x-spot.x)*k,FX+6,FX+FW-6);q.y=clamp(spot.y+(q.y-spot.y)*k,FY+6,FY+FH-6);}}
+  // yakındaki rakipler ışınlanmaz: süre boyunca topa dokunulamaz, rakipler 30 px dışına yürüyerek çekilir (ai.js simPlayers)
   take(taker);
   ball.setT=delay;ball.kickoff=false;taker.decT=delay;
   // kaleye yakınsa direkt şut

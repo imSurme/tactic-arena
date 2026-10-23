@@ -56,6 +56,13 @@ const FieldStates={
     return{x:o.x+dx/d*14,y:o.y+dy/d*14,sp:1.12}; // arkada ya da uzakta: önüne dolan
   }},
   mark:{name:'Markaj',short:'MRK',execute:p=>markSpot(p,p.team)},
+  // Taktik Faul: topçuya depar at, yetişince faulü yap. Rakip yapay zeka ceza sahasında faul yapmaz (penaltı olur), bekler
+  foulRun:{name:'Taktik faul',short:'FAL',execute(p){
+    const o=ball.owner,t=p.team;
+    if(!o||o.team===t)return formation(p,t); // bu karede top pasla çıktı; sonraki karede yeni görev
+    if(dist(p,o)<14&&!(t.id===1&&inBox(o,ownGoal(t)))){tacticalFoul(t,p);return stay(p);}
+    return{x:o.x,y:o.y,sp:1.45};
+  }},
   // hücumda boş alan bul; fırsat olursa savunma arkasına koşuya çık
   support:{name:'Destek',short:'DST',
     enter(p){p.spotT=0;},
@@ -110,6 +117,7 @@ function chooseFieldState(p,t){
   if(p.dash>0)return S.dash;
   if(ball.kickoff&&p===t.koRecv&&attacking(t))return S.kickoffWait;
   if(o===p)return S.dribble;
+  if(t.fouler===p)return S.foulRun;
   if(ball.passTo===p&&!o)return S.receive;
   if(t.chasers.includes(p))return o?S.press:S.chase;
   if(p.mark)return S.mark;

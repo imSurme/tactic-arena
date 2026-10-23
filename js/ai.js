@@ -12,6 +12,8 @@ function assignRoles(t){
   else if(!o)t.chasers=ball.passTo&&ball.passTo.team===t?[ball.passTo]:out.slice(0,n);
   else if(o.team!==t)t.chasers=o.role==='GK'?[]:out.slice(0,n); // topu tutan kaleciye basılmaz
   else t.chasers=[];
+  // Taktik Faul kartı: topçuya en yakın oyuncu faul için koşar (topu tutan kaleciye ve duran topta yapılmaz)
+  t.fouler=t.fx.foul>0&&o&&o.team!==t&&o.role!=='GK'&&!ball.kickoff&&!(ball.setT>0)?out[0]||null:null;
   assignMarks(t);
 }
 // hedefe doğru hızlanarak koş, takım arkadaşlarından uzak dur, yüzünü hareket yönüne ya da topa çevir

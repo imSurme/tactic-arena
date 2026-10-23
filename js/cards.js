@@ -68,7 +68,6 @@ function applyCard(t,k){
   switch(k){
     case'through':if(mine&&throughPass(o,t))return;break;
     case'longball':if(mine&&longBall(o,t))return;break;
-    case'foul':if(theirs){tacticalFoul(t);return;}break;
     case'total':{ // Kontra Atak + Hücum Dalgası + Çalım Ustası
       for(const x of ['counter','wave','dribble'])t.fx[x]=Math.max(t.fx[x]||0,DUR.total);
       for(const p of t.players)if(p.role!=='GK')ring(p.x,p.y,CARDS.total.col);
@@ -98,17 +97,15 @@ function applyCard(t,k){
   if(k==='gk')ring(t.players[0].x,t.players[0].y,CARDS.gk.col);
   else for(const p of t.players)if(p.role!=='GK')ring(p.x,p.y,CARDS[k].col);
 }
-// Taktik Faul: atak bilerek faulle kesilir. Rakip serbest vuruş kullanır ama vuruş geç gelir,
+// Taktik Faul: kart oynanınca topçuya en yakın oyuncu depar atar, yetişince atağı bilerek faulle keser
+// (ai.js assignRoles, states.js foulRun). Rakip serbest vuruş kullanır ama vuruş geç gelir,
 // bu sırada takım koşarak savunmaya dizilir. Rakip karşılığında yıldız kazanır.
-function tacticalFoul(t){
+function tacticalFoul(t,fouler){
   const o=ball.owner,opp=o.team;
-  let best=null,bd=1e9;
-  for(const p of t.players){if(p.role==='GK')continue;const d=dist(p,o);if(d<bd){bd=d;best=p;}}
-  t.fx.foul=0;
+  t.fx.foul=0;t.fouler=null;
   // serbest vuruş faulün yapıldığı yerden; ceza sahası içindeyse penaltı
-  best.x=clamp(o.x-dirY(opp)*10,FX+6,FX+FW-6);best.y=clamp(o.y-dirY(opp)*10,FY+6,FY+FH-6);
-  callFoul(best,o,{delay:2.6,label:'TAKTİK FAUL!',indirect:true});
-  for(const p of t.players)if(p.role!=='GK'&&p!==best)p.sprint=2.2; // savunmaya koş
+  callFoul(fouler,o,{delay:2.6,label:'TAKTİK FAUL!',indirect:true});
+  for(const p of t.players)if(p.role!=='GK'&&p!==fouler)p.sprint=2.2; // savunmaya koş
   t.fx.wall=Math.max(t.fx.wall||0,5); // savunmaya dizilir, şutların önünü keser
   ball.tactical=true; // vuruş gelene kadar rakibin diğer oyuncuları yavaş ilerler
   addStars(opp,REWARD.foulComp,o.x,o.y);
