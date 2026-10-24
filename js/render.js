@@ -195,10 +195,7 @@ function drawPlayer(p){
     ctx.globalAlpha=.18;ctx.fillStyle=CARDS.hero.col;ctx.fill();ctx.restore();
     if(Math.random()<.35)parts.push({x:x+rnd(-10,10),y:y+rnd(-12,6),vx:rnd(-12,12),vy:rnd(-40,-15),life:.6,t:0,c:'#fff3a0',s:rnd(1,2)});
   }
-  const aura=['wave','counter','press','wall'].find(k=>t.fx[k]>0);
-  if(aura&&!gk){ctx.strokeStyle=t.color;ctx.globalAlpha=.5+Math.sin(now*8+p.num)*.25;ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.lineDashOffset=-now*20;ell(x,y+2,17,11);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
   if(t.fouler===p||t.slider===p){ctx.strokeStyle=CARDS[t.fouler===p?'foul':'slide'].col;ctx.globalAlpha=.75+Math.sin(now*12)*.2;ctx.lineWidth=2.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-now*30;ell(x,y+2,16,10.5);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;} // taktik faule ya da kaymaya koşan
-  if(gk&&t.fx.gk>0){ctx.strokeStyle=t.color;ctx.globalAlpha=.45+Math.sin(now*6)*.2;ctx.lineWidth=2.5;ell(x,y,26,26);ctx.stroke();ctx.globalAlpha=.08;ctx.fillStyle=t.color;ctx.fill();ctx.globalAlpha=1;}
   if(p.dash>0||p.sprint>0){ctx.strokeStyle='rgba(255,255,255,.65)';ctx.lineWidth=2;ctx.lineCap='round';const a=p.fa+Math.PI;for(const o of [-6,0,6]){const ox=Math.cos(a+Math.PI/2)*o,oy=Math.sin(a+Math.PI/2)*o;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*13+ox,y+Math.sin(a)*13+oy);ctx.lineTo(x+Math.cos(a)*(22+Math.abs(o))+ox,y+Math.sin(a)*(22+Math.abs(o))+oy);ctx.stroke();}ctx.lineCap='butt';}
   drawBody(p,x,y,jersey,trim,gk,run,sw);
   if(p.stun>0){ctx.fillStyle='#ffe066';for(let i=0;i<3;i++){const a=now*7+i*2.1;ctx.beginPath();ctx.arc(x+Math.cos(a)*9,y-14+Math.sin(a)*3,1.8,0,Math.PI*2);ctx.fill();}}
@@ -267,11 +264,11 @@ function drawPassLine(){
   ctx.globalAlpha=.7;ell(tg.x,tg.y+1,7+Math.sin(now*8),4.2);ctx.stroke();
   ctx.restore();
 }
-// kart etkilerinin sahadaki izi: duvar hattı, ofsayt çizgisi, baskı alanı, pas üçgenleri, markaj bağları
+// kart etkilerinin sahadaki izi: duvar hattı, ofsayt çizgisi, kaleci kalkanı, pas üçgenleri, markaj bağları
 function drawZones(){
   const pulse=.5+Math.sin(now*6)*.2;
   for(const t of teams){
-    const fx=t.fx,outs=t.players.filter(p=>p.role!=='GK'),o=ball.owner;
+    const fx=t.fx,outs=t.players.filter(p=>p.role!=='GK');
     if(fx.wall>0){
       const defs=outs.filter(p=>p.role==='DEF'),y=defs.reduce((a,p)=>a+p.y,0)/defs.length+dirY(t)*14;
       ctx.save();ctx.globalAlpha=.22*pulse+.1;ctx.fillStyle=CARDS.wall.col;
@@ -287,12 +284,11 @@ function drawZones(){
       ctx.fillStyle=CARDS.offside.col;ctx.beginPath();ctx.moveTo(FX+2,y);ctx.lineTo(FX+2,y-12);ctx.lineTo(FX+12,y-8);ctx.lineTo(FX+2,y-4);ctx.fill();
       ctx.restore();
     }
-    if(fx.press>0&&o&&o.team!==t){
-      ctx.save();const g=ctx.createRadialGradient(o.x,o.y,4,o.x,o.y,34);
-      g.addColorStop(0,'rgba(167,123,255,0)');g.addColorStop(.7,'rgba(167,123,255,.18)');g.addColorStop(1,'rgba(167,123,255,0)');
-      ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,34,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle=CARDS.press.col;ctx.globalAlpha=pulse;ctx.lineWidth=2;ctx.setLineDash([3,4]);ctx.lineDashOffset=now*25;
-      ctx.beginPath();ctx.arc(o.x,o.y,26,0,Math.PI*2);ctx.stroke();ctx.restore();
+    if(fx.gk>0){ // Kaleci Refleksi: kale ağzının önünde direkten direğe kalkan yayı
+      const g=ownGoal(t),up=dirY(t)<0,r=GW/2+5;
+      ctx.save();ctx.beginPath();ctx.ellipse(g.x,g.y,r,24,0,up?Math.PI:0,up?Math.PI*2:Math.PI);
+      ctx.globalAlpha=.1+pulse*.08;ctx.fillStyle=CARDS.gk.col;ctx.fill();
+      ctx.globalAlpha=.45+pulse*.4;ctx.strokeStyle=CARDS.gk.col;ctx.lineWidth=2.5;ctx.stroke();ctx.restore();
     }
     if(fx.tiki>0){
       ctx.save();ctx.strokeStyle=CARDS.tiki.col;ctx.globalAlpha=.35;ctx.lineWidth=1.5;
