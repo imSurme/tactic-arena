@@ -44,7 +44,7 @@ function kitFrom(hex,trim){
 const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 
 const Team=(()=>{
-  const DEFAULT={name:'Mavi Yıldızlar',short:'MAVİ',color:'#2f80ff',trim:'#ffffff',shape:0,symbol:0};
+  const DEFAULT={name:'Mavi Yıldızlar',short:'MAVİ',color:'#2f80ff',trim:'#ffffff',shape:0,symbol:0,formation:'2-1-1',tactic:'bal'};
   const COLORS=KIT_COLORS.map(c=>c[0]);
   const cleanName=s=>String(s||'').replace(/[^\p{L}\p{N} .'-]/gu,'').replace(/\s+/g,' ').trim().slice(0,20);
   const cleanShort=s=>String(s||'').toLocaleUpperCase('tr').replace(/[^\p{L}\p{N}]/gu,'').slice(0,8);
@@ -57,7 +57,8 @@ const Team=(()=>{
     let trim=COLORS.includes(o.trim)?o.trim:DEFAULT.trim;if(trim===color)trim=color==='#f2f2f2'?'#2a2f45':'#f2f2f2';
     return{name,short:cleanShort(o.short)||shortFrom(name)||'TAKIM',color,trim,
       shape:Number.isInteger(o.shape)&&o.shape>=0&&o.shape<CREST_SHAPES.length?o.shape:0,
-      symbol:Number.isInteger(o.symbol)&&o.symbol>=0&&o.symbol<CREST_SYMBOLS.length?o.symbol:0};
+      symbol:Number.isInteger(o.symbol)&&o.symbol>=0&&o.symbol<CREST_SYMBOLS.length?o.symbol:0,
+      formation:FORMATIONS[o.formation]?o.formation:DEFAULT.formation,tactic:TACTICS[o.tactic]?o.tactic:DEFAULT.tactic};
   }
   let me;
   try{me=clean(JSON.parse(localStorage.getItem('ta-team')));}catch(e){me=clean(DEFAULT);}
@@ -68,13 +69,18 @@ const Team=(()=>{
     let h=0;for(const ch of String(name))h=(h*31+ch.charCodeAt(0))>>>0;
     return{color,trim:isLight(color)?'#2a2f45':'#ffffff',shape:h%CREST_SHAPES.length,symbol:(h>>3)%CREST_SYMBOLS.length};
   }
+  // yapay zekâ takımının oyun tarzı: turnuva takımında addan sabit, hızlı maçta (ad yok) rastgele
+  function styleFor(name){
+    let h=0;for(const ch of String(name||Math.random()))h=(h*37+ch.charCodeAt(0))>>>0;
+    return{formation:FORMATION_KEYS[h%FORMATION_KEYS.length],tactic:TACTIC_KEYS[(h>>4)%TACTIC_KEYS.length]};
+  }
   // arma SVG'si; b: {color, trim, shape, symbol}
   function crestSVG(b,cls){
     const f=kitDist(b.trim,b.color)<CLASH?(isLight(b.color)?'#2a2f45':'#ffffff'):b.trim;
     return`<svg class="crest${cls?' '+cls:''}" viewBox="0 0 32 32" aria-hidden="true"><path d="${CREST_SHAPES[b.shape]||CREST_SHAPES[0]}" fill="${b.color}" stroke="${f}" stroke-width="2.4" stroke-linejoin="round"/>${(CREST_SYMBOLS[b.symbol]||CREST_SYMBOLS[0])(f,b.color)}</svg>`;
   }
   return{
-    COLORS,DEFAULT,clean,shortFrom,badgeFor,crestSVG,applyCss,
+    COLORS,DEFAULT,clean,shortFrom,badgeFor,styleFor,crestSVG,applyCss,
     get:()=>({...me}),
     set(o){me=clean(o);try{localStorage.setItem('ta-team',JSON.stringify(me));}catch(e){}applyCss();},
     kit:()=>kitFrom(me.color,me.trim),

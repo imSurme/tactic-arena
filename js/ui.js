@@ -116,6 +116,7 @@ function applyOppHud(){
     $('crest'+i).innerHTML=Team.crestSVG(t.badge);$('side'+i).style.setProperty('--tc',t.color);$('who'+i).textContent=t.short;
     r.setProperty(i?'--away':'--home',t.color);r.setProperty(i?'--away-l':'--home-l',t.light);
   });
+  updateTacBtn();
 }
 function showMenu(){
   // Sfx.resume: duraklatılmış maçtan çıkılınca ses kapalı kalmasın
@@ -279,13 +280,20 @@ function showSettings(){
 }
 // takım ekranı: ad, kısa ad, forma ve şerit rengi, arma. Arkadan görünen sahadaki oyuncular da anında yeni formayı giyer
 const shirtSVG=(c,tr)=>`<svg class="shirt" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 7 5 16l6.5 13 6.5-3.2V55h28V25.8l6.5 3.2L59 16 40 7c-2 4.5-4.6 6.5-8 6.5S26 11.5 24 7z" fill="${c}" stroke="${OUT}" stroke-width="2.5" stroke-linejoin="round"/><path d="M8.3 15.6 13.6 26.2M55.7 15.6 50.4 26.2" stroke="${tr}" stroke-width="3.5"/><path d="M25.5 8.3c1.8 3.6 4 5.6 6.5 5.6s4.7-2 6.5-5.6" fill="none" stroke="${tr}" stroke-width="3"/></svg>`;
+// formasyonun küçük saha çizimi: senin yarı saha, hücum yukarı doğru
+function formSVG(k,c){
+  const Y=y=>((y-.36)/.64*50).toFixed(1);
+  return`<svg viewBox="0 0 40 50" aria-hidden="true"><rect x="1" y="1" width="38" height="48" rx="3" fill="#2fa855" stroke="rgba(255,255,255,.5)"/><path d="M1 ${Y(.5)}h38M12 49v-9h16v9" fill="none" stroke="rgba(255,255,255,.5)"/>${
+    [GK_ROLE,...FORMATIONS[k].pos].map(([r,x,y])=>`<circle cx="${(x*40).toFixed(1)}" cy="${Y(y)}" r="3.6" fill="${r==='GK'?'#b6f23a':c}" stroke="#fff" stroke-width="1.2"/>`).join('')}</svg>`;
+}
 function showTeam(){
   const d=Team.get();
   const colorName=c=>(KIT_COLORS.find(k=>k[0]===c)||[,''])[1];
   const swatches=(cur,skip)=>Team.COLORS.map(c=>`<button class="swatch" data-v="${c}" style="--c:${c}" aria-label="${colorName(c)}" aria-pressed="${c===cur}"${c===skip?' disabled':''}></button>`).join('');
   showOverlay(`<h2>TAKIMIN</h2>
+<div class="decktabs two" role="tablist"><button class="dtab" data-t="kit" role="tab">TAKIM</button><button class="dtab" data-t="tac" role="tab">TAKTİK</button></div>
 <div class="teamprev" id="tPrev"></div>
-<div class="settings teamform">
+<div class="settings teamform" id="tabKit">
   <div class="namerow"><fieldset><legend>Takım adı</legend><div class="linkbox"><input id="tName" maxlength="20" autocomplete="off" spellcheck="false" aria-label="Takım adı"></div></fieldset>
   <fieldset><legend>Kısa ad</legend><div class="linkbox"><input id="tShort" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Kısa ad (skorbordda görünür)"></div></fieldset></div>
   <fieldset><legend>Forma rengi</legend><div class="swatches" id="tColor"></div></fieldset>
@@ -293,7 +301,13 @@ function showTeam(){
   <div class="crestrow"><fieldset><legend>Arma şekli</legend><div class="crestpick" id="tShape"></div></fieldset>
   <fieldset><legend>Sembol</legend><div class="crestpick" id="tSymbol"></div></fieldset></div>
 </div>
-<p class="tip">Arkadaş maçında ikinizin rengi çok benziyorsa odaya katılan taraf şerit rengini forma olarak giyer.</p>
+<div class="settings teamform" id="tabTac" hidden>
+  <fieldset><legend>Formasyon <small id="fDesc"></small></legend><div class="formpick" id="tForm"></div></fieldset>
+  <fieldset><legend>Taktik <small id="tacDesc"></small></legend><div class="seg" role="radiogroup">${TACTIC_KEYS.map(k=>
+    `<input type="radio" name="tac" id="tac-${k}" value="${k}"${k===d.tactic?' checked':''}><label for="tac-${k}">${TACTICS[k].name}</label>`).join('')}</div></fieldset>
+</div>
+<p class="tip" id="tacTip">Taktiğini maç sırasında alt bardaki, yıldız çubuğunun sağındaki ok düğmesinden de değiştirebilirsin.</p>
+<p class="tip" id="kitTip">Arkadaş maçında ikinizin rengi çok benziyorsa odaya katılan taraf şerit rengini forma olarak giyer.</p>
 <button class="cta" id="go">KAYDET</button><button class="link" id="back">Vazgeç</button>`,
   {go:()=>{Team.set(cur());showMenu();},back:showMenu});
   $('obox').classList.add('wide','teambox');
@@ -306,6 +320,8 @@ function showTeam(){
     shortIn.placeholder=Team.shortFrom(t.name)||'KISA AD';
     $('tColor').innerHTML=swatches(d.color);$('tTrim').innerHTML=swatches(t.trim,d.color);
     $('tShape').innerHTML=CREST_SHAPES.map((_,i)=>`<button class="cpick" data-v="${i}" aria-label="${CREST_SHAPE_NAMES[i]}" aria-pressed="${i===d.shape}">${Team.crestSVG({...t,shape:i})}</button>`).join('');
+    $('tForm').innerHTML=FORMATION_KEYS.map(k=>`<button class="fpick" data-v="${k}" aria-pressed="${k===d.formation}">${formSVG(k,t.color)}<b>${k}</b></button>`).join('');
+    $('fDesc').textContent='· '+FORMATIONS[d.formation].desc;$('tacDesc').textContent='· '+TACTICS[d.tactic].desc;
     $('tSymbol').innerHTML=CREST_SYMBOLS.map((_,i)=>`<button class="cpick" data-v="${i}" aria-label="${CREST_SYMBOL_NAMES[i]}" aria-pressed="${i===d.symbol}">${Team.crestSVG({...t,symbol:i})}</button>`).join('');
     // arkadaki sahada senin oyuncuların yeni formayla
     Object.assign(teams[0],kitFrom(t.color,t.trim),{name:t.name,short:t.short,badge:t});
@@ -314,7 +330,13 @@ function showTeam(){
   }
   const pick=(id,key,num)=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;d[key]=num?+b.dataset.v:b.dataset.v;
     if(key==='color'&&d.trim===d.color)d.trim=d.color==='#f2f2f2'?'#2a2f45':'#f2f2f2';Sfx.click();draw();};
-  pick('tColor','color');pick('tTrim','trim');pick('tShape','shape',true);pick('tSymbol','symbol',true);
+  pick('tColor','color');pick('tTrim','trim');pick('tShape','shape',true);pick('tSymbol','symbol',true);pick('tForm','formation');
+  $('obox').querySelectorAll('input[name=tac]').forEach(el=>el.onchange=()=>{d.tactic=el.value;Sfx.click();draw();});
+  // sekmeler: takım (ad, forma, arma) ve taktik (formasyon, oyun tarzı)
+  const tab=k=>{$('tabKit').hidden=k!=='kit';$('kitTip').hidden=k!=='kit';$('tacTip').hidden=k!=='tac';$('tabTac').hidden=k!=='tac';
+    document.querySelectorAll('.dtab').forEach(el=>{el.classList.toggle('on',el.dataset.t===k);el.setAttribute('aria-selected',el.dataset.t===k);});};
+  document.querySelectorAll('.dtab').forEach(el=>el.onclick=()=>{Sfx.click();tab(el.dataset.t);});
+  tab('kit');
   nameIn.oninput=draw;
   shortIn.oninput=()=>{shortIn.value=shortIn.value.toLocaleUpperCase('tr').replace(/[^\p{L}\p{N}]/gu,'');draw();};
   draw();
@@ -398,6 +420,26 @@ function updateMuteBtn(){
   b.setAttribute('aria-label',Sfx.muted?'Sesi aç':'Sesi kapat');b.setAttribute('aria-pressed',Sfx.muted);
   const sw=$('optSound');if(sw)sw.checked=!Sfx.muted;
 }
+// maç içinde taktik (alt barda, yıldız çubuğunun sağında): dokundukça Defansif → Dengeli → Ofansif (yalnız bu maç için; kayıtlı taktiğin değişmez).
+// ikon: ofansifte kılıç, dengelide terazi, defansifte kalkan; yatay ekranda hücum sağa doğru olduğu için ofansif ikonu döner
+const TAC_ICONS={
+  // ofansif: kılıç (ucu hücum yönüne bakar)
+  att:'<path d="M12 1.6l2.5 3.1V15h-5V4.7z"/><path d="M12 4.6V14" stroke="rgba(0,0,0,.28)" stroke-width="1.4"/><rect x="6.2" y="15" width="11.6" height="2.8" rx="1.4"/><rect x="10.7" y="17.6" width="2.6" height="3.6" rx=".6"/><circle cx="12" cy="22.2" r="1.6"/>',
+  // dengeli: terazi
+  bal:'<circle cx="12" cy="4" r="1.7"/><path d="M12 5v14M4.5 7.5h15M7.5 20.5h9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M6 7.5 3.4 13.5M6 7.5l2.6 6M18 7.5l-2.6 6M18 7.5l2.6 6" stroke="currentColor" stroke-width="1.2" opacity=".8"/><path d="M2.4 13.5h7.2a3.6 3.6 0 0 1-7.2 0zM14.4 13.5h7.2a3.6 3.6 0 0 1-7.2 0z"/>',
+  // defansif: kalkan
+  def:'<path d="M12 2.5 20 5.5v6c0 5-3.4 8.7-8 10.5-4.6-1.8-8-5.5-8-10.5v-6z"/><path d="M12 2.5 20 5.5v6c0 5-3.4 8.7-8 10.5z" fill="rgba(0,0,0,.2)"/>',
+};
+function updateTacBtn(){const b=$('tacBtn'),k=teams[0].tactic;
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor">'+TAC_ICONS[k]+'</svg>';b.dataset.k=k;b.classList.toggle('land',landscape);
+  b.setAttribute('aria-label','Taktik: '+TACTICS[k].name+' (değiştirmek için dokun)');}
+$('tacBtn').onclick=()=>{
+  if(state!=='play'||paused)return;
+  const k=TACTIC_KEYS[(TACTIC_KEYS.indexOf(teams[0].tactic)+1)%TACTIC_KEYS.length];
+  teams[0].tactic=k;Sfx.click();updateTacBtn();
+  banners.push({type:'info',text:TACTICS[k].name.toLocaleUpperCase('tr'),sub:'Taktik değişti',color:k==='def'?'#5cc8ff':k==='att'?'#ffb547':'#aab5ea',t:0,life:1.1});
+  if(Net.isGuest())Net.guestTactic(k);
+};
 $('pauseBtn').innerHTML=UI_ICONS.pause;
 $('pauseBtn').onclick=()=>setPaused(!paused);
 $('muteBtn').onclick=()=>{Sfx.init();Sfx.toggleMute();if(!Sfx.muted)Sfx.click();updateMuteBtn();};

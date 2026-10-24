@@ -26,6 +26,7 @@ function resize(){
   const k=scale*dpr,m=landscape?[0,k,-k,0,(H-viewCrop+offY)*k,offX*k]:[k,0,0,k,offX*k,(offY-viewCrop)*k];
   ctx.setTransform(...m);bctx.setTransform(...m);
   renderField(bctx);
+  if(teams&&typeof updateTacBtn==='function')updateTacBtn(); // taktik okunun yönü ekran yönüne uysun
   if(typeof redraw==='function')redraw(); // boyut değişince tuval silinir, donmuşsa da yeniden çizilsin
 }
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}

@@ -68,7 +68,7 @@ const Net=(()=>{
   let oppTeam=null;
   function oppFrom(o){
     if(!o)return null;const m=Team.clean(o);
-    return{name:m.name,short:m.short,kit:kitFrom(m.color,m.trim),badge:m};
+    return{name:m.name,short:m.short,kit:kitFrom(m.color,m.trim),badge:m,formation:m.formation,tactic:m.tactic};
   }
   const send=m=>{if(conn&&conn.open)conn.send(m);};
   const sendFast=m=>{if(fast&&fast.readyState==='open'){try{fast.send(JSON.stringify(m));return true;}catch(e){}}return false;};
@@ -313,6 +313,7 @@ const Net=(()=>{
     if(m.t==='po'){const rtt=performance.now()-m.c;pingMs=pingMs==null?rtt:pingMs*.7+rtt*.3;return;}
     if(role==='host'){
       if(m.t==='hello'){oppTeam=oppFrom(m.team);guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();pvpOppSuper=SUPER_KEYS.includes(m.super)?m.super:Deck.randomSuper();beginMatch();}
+      else if(m.t==='tac'&&TACTICS[m.k])teams[1].tactic=m.k; // misafir maç içinde taktik değiştirdi
       else if(m.t==='super'&&state==='play'&&!paused){if(!playSuper(teams[1],null))send({t:'deny'});}
       else if(m.t==='card'&&state==='play'&&!paused){
         if(!playCard(teams[1],m.i,null))send({t:'deny'});
@@ -456,6 +457,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
     ping:()=>pingMs==null?null:Math.round(pingMs),
     guestFrame,
     // misafir kart oynar: isteği gönder, kartın uçuşunu hemen göster
+    guestTactic(k){send({t:'tac',k});},
     guestSuper(rect){
       const t=teams[0],k=t.superKey;
       if(t.superUsed||state!=='play'||t.stars<CARDS[k].cost||performance.now()<cardLock){Sfx.deny();return;}

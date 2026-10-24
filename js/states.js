@@ -83,7 +83,7 @@ const FieldStates={
       p.spotT-=dt;
       if(p.spotT<=0){p.spot=supportSpot(p,t);p.spotT=rnd(.35,.55);}
       const lim=offsideLimit(t);
-      if(p.role!=='DEF'&&ball.owner&&!ball.kickoff&&adv(t,p.y)>lim-50&&Math.random()<dt*(p.role==='FWD'?.6:.25)){
+      if(p.role!=='DEF'&&ball.owner&&!ball.kickoff&&adv(t,p.y)>lim-50&&Math.random()<dt*(p.role==='FWD'?.6:.25)*TACTICS[t.tactic].runs){
         p.run=1.3;
         p.runTo={x:clamp(p.x+(CX-p.x)*.3+rnd(-35,35),FX+20,FX+FW-20),y:clamp((lim+65)*dirY(t),FY+20,FY+FH-20)};
       }

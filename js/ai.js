@@ -6,7 +6,8 @@ function assignRoles(t){
   const o=ball.owner;
   const out=t.players.filter(p=>p.role!=='GK'&&p.stun<=0&&p!==o);
   // kendi son üçte birimizde ikinci oyuncu da topa basar
-  const ref=o||ball,n=t.fx.press||(o&&o.team!==t&&toN(t,o.x,o.y).y>.72)?2:1;
+  // ofansif taktikte rakip kendi kalesine yakınken de iki kişi basar
+  const ref=o||ball,n=t.fx.press||(o&&o.team!==t&&(toN(t,o.x,o.y).y>.72||TACTICS[t.tactic].highPress&&toN(t,o.x,o.y).y<.4))?2:1;
   out.sort((a,b)=>dist(a,ref)-dist(b,ref));
   if(ball.kickoff||(ball.setT>0&&o&&o.team!==t))t.chasers=[]; // serbest vuruşta topa basılmaz
   else if(!o)t.chasers=ball.passTo&&ball.passTo.team===t?[ball.passTo]:out.slice(0,n);

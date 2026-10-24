@@ -650,3 +650,20 @@ input{-webkit-user-select:text;user-select:text}
 .teamform fieldset{min-width:0}
 .teamform .namerow{display:grid;grid-template-columns:1fr 92px;gap:8px}
 .teamform .linkbox input{padding:10px 12px}
+.decktabs.two{grid-template-columns:1fr 1fr}
+.formpick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.fpick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:10px;background:#0b1230;border:1px solid var(--line);cursor:pointer;color:var(--muted)}
+.fpick svg{width:100%;max-width:48px;height:auto}
+.fpick b{font-size:12px;font-weight:800}
+.fpick[aria-pressed=true]{background:var(--panel-2);border-color:var(--gold);color:var(--text)}
+.fpick:focus-visible{outline:2px solid #fff;outline-offset:1px}
+@media (max-height:720px){.box.teambox{gap:10px}.teamform{gap:10px}}
+.teamform[hidden]{display:none}
+/* maç içi taktik düğmesi: oyunun kalın, gradyanlı düğmeleri gibi; renk taktiğe göre (savunma mavisi, hücum turuncusu) */
+.tacbtn{flex:none;width:34px;height:34px;border-radius:11px;color:#fff;
+  border:2px solid rgba(255,255,255,.85);background:linear-gradient(#8f9bd0,#4a5590);box-shadow:0 3px 0 #262e5c,0 6px 12px rgba(0,0,0,.4)}
+.tacbtn[data-k=def]{background:linear-gradient(#7fd4ff,#2a6fd0);box-shadow:0 3px 0 #1a3f8f,0 6px 12px rgba(0,0,0,.4)}
+.tacbtn[data-k=att]{background:linear-gradient(#ffc66b,#ff8a1f);box-shadow:0 3px 0 #b3600a,0 6px 12px rgba(0,0,0,.4)}
+.tacbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.tacbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.35))}
+.tacbtn.land[data-k=att] svg{transform:rotate(90deg)}

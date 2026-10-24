@@ -1,5 +1,5 @@
 // Maç durumu: takımlar, top, santra
-// matchOpp: turnuva rakibi ya da arkadaşın {name, short, kit, str, badge?}; matchCtx: {tour, knockout, label}. Hızlı maçta ikisi de null
+// matchOpp: turnuva rakibi ya da arkadaşın {name, short, kit, str, badge?, formation?, tactic?}; matchCtx: {tour, knockout, label}. Hızlı maçta ikisi de null
 let matchOpp=null,matchCtx=null;
 // rakibin gücü: ayarlardaki zorluk × turnuva rakibinin gücü
 function oppMod(){if(matchCtx&&matchCtx.pvp)return{skill:1,think:1};const d=Settings.diff(),s=matchOpp?matchOpp.str:1;return{skill:d.skill*s,think:d.think/s};}
@@ -13,14 +13,20 @@ function makeTeam(id){
   if(id===0){const m=Team.get();Object.assign(t,Team.kit(),{name:m.name,short:m.short,badge:m});}
   else if(matchOpp)Object.assign(t,matchOpp.kit,{name:matchOpp.name,short:matchOpp.short,badge:matchOpp.badge||Team.badgeFor(matchOpp.name,matchOpp.kit.color)});
   else{const b=rivalBadge(Team.get().color);Object.assign(t,kitFrom(b.color),{name:'Rakip',short:'RAKİP',badge:b});}
+  // formasyon ve taktik: sen ve arkadaşın kendi seçiminiz; yapay zekâ turnuvada takımına özgü, hızlı maçta rastgele
+  const style=id===0?Team.get():matchOpp&&matchOpp.formation?matchOpp:Team.styleFor(matchOpp&&matchOpp.name);
+  t.formation=FORMATIONS[style.formation]?style.formation:'2-1-1';t.tactic=TACTICS[style.tactic]?style.tactic:'bal';
   t.superKey=id===0?Deck.getSuper():matchCtx&&matchCtx.pvp&&pvpOppSuper?pvpOppSuper:Deck.randomSuper();t.superUsed=false;
-  ROLES.forEach(([role,bx,by,num],i)=>{
-    const pl={team:t,role,bx,by,num,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,
+  // wing: kanattaki bek ya da orta saha (Kanat Bindirme bunlarla yapılır)
+  [GK_ROLE,...FORMATIONS[t.formation].pos].forEach(([role,bx,by,num],i)=>{
+    const pl={team:t,role,bx,by,num,wing:role!=='GK'&&role!=='FWD'&&Math.abs(bx-.5)>.1,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,
       skin:SKIN[(i*2+id*3+Math.random()*2|0)%5],hair:HAIR[Math.random()*HAIR.length|0],hairStyle:Math.random()*7|0,
       boots:BOOTS[Math.random()*BOOTS.length|0],build:role==='DEF'?rnd(1,1.08):role==='GK'?1.04:rnd(.92,1.02),stride:rnd(.9,1.12),look:0,kickA:0,
       spd:role==='GK'?1:role==='DEF'?rnd(.94,1):rnd(1,1.07),stun:0,dash:0,sprint:0,kickCd:0,tackleCd:0,decT:0,anim:Math.random()*6};
     pl.fsm=new StateMachine(pl);t.players.push(pl);
   });
+  // iki forvetli dizilişte santrayı yapan forvet savunmaya gelmez, önde kalır (hücumda bir kişi fazla, savunmada bir kişi eksik)
+  if(t.players.filter(p=>p.role==='FWD').length>1)t.players[4].stayUp=true;
   return t;
 }
 function newMatch(){
@@ -36,10 +42,10 @@ function kickoff(tid){
     const w=toW(t,p.bx,ny);Object.assign(p,{x:w.x,y:w.y,vx:0,vy:0,stun:0,dash:0,slideRest:0,sprint:0,run:0,kickCd:0,tackleCd:0,hold:0,spot:null,spotT:0,mark:null,fa:t.id?Math.PI/2:-Math.PI/2});
   }
   const kt=teams[tid],f=kt.players[4],r=Math.random();
-  const m=r<.5?kt.players[3]:r<.75?kt.players[1]:kt.players[2]; // geri pası alacak oyuncu: orta saha ya da bir bek
+  const m=r<.5?kt.players[3]:r<.75?kt.players[1]:kt.players[2]; // geri pası alacak oyuncu: forvetin arkasındaki ya da defanstaki biri
   kt.koRecv=m;
   f.x=CX;f.y=CY-dirY(kt)*8;
-  if(m.role==='MID'){m.x=CX+(Math.random()<.5?-28:28);m.y=CY-dirY(kt)*48;} // orta saha geride, sağda ya da solda bekler
+  if(m.role!=='DEF'){m.x=CX+(Math.random()<.5?-28:28);m.y=CY-dirY(kt)*48;} // orta saha (ya da ikinci forvet) geride, sağda ya da solda bekler
   f.fa=Math.atan2(m.y-f.y,m.x-f.x);
   ball={x:CX,y:CY,vx:0,vy:0,owner:f,ownT:0,passTo:null,passTeam:null,shot:false,shotTeam:null,power:false,gkRolled:false,kickoff:true,rolled:new Set(),trail:[],rot:0};
   f.decT=.8;f.drib=f.fa;

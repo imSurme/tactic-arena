@@ -72,7 +72,24 @@ const ICONS={
 // kart maliyeti ve yıldız göstergesi için yıldız şekli
 const STAR_PATH='M12 1.6l3.1 6.5 7.1.9-5.2 4.9 1.3 7-6.3-3.5-6.3 3.5 1.3-7L1.8 9l7.1-.9z';
 const STAR=`<svg viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="url(#sg)" stroke="#7a4a00" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
-const ROLES=[['GK',.5,.955,1],['DEF',.3,.78,4],['DEF',.7,.78,5],['MID',.5,.62,8],['FWD',.5,.44,9]];
+const GK_ROLE=['GK',.5,.955,1];
+// formasyonlar: kaleci hariç 4 oyuncu [rol, x, y, numara] (y: 1 kendi kalemiz, 0 rakip kale). Son oyuncu santrayı yapan forvet
+const FORMATIONS={
+  '2-1-1':{desc:'Dengeli: iki bek, bir orta saha, bir forvet',pos:[['DEF',.3,.78,4],['DEF',.7,.78,5],['MID',.5,.62,8],['FWD',.5,.44,9]]},
+  '1-2-1':{desc:'Orta saha güçlü: iki kanat orta saha',pos:[['DEF',.5,.8,4],['MID',.24,.62,7],['MID',.76,.62,8],['FWD',.5,.44,9]]},
+  '2-2':{desc:'Geniş: iki bek, iki kanat forveti, orta boş',pos:[['DEF',.3,.78,4],['DEF',.7,.78,5],['FWD',.25,.53,11],['FWD',.75,.53,9]]},
+  '3-1':{desc:'Savunmacı: üç defans, tek forvet',pos:[['DEF',.2,.77,2],['DEF',.5,.81,4],['DEF',.8,.77,5],['FWD',.5,.5,9]]},
+  '1-1-2':{desc:'Hücumcu: iki forvet, tek defans',pos:[['DEF',.5,.8,4],['MID',.5,.65,8],['FWD',.28,.51,11],['FWD',.72,.51,9]]},
+};
+const FORMATION_KEYS=Object.keys(FORMATIONS);
+// taktik: takımın yeri (+ geride, - önde) hücumda (atk) ve savunmada; savunmada defans (defD) ile önündekiler (defF) ayrı.
+// runs = derine koşu sıklığı, highPress = rakip kendi kalesine yakınken iki kişi basar
+const TACTICS={
+  def:{name:'Defansif',desc:'Orta saha ve forvet geri gelir, takım kompakt savunur',atk:.05,defD:.01,defF:.1,runs:.6,highPress:false},
+  bal:{name:'Dengeli',desc:'Normal dizilim',atk:0,defD:0,defF:0,runs:1,highPress:false},
+  att:{name:'Ofansif',desc:'Hücumda herkes öne çıkar ve önde basar, arkada boşluk kalır',atk:-.05,defD:-.03,defF:-.04,runs:1.4,highPress:true},
+};
+const TACTIC_KEYS=Object.keys(TACTICS);
 const SKIN=['#f5cfa0','#e3a873','#c98652','#8f5a33','#ffe0bd'];
 const HAIR=['#2a1a10','#5a3418','#141414','#b8742a','#e0a52a','#e9e1c4','#a8381c'];
 const BOOTS=['#1a1f36','#f4f6ff','#ff7a1a','#2fd36b','#ffd23f','#ff5fa8'];

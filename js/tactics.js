@@ -53,7 +53,7 @@ function passOptions(p,t){
     const prog=(tg.y-p.y)*dirY(t),open=Math.min(nearestOpp(tg,t).d,60);
     const near=Math.max(0,200-dist(tg,oppGoal(t)))*.25;
     const s=prog*.7+open*.8+near+Math.min(safe,30)*.4-d*.08+rnd(0,8)-(r.role==='GK'?25:0)
-      +(t.fx.overlap&&r.role==='DEF'?40:0)+(r.superT>0?30:0)
+      +(t.fx.overlap&&r.wing?40:0)+(r.superT>0?30:0)
       -(r===p.passFrom&&now-p.passFromT<2.5?(ball.kickoff===false&&p.hold<.3?40:24):0) // topu yeni verene hemen geri verme
       +(laneX(t)!==null&&Math.abs(tg.x-laneX(t))<60?14:0); // hücum kanadına pas
     res.push({r,tg,sp,s});
@@ -237,11 +237,12 @@ function formation(p,t){
     if(t.fx.counter)ny-=.12;
     if(t.lane&&p.role!=='GK'){
       nx+=t.lane*.14;
-      if(p.role==='DEF'&&(p.bx-.5)*t.lane>0){ny-=.12;nx=t.lane>0?.88:.12;} // kanat tarafındaki bek bindirir
+      if(p.wing&&(p.bx-.5)*t.lane>0){ny-=.12;nx=t.lane>0?.88:.12;} // kanat tarafındaki bek / orta saha bindirir
     }
-    if(t.fx.overlap&&p.role==='DEF'){ny-=.22;nx=p.bx<.5?.08:.92;} // bekler bindirir
-    if(t.fx.overlap&&p.role!=='DEF'&&p.role!=='GK')ny-=.16; // orta saha ve forvet ortaya hazırlanır
+    if(t.fx.overlap&&p.wing){ny-=.22;nx=p.bx<.5?.08:.92;} // kanattakiler bindirir
+    if(t.fx.overlap&&!p.wing&&p.role!=='DEF'&&p.role!=='GK')ny-=.16; // ortadaki orta saha ve forvetler ortaya hazırlanır (stoper yerinde kalır)
   }else if(t.fx.offside&&p.role!=='GK')ny-=p.role==='DEF'?.16:.07; // ofsayt tuzağı: hat aniden öne çıkar
+  {const T=TACTICS[t.tactic];ny+=has?T.atk:p.role==='DEF'?T.defD:T.defF;} // taktik: defansifte önündekiler geri gelir, ofansifte takım önde
   if(t.fx.wave)ny-=has?.2:.1;
   if(t.fx.wall&&!has){ny=.7+(p.by-.44)*.45+(b.y-.5)*.08;nx=.5+(nx-.5)*.75;}
   if(ball.kickoff){ny=Math.max(ny,has?.52:.6);if(!has&&p.role==='MID')ny=Math.max(ny,.7);} // santrada orta saha forvetin arkasında bekler, üst üste binmez
@@ -275,7 +276,7 @@ function assignMarks(t){
   const opp=teams[1-t.id];
   if(!attacking(opp)||ball.kickoff)return;
   const g=ownGoal(t);
-  const free=t.players.filter(p=>p.role!=='GK'&&p.stun<=0&&!t.chasers.includes(p));
+  const free=t.players.filter(p=>p.role!=='GK'&&!p.stayUp&&p.stun<=0&&!t.chasers.includes(p));
   const atk=opp.players.filter(q=>q.role!=='GK'&&q!==ball.owner).sort((a,b)=>dist(a,g)-dist(b,g));
   for(const q of atk){
     if(!free.length)break;

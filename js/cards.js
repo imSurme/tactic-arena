@@ -97,8 +97,8 @@ function applyCard(t,k){
   }
   // süreli etkiler; ara pas, uzun top ve faul top uygun ana kadar bekler
   t.fx[k]=DUR[k];
-  // Kanat Bindirme: bekler kanattan derine depar atar (ofsayta düşmeden)
-  if(k==='overlap')for(const p of t.players)if(p.role==='DEF'){
+  // Kanat Bindirme: kanattaki bekler / orta sahalar derine depar atar (ofsayta düşmeden)
+  if(k==='overlap')for(const p of t.players)if(p.wing){
     const w=toW(t,p.bx<.5?.08:.92,.24),lim=offsideLimit(t)-6;
     p.run=2.4;p.sprint=1.6;p.runTo={x:w.x,y:adv(t,w.y)>lim?lim*dirY(t):w.y};
   }
