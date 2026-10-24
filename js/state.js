@@ -12,7 +12,7 @@ function makeTeam(id){
   // ad, kısa ad, arma (badge) ve forma: sen her zaman kendi takımınsın; rakip turnuva takımı, arkadaşın ya da kırmızı "Rakip"
   if(id===0){const m=Team.get();Object.assign(t,Team.kit(),{name:m.name,short:m.short,badge:m});}
   else if(matchOpp)Object.assign(t,matchOpp.kit,{name:matchOpp.name,short:matchOpp.short,badge:matchOpp.badge||Team.badgeFor(matchOpp.name,matchOpp.kit.color)});
-  else Object.assign(t,kitFrom('#ff4d5e','#7a0f22'),{name:'Rakip',short:'RAKİP',badge:{color:'#ff4d5e',trim:'#ffffff',shape:0,symbol:1}});
+  else{const b=rivalBadge(Team.get().color);Object.assign(t,kitFrom(b.color),{name:'Rakip',short:'RAKİP',badge:b});}
   t.superKey=id===0?Deck.getSuper():matchCtx&&matchCtx.pvp&&pvpOppSuper?pvpOppSuper:Deck.randomSuper();t.superUsed=false;
   ROLES.forEach(([role,bx,by,num],i)=>{
     const pl={team:t,role,bx,by,num,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,

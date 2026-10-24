@@ -82,6 +82,11 @@ const Team=(()=>{
 })();
 Team.applyCss();
 
+// hızlı maçın "Rakip"i: her maç senin formandan belirgin şekilde farklı rastgele bir renk giyer (arması da o renkte)
+function rivalBadge(mine){
+  const far=Team.COLORS.filter(c=>kitDist(c,mine)>=70),color=far[Math.random()*far.length|0]||'#ff4d5e';
+  return{color,trim:isLight(color)?'#2a2f45':'#ffffff',shape:0,symbol:1};
+}
 // renk çakışması: deplasman takımı ana rengini şeridiyle değiştirir, o da yakınsa en uzak renge geçer.
 // Şerit ancak paletten seçilmişse kullanılır: yapay zekâ takımlarının şeridi kendi renginin koyu tonudur, sahada yine karışır.
 // İki taraf da aynı sonucu bulur (arkadaş maçında ev sahibi = odayı kuran). Kaleciler iki takımdan da ayrışır.

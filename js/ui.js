@@ -26,8 +26,10 @@ let oppKey='',lastWhole=0,superKeyShown='';
 // her karede çağrılır: değer değişmediyse sayfaya dokunma (gereksiz yeniden düzen ve boyama olmasın)
 const setText=(el,v)=>{v=String(v);if(el.textContent!==v)el.textContent=v;};
 const setCss=(el,p,v)=>{const c=el._css||(el._css={});if(c[p]!==v){c[p]=v;el.style.setProperty(p,v);}};
+// kayan müdahalenin süre kaydı yok: koşma süresi kullanılır
+const fxDur=k=>k==='slide'?SLIDE_WAIT:DUR[k];
 function updateFxChips(t){
-  const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&DUR[k]&&!['through','longball','foul'].includes(k));
+  const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&fxDur(k));
   for(const el of [...box.children])if(!keys.includes(el.dataset.k))el.remove();
   for(const k of keys){
     let el=box.querySelector('[data-k="'+k+'"]');
@@ -36,7 +38,7 @@ function updateFxChips(t){
       el.style.cssText='--c1:'+c.c1+';--c2:'+c.c2+';--col:'+c.col+';--team:'+t.color;
       el.innerHTML='<i>'+iconSvg(k)+'</i>';box.appendChild(el);
     }
-    setCss(el,'--p',(t.fx[k]/DUR[k]*100).toFixed(1)+'%');
+    setCss(el,'--p',(t.fx[k]/fxDur(k)*100).toFixed(1)+'%');
     el.classList.toggle('ending',t.fx[k]<1.5);el.classList.toggle('wait',!fxLive(t,k));
   }
 }
@@ -307,7 +309,8 @@ function showTeam(){
     $('tSymbol').innerHTML=CREST_SYMBOLS.map((_,i)=>`<button class="cpick" data-v="${i}" aria-label="${CREST_SYMBOL_NAMES[i]}" aria-pressed="${i===d.symbol}">${Team.crestSVG({...t,symbol:i})}</button>`).join('');
     // arkadaki sahada senin oyuncuların yeni formayla
     Object.assign(teams[0],kitFrom(t.color,t.trim),{name:t.name,short:t.short,badge:t});
-    Object.assign(teams[1],kitFrom('#ff4d5e','#7a0f22'));settleKits(teams[0],teams[1]);applyOppHud();redraw();
+    if(kitDist(teams[1].badge.color,t.color)<70)teams[1].badge=rivalBadge(t.color); // rakip yeni renginle karışmasın
+    Object.assign(teams[1],kitFrom(teams[1].badge.color));settleKits(teams[0],teams[1]);applyOppHud();redraw();
   }
   const pick=(id,key,num)=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;d[key]=num?+b.dataset.v:b.dataset.v;
     if(key==='color'&&d.trim===d.color)d.trim=d.color==='#f2f2f2'?'#2a2f45':'#f2f2f2';Sfx.click();draw();};
