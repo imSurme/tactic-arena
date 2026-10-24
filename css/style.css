@@ -620,13 +620,13 @@ input{-webkit-user-select:text;user-select:text}
 .crest.mini{width:15px;height:15px;margin-right:5px;vertical-align:-3px;display:inline-block}
 .teamcard{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:7px 14px 7px 9px;border-radius:14px;background:rgba(11,18,48,.7);border:1px solid var(--line);text-align:left;max-width:100%}
 .teamcard .crest{width:34px;height:34px}
-.teamcard b{display:block;font-size:15px;font-weight:800;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.teamcard b{display:block;font-family:var(--display);font-size:15px;font-weight:400;color:var(--text);line-height:1.15;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .teamcard small{font-size:11px;font-weight:700;color:var(--muted)}
 .teamcard:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .teamprev{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:10px;border-radius:14px;background:rgba(11,18,48,.6);border:1px solid var(--line)}
 .teamprev .shirt{width:48px;height:48px}
 .teamprev .crest.big{width:36px;height:36px}
-.teamprev div{text-align:left;min-width:0}
+.teamprev div{text-align:left;min-width:0;margin-left:10px}
 .teamprev b{display:block;font-family:var(--display);font-size:18px;line-height:1.05;overflow-wrap:anywhere;text-transform:uppercase}
 .teamprev small{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
 .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
