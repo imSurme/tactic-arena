@@ -549,7 +549,11 @@ canvas{border-radius:0;box-shadow:none}
 #superLbl{display:none}
 #super.used .card::after{content:"KULLANILDI";position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) rotate(-12deg);font:800 7px var(--body);letter-spacing:.06em;color:#fff;background:rgba(11,18,48,.85);padding:2px 4px;border-radius:4px;white-space:nowrap;z-index:3}
 #stars #next{flex:none;width:auto;flex-direction:row;align-items:center;gap:4px;font-size:7px;letter-spacing:.06em;line-height:1.05;color:var(--muted)}
-#stars #next>span{width:34px;text-align:right}
+/* sıradaki kart: yazı yerine köşede ele doğru bakan küçük ok rozeti (yazı yalnız ekran okuyucuya) */
+#stars #next{position:relative}
+.nexttag{position:absolute;top:-6px;right:-6px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;background:var(--panel-2);border:1.5px solid #fff;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none}
+.nexttag svg{width:10px;height:10px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 #stars #next .card{width:28px;padding:1.5px;border-radius:7px}
 #stars #next .card .art{aspect-ratio:1/1;border-radius:5px}
 #stars #next .card .nm,#stars #next .card .tag{display:none}
