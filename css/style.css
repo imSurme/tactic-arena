@@ -225,6 +225,11 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .fxchip svg{width:14px;height:14px;color:#fff}
 .fxchip.ending{animation:blink .5s steps(2) infinite}
 .fxchip.wait{opacity:.45;filter:grayscale(.7);animation:none}
+.fxchip.sup{background:rgba(11,18,48,.75);box-shadow:0 3px 8px rgba(0,0,0,.4)}
+/* süper kart: gökkuşağı çerçevenin kendisi kalan süre kadar dolu (içte ayrı süre halkası yok) */
+.fxchip.sup::before{content:"";position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(#ff4d5e,#ffd23f,#5be38b,#5cb8ff,#b18cff,#ff4d5e);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px)),conic-gradient(#000 var(--p,100%),transparent 0);-webkit-mask-composite:source-in;
+  mask-image:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px)),conic-gradient(#000 var(--p,100%),transparent 0);mask-composite:intersect}
 @keyframes chipIn{from{transform:scale(0)}}
 @keyframes blink{50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.fxchip,.fxchip.ending{animation:none}}

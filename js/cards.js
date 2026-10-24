@@ -50,7 +50,9 @@ function playCard(t,i,from){
 }
 // süreli kartın sayacı işe yaramadığı anda yavaş akar: hücum kartı rakip topa sahipken, savunma kartı top bizdeyken
 const FX_IDLE=.6;
-const fxLive=(t,k)=>CARDS[k].type==='atk'?!attacking(teams[1-t.id]):CARDS[k].type==='def'?!attacking(t):true;
+// Total Futbol hücum, Otobüsü Çek savunma kartları gibi akar: kutucukları parçalarıyla aynı anda biter
+const fxType=k=>k==='total'?'atk':k==='bus'?'def':CARDS[k].type;
+const fxLive=(t,k)=>fxType(k)==='atk'?!attacking(teams[1-t.id]):fxType(k)==='def'?!attacking(t):true;
 // süper kart: maçta bir kez (uzatmada bir hak daha); kendi yuvasından oynanır
 function playSuper(t,from){
   if(state!=='play'||t.superUsed)return false;
@@ -64,17 +66,21 @@ function playSuper(t,from){
 }
 function superBanner(mine,k){banners.push({type:'info',text:CARDS[k].name.toLocaleUpperCase('tr'),sub:mine?'SÜPER KART!':'Rakip süper kart oynadı!',color:CARDS[k].col,t:0,life:1.7});}
 function applyCard(t,k){
+  t.quiet.delete(k); // kart gerçekten oynandı: kutucuğu görünsün
   const o=ball.owner,mine=o&&o.team===t,theirs=o&&o.team!==t;
   switch(k){
     case'through':if(mine&&throughPass(o,t))return;break;
     case'longball':if(mine&&longBall(o,t))return;break;
     case'total':{ // Kontra Atak + Hücum Dalgası + Çalım Ustası
-      for(const x of ['counter','wave','dribble'])t.fx[x]=Math.max(t.fx[x]||0,DUR.total);
+      // parçaların kutucuğu çıkmaz (zaten oynanmış olanlar hariç), sağ altta tek Total Futbol kutucuğu görünür
+      for(const x of ['counter','wave','dribble']){if(!(t.fx[x]>0))t.quiet.add(x);t.fx[x]=Math.max(t.fx[x]||0,DUR.total);}
+      t.fx.total=DUR.total;
       for(const p of t.players)if(p.role!=='GK')ring(p.x,p.y,CARDS.total.col);
       return;
     }
     case'bus':{ // Savunma Duvarı + Kaleci Refleksi
-      t.fx.wall=Math.max(t.fx.wall||0,DUR.bus);t.fx.gk=Math.max(t.fx.gk||0,DUR.bus);
+      for(const x of ['wall','gk']){if(!(t.fx[x]>0))t.quiet.add(x);t.fx[x]=Math.max(t.fx[x]||0,DUR.bus);}
+      t.fx.bus=DUR.bus;
       for(const p of t.players)ring(p.x,p.y,CARDS.bus.col);
       return;
     }
@@ -108,6 +114,7 @@ function tacticalFoul(t,fouler){
   // serbest vuruş faulün yapıldığı yerden; ceza sahası içindeyse penaltı
   callFoul(fouler,o,{delay:2.6,label:'TAKTİK FAUL!',indirect:true});
   for(const p of t.players)if(p.role!=='GK'&&p!==fouler)p.sprint=2.2; // savunmaya koş
+  if(!(t.fx.wall>0))t.quiet.add('wall'); // Savunma Duvarı kartı oynanmadı: sağ altta kutucuğu çıkmasın
   t.fx.wall=Math.max(t.fx.wall||0,5); // savunmaya dizilir, şutların önünü keser
   ball.tactical=true; // vuruş gelene kadar rakibin diğer oyuncuları yavaş ilerler
   addStars(opp,REWARD.foulComp,o.x,o.y);

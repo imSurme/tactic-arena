@@ -101,7 +101,7 @@ const elapsed=()=>overtime?stats.len+clock:stats.len-clock;
 function statShot(p,t,xg){
   const i=t.id;stats.shots[i]++;stats.xg[i]+=xg;stats.cur={team:i,on:false};
   const now0=elapsed(),keys=new Set(stats.recent[i].filter(r=>now0-r.at<=10&&CARDS[r.k].type==='atk').map(r=>r.k));
-  for(const k in t.fx)if(t.fx[k]>0&&CARDS[k].type==='atk')keys.add(k);
+  for(const k in t.fx)if(t.fx[k]>0&&CARDS[k].type==='atk'&&!t.quiet.has(k))keys.add(k); // süper karttan gelen parçalar sayılmaz
   for(const k of keys)stats.cardXg[i][k]=(stats.cardXg[i][k]||0)+xg;
 }
 // son şut kaleyi buldu (kurtarış ya da gol); her şut bir kez sayılır

@@ -127,7 +127,7 @@ const Net=(()=>{
     const P=[...teams[0].players,...teams[1].players],b=ball;
     const fxOf=t=>Object.fromEntries(Object.entries(t.fx).filter(([,v])=>v>0).map(([k,v])=>[k,r1(v)]));
     return{t:'s',n:++snapN,ht:ri(performance.now()),st:state,c:r1(clock),ot:overtime?1:0,sc:[teams[0].score,teams[1].score],
-      stars:[r1(teams[0].stars),r1(teams[1].stars)],hand:teams[1].hand,next:teams[1].queue[0],fx:[fxOf(teams[0]),fxOf(teams[1])],
+      stars:[r1(teams[0].stars),r1(teams[1].stars)],hand:teams[1].hand,next:teams[1].queue[0],fx:[fxOf(teams[0]),fxOf(teams[1])],q:[[...teams[0].quiet],[...teams[1].quiet]],
       p:P.map(p=>[ri(p.x),ri(p.y),ri(p.fa*100),ri(p.vx),ri(p.vy),(p.stun>0?1:0)|(p.dash>0?2:0)|(p.sprint>0?4:0)]),
       b:[ri(b.x),ri(b.y),r1(b.z||0),ri(b.vx),ri(b.vy),b.owner?P.indexOf(b.owner):-1,b.shot?1:0,b.power?1:0,b.setT>0?1:0,b.kickoff?1:0,
         b.passTo?P.indexOf(b.passTo):-1,b.passTeam?b.passTeam.id:-1,b.passTarget?ri(b.passTarget.x):0,b.passTarget?ri(b.passTarget.y):0],
@@ -176,6 +176,7 @@ const Net=(()=>{
     teams[0].stars=s.stars[1];teams[1].stars=s.stars[0];
     teams[0].hand=s.hand;teams[0].queue=[s.next];
     teams[0].fx=s.fx[1];teams[1].fx=s.fx[0];
+    if(s.q){teams[0].quiet=new Set(s.q[1]);teams[1].quiet=new Set(s.q[0]);}
     if(s.su){teams[0].superUsed=!!s.su[1];teams[1].superUsed=!!s.su[0];}
     overtime=!!s.ot;clock=s.c;
     if(s.ev)for(const e of s.ev)applyEvent(e);

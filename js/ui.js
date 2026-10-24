@@ -29,12 +29,13 @@ const setCss=(el,p,v)=>{const c=el._css||(el._css={});if(c[p]!==v){c[p]=v;el.sty
 // kayan müdahalenin süre kaydı yok: koşma süresi kullanılır
 const fxDur=k=>k==='slide'?SLIDE_WAIT:DUR[k];
 function updateFxChips(t){
-  const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&fxDur(k));
+  const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&fxDur(k)&&!t.quiet.has(k));
   for(const el of [...box.children])if(!keys.includes(el.dataset.k))el.remove();
   for(const k of keys){
     let el=box.querySelector('[data-k="'+k+'"]');
     if(!el){
-      const c=CARDS[k];el=document.createElement('span');el.className='fxchip';el.dataset.k=k;el.title=c.name;
+      const c=CARDS[k];el=document.createElement('span');el.className='fxchip'+(c.type==='super'?' sup':''); // süper kart: gökkuşağı çerçeve
+      el.dataset.k=k;el.title=c.name;
       el.style.cssText='--c1:'+c.c1+';--c2:'+c.c2+';--col:'+c.col+';--team:'+t.color;
       el.innerHTML='<i>'+iconSvg(k)+'</i>';box.appendChild(el);
     }

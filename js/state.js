@@ -8,7 +8,7 @@ let parts=[],floats=[],banners=[],handKey='',lastAfford=[],oppLog=[],overtime=fa
 
 function makeTeam(id){
   const keys=shuffle(id===0?Deck.get():matchCtx&&matchCtx.pvp&&pvpOppDeck?pvpOppDeck.slice():Deck.random());
-  const t={id,score:0,stars:STAR_START,fx:{},hand:keys.slice(0,4),queue:keys.slice(4),players:[],chasers:[]};
+  const t={id,score:0,stars:STAR_START,fx:{},hand:keys.slice(0,4),queue:keys.slice(4),players:[],chasers:[],quiet:new Set()}; // quiet: kart oynanmadan açılan etkiler, sağ altta gösterilmez
   // ad, kısa ad, arma (badge) ve forma: sen her zaman kendi takımınsın; rakip turnuva takımı, arkadaşın ya da kırmızı "Rakip"
   if(id===0){const m=Team.get();Object.assign(t,Team.kit(),{name:m.name,short:m.short,badge:m});}
   else if(matchOpp)Object.assign(t,matchOpp.kit,{name:matchOpp.name,short:matchOpp.short,badge:matchOpp.badge||Team.badgeFor(matchOpp.name,matchOpp.kit.color)});
