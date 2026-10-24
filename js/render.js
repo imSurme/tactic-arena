@@ -66,9 +66,8 @@ function renderField(c){
   }
   for(const [x,y,a] of [[FX,FY,0],[FX+FW,FY,.5],[FX+FW,FY+FH,1],[FX,FY+FH,1.5]]){c.beginPath();c.arc(x,y,8,a*Math.PI,(a+.5)*Math.PI);c.stroke();}
   c.restore();
-  // orta yuvarlakta soluk amblem
+  // orta yuvarlakta soluk daire
   c.fillStyle='rgba(255,255,255,.06)';c.beginPath();c.arc(CX,CY,44,0,Math.PI*2);c.fill();
-  {const u=upOff(-20);c.save();c.globalAlpha=.1;c.font='14px '+FD;c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.translate(CX+u.x,CY+u.y);upright(c);c.fillText('ARENA',0,0);c.restore();}
   // köşe bayrakları
   for(const [x,y] of [[FX,FY],[FX+FW,FY],[FX,FY+FH],[FX+FW,FY+FH]]){
     c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(x+2,y+2,3,1.5,0,0,Math.PI*2);c.fill();
