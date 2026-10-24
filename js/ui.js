@@ -291,7 +291,7 @@ function showTeam(){
   <div class="crestrow"><fieldset><legend>Arma şekli</legend><div class="crestpick" id="tShape"></div></fieldset>
   <fieldset><legend>Sembol</legend><div class="crestpick" id="tSymbol"></div></fieldset></div>
 </div>
-<p class="tip">Arkadaş maçında ikinizin rengi aynıysa odaya katılan taraf şerit rengini forma olarak giyer.</p>
+<p class="tip">Arkadaş maçında ikinizin rengi çok benziyorsa odaya katılan taraf şerit rengini forma olarak giyer.</p>
 <button class="cta" id="go">KAYDET</button><button class="link" id="back">Vazgeç</button>`,
   {go:()=>{Team.set(cur());showMenu();},back:showMenu});
   $('obox').classList.add('wide','teambox');
