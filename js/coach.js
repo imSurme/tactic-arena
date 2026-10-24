@@ -55,6 +55,8 @@ const Coach=(()=>{
      text:'Topu süren oyuncunun altında <b>sarı halka</b> olur. Kesikli çizgi, giden pasın ineceği yeri gösterir. Ortalar ve uzun toplar havadan gider, havadayken kesilemez.'},
     {at:()=>fieldRect(FX,CY-110,FW,120),title:'Ofsayt ve faul',demo:every(4.5,()=>{flip=!flip;kickoff(0);ball.kickoff=false;const t=teams[0],f=t.players[4],m=t.players[3];if(flip){const line=secondLastDefender(t);f.x=CX+40;f.y=(line+26)*dirY(t);m.x=CX-20;m.y=CY+20;give(m);asPlay(()=>pass(m,f,t,{x:f.x,y:f.y},220));}else{f.x=CX+30;f.y=CY-70;give(f);const d=teams[1].players[2];d.x=f.x;d.y=f.y+14;asPlay(()=>callFoul(d,f));}}),
      text:'Kurallar gerçek: pas anında savunmanın arkasında bekleyen oyuncu topu alınca <b>ofsayt</b> olur, yan hakem bayrağı kaldırır ve top rakibe geçer. Sert ya da arkadan müdahale <b>faul</b> olur; faule uğrayan takım serbest vuruşu genelde pasla kullanır, kaleye yakınsa direkt şut da çekebilir. Ceza sahasındaki faul <b>penaltıdır</b>.'},
+    {at:el('tacBtn'),title:'Taktik',demo:{enter(){this.k0=teams[0].tactic;this.n=0;},update(dt,t){sandbox(dt);if(t>=this.n){this.n=t+2.2;cycleTactic();}},exit(){teams[0].tactic=this.k0;updateTacBtn();}},
+     text:'Bu düğme takımının oyun tarzını değiştirir; dokundukça sırayla geçer. <b>Kalkan</b> defansif: orta saha ve forvet geri gelir. <b>Terazi</b> dengeli. <b>Kılıç</b> ofansif: takım önde oynar ve önde basar ama arkada boşluk kalır. Maça hangi taktik ve formasyonla başlayacağını menüde takım kartının <b>TAKTİK</b> sekmesinden seçersin.'},
     {at:el('ctrl'),title:'Duraklat ve ses',
      text:'Buradan oyunu duraklatır, sesi açıp kapatırsın. Rakip zorluğu ve maç süresi menüdeki <b>AYARLAR</b> ekranında.'},
     {at:el('field'),title:'Hazırsın!',last:true,

@@ -433,13 +433,13 @@ const TAC_ICONS={
 function updateTacBtn(){const b=$('tacBtn'),k=teams[0].tactic;
   b.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor">'+TAC_ICONS[k]+'</svg>';b.dataset.k=k;b.classList.toggle('land',landscape);
   b.setAttribute('aria-label','Taktik: '+TACTICS[k].name+' (değiştirmek için dokun)');}
-$('tacBtn').onclick=()=>{
-  if(state!=='play'||paused)return;
+$('tacBtn').onclick=()=>{if(state==='play'&&!paused)cycleTactic();};
+function cycleTactic(){
   const k=TACTIC_KEYS[(TACTIC_KEYS.indexOf(teams[0].tactic)+1)%TACTIC_KEYS.length];
   teams[0].tactic=k;Sfx.click();updateTacBtn();
   banners.push({type:'info',text:TACTICS[k].name.toLocaleUpperCase('tr'),sub:'Taktik değişti',color:k==='def'?'#5cc8ff':k==='att'?'#ffb547':'#aab5ea',t:0,life:1.1});
   if(Net.isGuest())Net.guestTactic(k);
-};
+}
 $('pauseBtn').innerHTML=UI_ICONS.pause;
 $('pauseBtn').onclick=()=>setPaused(!paused);
 $('muteBtn').onclick=()=>{Sfx.init();Sfx.toggleMute();if(!Sfx.muted)Sfx.click();updateMuteBtn();};
