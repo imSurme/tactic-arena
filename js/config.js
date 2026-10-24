@@ -30,7 +30,7 @@ const CARDS={
   press:{name:'Sığır Press',short:'S. PRESS',type:'def',cost:3,desc:'2 oyuncu topa basar',c1:'#b18cff',c2:'#5a2fd0',col:'#a77bff'},
   wall:{name:'Savunma Duvarı',short:'DUVAR',type:'def',cost:3,desc:'Geriye yaslan, şutları blokla',c1:'#8fd3ff',c2:'#2a5bd0',col:'#5cb8ff'},
   gk:{name:'Kaleci Refleksi',short:'KALECİ',type:'def',cost:3,desc:'10 sn süper kurtarış',c1:'#8ff5e6',c2:'#118a8c',col:'#3fe0d0'},
-  slide:{name:'Kayan Müdahale',short:'KAYMA',type:'def',cost:3,desc:'Kayarak topa dalar',c1:'#d4f78a',c2:'#4c9a1f',col:'#b4e85a'},
+  slide:{name:'Kayan Müdahale',short:'KAYMA',type:'def',cost:3,desc:'4 sn kayarak topa dalar',c1:'#d4f78a',c2:'#4c9a1f',col:'#b4e85a'},
   offside:{name:'Ofsayt Tuzağı',short:'OFSAYT',type:'def',cost:3,desc:'Hat çıkar, ofsayt yakalar',c1:'#fff3a0',c2:'#b58b00',col:'#ffe14d'},
   foul:{name:'Taktik Faul',short:'FAUL',type:'def',cost:2,desc:'Atağı kes, baştan kurdur',c1:'#ffa3a3',c2:'#b3122b',col:'#ff6b7a'},
   mark:{name:'Adam Adama',short:'MARKAJ',type:'def',cost:3,desc:'8 sn sıkı markaj',c1:'#a6c8ff',c2:'#28408f',col:'#7fa8ff'},
@@ -40,8 +40,8 @@ const CARDS={
   hero:{name:'Yıldız Oyuncu',short:'YILDIZ',type:'super',cost:7,desc:'Forvet 12 sn süperstar',c1:'#fff3a0',c2:'#c98a00',col:'#ffd23f'},
   intercept:{name:'Pas Kesme',short:'PAS KESME',type:'def',cost:2,desc:'7 sn pasları keser',c1:'#b9fff0',c2:'#14806a',col:'#5cf0cf'},
 };
-const SLIDE_WAIT=6,SLIDE_RANGE=75,SLIDE_SPEED=265; // kayan müdahale: yaklaşmak için süre, kaymaya başlama mesafesi ve kayış hızı
-const DUR={total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:8,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:8,intercept:7};
+const SLIDE_RANGE=75,SLIDE_SPEED=200,SLIDE_REST=.9,SLIDE_WIN=.6; // kayan müdahale: kaymaya başlama mesafesi, kayış hızı, kayan oyuncunun kalkma süresi, rakibe yetişince topu alma şansı
+const DUR={slide:4,total:10,bus:10,hero:12,counter:6,press:6,through:6,power:15,wall:7,gk:10,wave:7,overlap:8,longball:6,dribble:6,tiki:8,offside:6,foul:5,mark:8,intercept:7};
 // xG: şutun gol olma olasılığı. Simülasyondaki 18.153 şuttan lojistik regresyonla çıkarıldı.
 // mesafe dilimleri (px): <50, <80, <110, <150, <200, 200+ (her dilimin kendi sabiti);
 // sonra: açı, öndeki savunmacı, baskı altında, güçlü şut, güçlü şut×mesafe, vole, rakip kaleci kartı, rakip duvar kartı

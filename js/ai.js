@@ -13,7 +13,12 @@ function assignRoles(t){
   else if(o.team!==t)t.chasers=o.role==='GK'?[]:out.slice(0,n); // topu tutan kaleciye basılmaz
   else t.chasers=[];
   // Kayan Müdahale kartı: rakip topçuya ya da boştaki topa en yakın oyuncu koşar (topu tutan kaleciye ve duran topta yapılmaz)
-  t.slider=t.fx.slide>0&&!ball.kickoff&&!(ball.setT>0)&&(o?o.team!==t&&o.role!=='GK':true)?out[0]||null:null;
+  // kart oynandıktan sonra rakipten top kazanılınca biter (kart oynandığında top bizdeyse rakibin almasını bekler)
+  if(t.fx.slide>0){if(o&&o.team!==t)t.slideSeen=true;else if(o&&o.team===t&&t.slideSeen){t.fx.slide=0;t.slideSeen=false;}}
+  // kayılan top: rakip topçu (kaleci hariç) ya da boşta top; kendi pasımız ya da şutumuz yoldayken kayılmaz.
+  // aynı anda tek kişi kayar: biri kayarken başkası seçilmez, az önce kayan yerden kalkarken sıra ona gelmez
+  const slideBall=o?o.team!==t&&o.role!=='GK':ball.passTeam!==t&&!(ball.shot&&ball.shotTeam===t);
+  t.slider=t.fx.slide>0&&!ball.kickoff&&!(ball.setT>0)&&slideBall&&!t.players.some(p=>p.dash>0)?out.find(p=>!(p.slideRest>0))||null:null;
   // Taktik Faul kartı: topçuya en yakın oyuncu faul için koşar (topu tutan kaleciye ve duran topta yapılmaz)
   t.fouler=t.fx.foul>0&&o&&o.team!==t&&o.role!=='GK'&&!ball.kickoff&&!(ball.setT>0)?out[0]||null:null;
   assignMarks(t);

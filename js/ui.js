@@ -26,8 +26,7 @@ let oppKey='',lastWhole=0,superKeyShown='';
 // her karede çağrılır: değer değişmediyse sayfaya dokunma (gereksiz yeniden düzen ve boyama olmasın)
 const setText=(el,v)=>{v=String(v);if(el.textContent!==v)el.textContent=v;};
 const setCss=(el,p,v)=>{const c=el._css||(el._css={});if(c[p]!==v){c[p]=v;el.style.setProperty(p,v);}};
-// kayan müdahalenin süre kaydı yok: koşma süresi kullanılır
-const fxDur=k=>k==='slide'?SLIDE_WAIT:DUR[k];
+const fxDur=k=>DUR[k];
 function updateFxChips(t){
   const box=$('fx'+t.id),keys=Object.keys(t.fx).filter(k=>t.fx[k]>0&&fxDur(k)&&!t.quiet.has(k));
   for(const el of [...box.children])if(!keys.includes(el.dataset.k))el.remove();
@@ -159,7 +158,7 @@ const CARD_DETAIL={
   press:'6 sn boyunca iki oyuncu birden topa basar, top kapma şansı artar.',
   wall:'7 sn boyunca takım kendi kalesine yaslanır ve ortayı kapatır. Şutun önüne giren savunmacı topu büyük ihtimalle bloke eder, kaleci de daha çok kurtarır.',
   gk:'10 sn boyunca kaleci daha geniş alanı kapatır, kurtarış şansı çok artar.',
-  slide:'Topa en yakın oyuncun depar atar, yakınına gelince kayarak atılır. Rakip pas verirse yeni topçunun ya da pasın peşine düşer (6 sn içinde yaklaşamazsa kart boşa gider). Rakibe yetişirse topu çoğunlukla alır, rakip pası çıkarırsa pası kesmeye çalışır. Kayarak müdahale bazen faul olur.',
+  slide:'4 sn boyunca topa en yakın oyuncun depar atar, yakınına gelince kayarak atılır. Kayış boşa giderse en yakındaki oyuncun tekrar kayar; aynı anda tek oyuncu kayar. Kendi pasın yoldayken kayılmaz. Rakibe yetişirse topu çoğunlukla alır, rakip pası çıkarırsa pası kesmeye çalışır. Topu kazanınca kart biter. Kayarak müdahale bazen faul olur.',
   offside:'6 sn boyunca savunma hattı aniden öne çıkar. Rakip bunu geç fark eder; pas anında hattın arkasında kalan oyuncu topu alınca ofsayt olur, top sana geçer ve +1★ kazanırsın. Hattın arkasına atılan ara pasa karşı risklidir.',
   foul:'Topçuya en yakın oyuncun depar atar ve yetişince bilerek faul yapar, atak orada kesilir. 5 sn içinde yetişemezse kart boşa gider. Rakip serbest vuruşu geriye oynamak zorundadır, atak baştan kurulur. Bu sırada takımın koşarak savunmaya dizilir ve 5 sn şutları bloklar. Serbest vuruş faulün yapıldığı yerden kullanılır. Dikkat: ceza sahası içinde yapılan faul penaltıdır!',
   mark:'8 sn boyunca savunmacılar rakiplerini yapışık tutar; pas arası ve top kapma şansı çok artar.',
@@ -169,7 +168,7 @@ const CARD_DETAIL={
   intercept:'7 sn boyunca savunmacılar pas yollarına hızla kayar; rakip paslarını kesme şansı çok yüksek, oyuncuların menzili artar.',
 };
 function cardInfoHTML(k){
-  const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','slide','power'].includes(k)?DUR[k]+' sn':'Anlık';
+  const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','power'].includes(k)?DUR[k]+' sn':'Anlık';
   return `<div class="cinfo ${c.type}"><span class="cart" style="--c1:${c.c1};--c2:${c.c2}">${iconSvg(k)}</span>
 <div><b>${c.name}</b><div class="cmeta"><span class="ctype">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER · maçta 1 kez'}</span><span>${c.cost}★</span><span>${dur}</span></div><p>${CARD_DETAIL[k]}</p></div></div>`;
 }
@@ -193,7 +192,7 @@ function pressable(root,{tap,hold,release},sel='.card'){
 }
 let modalOpenedAt=0,modalPaused=false;
 function openCardModal(k){
-  const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','slide','power'].includes(k)?DUR[k]+' saniye':'Anlık';
+  const c=CARDS[k],dur=DUR[k]&&!['through','longball','foul','power'].includes(k)?DUR[k]+' saniye':'Anlık';
   $('cmBody').innerHTML=`<div class="cm-card">${cardHTML(k,-1)}</div>
 <h3 id="cmTitle">${c.name}</h3>
 <div class="cmeta ${c.type}"><span class="ctype">${c.type==='atk'?'HÜCUM':c.type==='def'?'SAVUNMA':'SÜPER · maçta 1 kez'}</span><span>${c.cost} ★</span><span>${dur}</span></div>

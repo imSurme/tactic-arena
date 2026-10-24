@@ -62,7 +62,7 @@ const FieldStates={
     if(o&&o.team===t)return formation(p,t); // bu karede top bize geçti
     const tg=o||ball,d=dist(p,tg);
     if(d<SLIDE_RANGE){
-      p.dash=clamp(d/SLIDE_SPEED+.2,.3,.45);p.tackleCd=0;t.fx.slide=0;t.slider=null; // hızlanma payı dahil: hedefe ulaşacak kadar, fazlası değil
+      p.dash=clamp(d/SLIDE_SPEED+.2,.3,.45);p.tackleCd=0;p.slideRest=p.dash+SLIDE_REST;t.slider=null; // hızlanma payı dahil: hedefe ulaşacak kadar, fazlası değil
       burst(p.x,p.y,CARDS.slide.col,10,90);
       return{x:tg.x,y:tg.y,sp:1};
     }
@@ -115,7 +115,7 @@ const KeeperStates={
 
 // her karede, duruma bakmadan: zamanlayıcılar ve hücum dışı kalınca boş alan/koşu bilgisinin sıfırlanması
 function playerGlobal(p,t,dt){
-  p.stun=Math.max(0,p.stun-dt);if(p.volley>0)p.volley-=dt;p.dash=Math.max(0,p.dash-dt);
+  p.stun=Math.max(0,p.stun-dt);if(p.volley>0)p.volley-=dt;p.dash=Math.max(0,p.dash-dt);if(p.slideRest>0)p.slideRest-=dt;
   p.sprint=Math.max(0,p.sprint-dt);p.run=Math.max(0,p.run-dt);
   p.kickCd=Math.max(0,p.kickCd-dt);p.tackleCd=Math.max(0,p.tackleCd-dt);
   if(p.superT>0)p.superT=Math.max(0,p.superT-dt);

@@ -90,8 +90,8 @@ function applyCard(t,k){
       ring(f.x,f.y,CARDS.hero.col);burst(f.x,f.y,CARDS.hero.col,18,140);floatAbove(f.x,f.y,22,'YILDIZ!',CARDS.hero.col);
       return;
     }
-    case'slide':{ // en yakın oyuncu önce koşar, yakınına gelince kayar (ai.js assignRoles, states.js slideRun)
-      t.fx.slide=SLIDE_WAIT;
+    case'slide':{ // süre boyunca topa en yakın oyuncu koşar ve kayar, boşa giderse sıradaki kayar; topu kazanınca biter (ai.js assignRoles, states.js slideRun)
+      t.fx.slide=DUR.slide;t.slideSeen=false;
       return;
     }
   }

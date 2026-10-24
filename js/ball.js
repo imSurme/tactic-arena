@@ -91,7 +91,7 @@ function simBall(dt,live){
       if(dist(p,o)>(dashing?18:13))continue;
       p.tackleCd=TEMPO.tackleCd;
       if(tackleFoul(p,o)){p.dash=0;callFoul(p,o);break;} // sert ya da arkadan müdahale
-      let ch=p.dash>0?.85:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.3:0);
+      let ch=p.dash>0?SLIDE_WIN:TEMPO.tackle+(t.fx.press?.2:0)+(t.fx.wall?.08:0)+(t.fx.mark?.3:0);
       const ax=p.x-o.x,ay=p.y-o.y,dirC=(Math.cos(o.fa)*ax+Math.sin(o.fa)*ay)/(Math.hypot(ax,ay)||1); // >0 önden, <0 arkadan
       if(p.dash<=0)ch*=dirC>.3?1.6:dirC<-.3?.45:1.9; // önden karşılama ve omuz omuza mücadele iyi, arkadan zor
       if(o.team.fx.dribble&&p.dash<=0)ch*=.2; // çalım ustası
