@@ -10,22 +10,12 @@ const TEAM_NAMES=[
   ['Zümrüt Ejder','EJDER'],['Kara Şahinler','ŞAHİN'],['Yıldırım FK','YILDIRIM'],['Akıncılar','AKINCI'],
   ['Lav Akıntısı','LAV'],['Safir Spor','SAFİR'],['Kaplan Pençesi','KAPLAN'],
 ];
-// mavi (senin forman) dışındaki forma renkleri
+// rakip forma renkleri (seninkiyle çakışırsa maçta deplasman forması giyerler)
 const KITS=['#ff4d5e','#ff8a1f','#ffd23f','#a34dff','#ff5fb0','#8c1c3c','#2a2f45','#f2f2f2','#14b8a6','#c2410c','#e11d48','#94a3b8','#7c3aed','#f59e0b','#be185d','#65a30d'];
 const ROUND_NAMES=['SON 16','ÇEYREK FİNAL','YARI FİNAL','FİNAL'];
 const GROUP_PAIRS=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]]; // grup içi maç günleri
 const GROUP_LETTERS='ABCDEFGH';
 
-// bir forma renginden koyu, açık, şerit ve kaleci renklerini türet
-function mixHex(a,b,k){
-  const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),x=p(a),y=p(b);
-  return'#'+x.map((v,i)=>Math.round(v+(y[i]-v)*k).toString(16).padStart(2,'0')).join('');
-}
-function kitFrom(hex){
-  const warm=['#ff8a1f','#ffd23f','#f59e0b','#c2410c'].includes(hex);
-  const gk=warm?'#9b5cff':'#ffa21f';
-  return{color:hex,dark:mixHex(hex,'#000000',.35),light:mixHex(hex,'#ffffff',.55),trim:mixHex(hex,'#000000',.6),gkColor:gk,gkTrim:mixHex(gk,'#000000',.55)};
-}
 const strStars=s=>Math.max(1,Math.min(5,Math.round((s-.8)/.45*4)+1));
 
 const Tour=(()=>{
@@ -79,7 +69,7 @@ const Tour=(()=>{
       // güçlere göre 4 torba; sen A grubundasın
       const others=shuffle(TEAM_NAMES.map(([name,short],i)=>({name,short,kit:kitFrom(KITS[i%KITS.length]),str:+rnd(.82,1.25).toFixed(2)})));
       others.sort((a,b)=>b.str-a.str);
-      const teams=[{name:'Mavi Yıldızlar (Sen)',short:'SEN',kit:null,str:1,me:true},...others];
+      const teams=[{name:'Sen',short:'SEN',kit:null,str:1,me:true},...others];
       const pots=[[0,...shuffle([1,2,3,4,5,6,7])],shuffle([8,9,10,11,12,13,14,15]),shuffle([16,17,18,19,20,21,22,23]),shuffle([24,25,26,27,28,29,30,31])];
       const groups=[...Array(8)].map((_,g)=>pots.map(p=>p[g]));
       T={teams,groups,groupResults:[],md:0,stage:'group',rounds:[],round:0,out:null,champion:null,finished:false};
@@ -124,7 +114,8 @@ const Tour=(()=>{
 })();
 
 // ---------- turnuva ekranı ----------
-const teamChip=(t,me)=>`<span class="tchip" style="--k:${t.kit?t.kit.color:'var(--home)'}"></span>${me?'<b>'+t.short+'</b>':t.name}`;
+// takım adı ve küçük arması (senin takımın her zaman güncel ayarlarınla)
+const teamChip=(t,me)=>{const m=me&&Team.get();return me?Team.crestSVG(m,'mini')+'<b>'+esc(m.short)+'</b>':Team.crestSVG(Team.badgeFor(t.name,t.kit.color),'mini')+t.name;};
 function groupTableHTML(g,compact){
   const T=Tour.data,rows=Tour.table(g);
   return`<table class="ttable${compact?' compact':''}"><thead><tr><th></th><th class="tl">GRUP ${GROUP_LETTERS[g]}</th><th>O</th><th>G</th><th>M</th><th>AV</th><th>P</th></tr></thead><tbody>${

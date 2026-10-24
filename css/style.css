@@ -238,7 +238,7 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .ttable td{padding:6px 3px;text-align:center;border-top:1px solid var(--line)}
 .ttable .tl{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 .ttable tr.q td:first-child{box-shadow:inset 3px 0 0 #2fd36b}
-.ttable tr.me td{background:rgba(47,128,255,.16)}
+.ttable tr.me td{background:color-mix(in srgb,var(--home) 16%,transparent)}
 .ttable.compact{font-size:11px}.ttable.compact td{padding:3px 2px}.ttable.compact .tl{max-width:110px}
 .others{width:100%;text-align:left}
 .others summary{cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);padding:4px 0}
@@ -252,7 +252,7 @@ canvas{display:block;border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.55)}
 .kround{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .kround .ktitle{grid-column:1/-1}
 .kmatch{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:12px;line-height:1.5}
-.kmatch.mine{border-color:var(--home);background:rgba(47,128,255,.12)}
+.kmatch.mine{border-color:var(--home);background:color-mix(in srgb,var(--home) 12%,transparent)}
 .krow{display:flex;justify-content:space-between;gap:6px;color:var(--muted)}
 .kt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kt.w{color:var(--text);font-weight:800}
@@ -608,3 +608,36 @@ canvas{border-radius:0;box-shadow:none}
 #app{position:fixed;inset:0;height:auto}
 /* ana ekran uygulamasında yükseklik JS ile ölçülen en büyük değer (bkz. main.js) */
 html.standalone #app{bottom:auto;height:var(--apph,100vh)}
+
+/* takım: skorbord arması, menüdeki takım kartı, takım düzenleme ekranı */
+input{-webkit-user-select:text;user-select:text}
+.crestwrap{display:contents}
+.crest.mini{width:15px;height:15px;margin-right:5px;vertical-align:-3px;display:inline-block}
+.teamcard{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:7px 14px 7px 9px;border-radius:14px;background:rgba(11,18,48,.7);border:1px solid var(--line);text-align:left;max-width:100%}
+.teamcard .crest{width:34px;height:34px}
+.teamcard b{display:block;font-size:15px;font-weight:800;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.teamcard small{font-size:11px;font-weight:700;color:var(--muted)}
+.teamcard:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.teamprev{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:10px;border-radius:14px;background:rgba(11,18,48,.6);border:1px solid var(--line)}
+.teamprev .shirt{width:48px;height:48px}
+.teamprev .crest.big{width:36px;height:36px}
+.teamprev div{text-align:left;min-width:0}
+.teamprev b{display:block;font-family:var(--display);font-size:18px;line-height:1.05;overflow-wrap:anywhere;text-transform:uppercase}
+.teamprev small{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.swatch{height:30px;border-radius:8px;background:var(--c);border:2px solid rgba(255,255,255,.18);cursor:pointer}
+.swatch[aria-pressed=true]{border-color:#fff;box-shadow:0 0 0 2px var(--gold)}
+.swatch:disabled{opacity:.25;cursor:default}
+.crestrow{display:grid;grid-template-columns:4fr 6fr;gap:10px}
+.crestpick{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.cpick{display:flex;justify-content:center;padding:8px 0;border-radius:8px;background:#0b1230;border:1px solid var(--line);cursor:pointer}
+.cpick .crest{width:22px;height:22px}
+.cpick[aria-pressed=true]{background:var(--panel-2);border-color:var(--gold)}
+.swatch:focus-visible,.cpick:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.vt .crest.mini{width:30px;height:30px;margin:0 0 4px}
+.box.teambox{gap:clamp(12px,2.6vh,22px)}
+.teamform{gap:clamp(12px,2.4vh,20px)}
+.teamform fieldset{gap:8px}
+.teamform fieldset{min-width:0}
+.teamform .namerow{display:grid;grid-template-columns:1fr 92px;gap:8px}
+.teamform .linkbox input{padding:10px 12px}

@@ -107,19 +107,21 @@ function tourButton(){
   const nx=Tour.active()&&Tour.next();
   return'<button class="cta alt small pvpbtn tourbtn" id="go">'+(nx?'TURNUVAYA DEVAM<small>'+nx.label+'</small>':'TURNUVA<small>32 takım</small>')+'</button>';
 }
-// skorbordda rakibin adı ve forma rengi
+// skorbordda iki takımın arması, kısa adı ve forma rengi; sayfadaki takım renkleri de bu maçın formalarına uyar
 function applyOppHud(){
-  const t=teams[1];
-  $('crest0').setAttribute('fill',teams[0].color);$('side0').style.setProperty('--tc',teams[0].color);
-  $('crest1').setAttribute('fill',t.color);$('side1').style.setProperty('--tc',t.color);
-  $('who1').textContent=matchOpp?matchOpp.short:'RAKİP';
+  const r=document.documentElement.style;
+  teams.forEach((t,i)=>{
+    $('crest'+i).innerHTML=Team.crestSVG(t.badge);$('side'+i).style.setProperty('--tc',t.color);$('who'+i).textContent=t.short;
+    r.setProperty(i?'--away':'--home',t.color);r.setProperty(i?'--away-l':'--home-l',t.light);
+  });
 }
 function showMenu(){
   // Sfx.resume: duraklatılmış maçtan çıkılınca ses kapalı kalmasın
   state='menu';paused=false;Sfx.resume();Tutorial.hide();matchCtx=null;matchOpp=null;newMatch();applyOppHud();resize();
-  showOverlay(`<h1>TACTIC<br>ARENA</h1><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
+  const me=Team.get();
+  showOverlay(`<h1>TACTIC<br>ARENA</h1><button class="teamcard" id="team">${Team.crestSVG(me)}<span><b>${esc(me.name)}</b><small>Takımını düzenle</small></span></button><p>Oyuncuların kendi kendine oynar. Sen yıldız harcayıp taktik kartı oynarsın. ${Settings.get('length')/60} dakikada en çok golü atan kazanır, berabere biterse altın gollü uzatma oynanır.</p>
 <button class="cta tour" id="pvp">ARKADAŞINLA OYNA<small>Link ya da oda koduyla</small></button><div class="menurow"><button class="cta alt small" id="quick">HIZLI MAÇ</button><button class="cta alt small" id="deck">DESTE</button></div>${tourButton()}<button class="cta alt gray small" id="opts">AYARLAR</button><div class="tip">Rakip: ${Settings.diff().name} · Maç: ${Settings.get('length')/60} dk</div>`,
-  {go:showTournament,pvp:showPvpMenu,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
+  {go:showTournament,team:showTeam,pvp:showPvpMenu,quick:()=>{matchCtx=null;matchOpp=null;start();},deck:showDeck,opts:showSettings});
   $('obox').classList.add('menu');
 }
 // arkadaş maçı: oda kur ya da arkadaşının oda kodunu gir
@@ -272,6 +274,47 @@ function showSettings(){
   $('obox').querySelectorAll('input[name=len]').forEach(el=>el.onchange=()=>{Settings.set('length',+el.value);Sfx.click();});
   $('optSound').onchange=e=>{Sfx.init();if(e.target.checked===Sfx.muted)Sfx.toggleMute();if(!Sfx.muted)Sfx.click();updateMuteBtn();}; // kapatırken ses yok, açınca tık
   $('optShake').onchange=e=>{Settings.set('shake',e.target.checked);Sfx.click();};
+}
+// takım ekranı: ad, kısa ad, forma ve şerit rengi, arma. Arkadan görünen sahadaki oyuncular da anında yeni formayı giyer
+const shirtSVG=(c,tr)=>`<svg class="shirt" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 7 5 16l6.5 13 6.5-3.2V55h28V25.8l6.5 3.2L59 16 40 7c-2 4.5-4.6 6.5-8 6.5S26 11.5 24 7z" fill="${c}" stroke="${OUT}" stroke-width="2.5" stroke-linejoin="round"/><path d="M8.3 15.6 13.6 26.2M55.7 15.6 50.4 26.2" stroke="${tr}" stroke-width="3.5"/><path d="M25.5 8.3c1.8 3.6 4 5.6 6.5 5.6s4.7-2 6.5-5.6" fill="none" stroke="${tr}" stroke-width="3"/></svg>`;
+function showTeam(){
+  const d=Team.get();
+  const colorName=c=>(KIT_COLORS.find(k=>k[0]===c)||[,''])[1];
+  const swatches=(cur,skip)=>Team.COLORS.map(c=>`<button class="swatch" data-v="${c}" style="--c:${c}" aria-label="${colorName(c)}" aria-pressed="${c===cur}"${c===skip?' disabled':''}></button>`).join('');
+  showOverlay(`<h2>TAKIMIN</h2>
+<div class="teamprev" id="tPrev"></div>
+<div class="settings teamform">
+  <div class="namerow"><fieldset><legend>Takım adı</legend><div class="linkbox"><input id="tName" maxlength="20" autocomplete="off" spellcheck="false" aria-label="Takım adı"></div></fieldset>
+  <fieldset><legend>Kısa ad</legend><div class="linkbox"><input id="tShort" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Kısa ad (skorbordda görünür)"></div></fieldset></div>
+  <fieldset><legend>Forma rengi</legend><div class="swatches" id="tColor"></div></fieldset>
+  <fieldset><legend>Şerit rengi</legend><div class="swatches" id="tTrim"></div></fieldset>
+  <div class="crestrow"><fieldset><legend>Arma şekli</legend><div class="crestpick" id="tShape"></div></fieldset>
+  <fieldset><legend>Sembol</legend><div class="crestpick" id="tSymbol"></div></fieldset></div>
+</div>
+<p class="tip">Arkadaş maçında ikinizin rengi aynıysa odaya katılan taraf şerit rengini forma olarak giyer.</p>
+<button class="cta" id="go">KAYDET</button><button class="link" id="back">Vazgeç</button>`,
+  {go:()=>{Team.set(cur());showMenu();},back:showMenu});
+  $('obox').classList.add('wide','teambox');
+  const nameIn=$('tName'),shortIn=$('tShort');
+  nameIn.value=d.name;shortIn.value=d.short===Team.shortFrom(d.name)?'':d.short; // boş kısa ad: takım adının ilk kelimesi
+  const cur=()=>Team.clean({...d,name:nameIn.value,short:shortIn.value});
+  function draw(){
+    const t=cur();
+    $('tPrev').innerHTML=shirtSVG(t.color,t.trim)+Team.crestSVG(t,'big')+`<div><b>${esc(t.name)}</b><small>${esc(t.short)}</small></div>`;
+    shortIn.placeholder=Team.shortFrom(t.name)||'KISA AD';
+    $('tColor').innerHTML=swatches(d.color);$('tTrim').innerHTML=swatches(t.trim,d.color);
+    $('tShape').innerHTML=CREST_SHAPES.map((_,i)=>`<button class="cpick" data-v="${i}" aria-label="${CREST_SHAPE_NAMES[i]}" aria-pressed="${i===d.shape}">${Team.crestSVG({...t,shape:i})}</button>`).join('');
+    $('tSymbol').innerHTML=CREST_SYMBOLS.map((_,i)=>`<button class="cpick" data-v="${i}" aria-label="${CREST_SYMBOL_NAMES[i]}" aria-pressed="${i===d.symbol}">${Team.crestSVG({...t,symbol:i})}</button>`).join('');
+    // arkadaki sahada senin oyuncuların yeni formayla
+    Object.assign(teams[0],kitFrom(t.color,t.trim),{name:t.name,short:t.short,badge:t});
+    Object.assign(teams[1],kitFrom('#ff4d5e','#7a0f22'));settleKits(teams[0],teams[1]);applyOppHud();redraw();
+  }
+  const pick=(id,key,num)=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;d[key]=num?+b.dataset.v:b.dataset.v;
+    if(key==='color'&&d.trim===d.color)d.trim=d.color==='#f2f2f2'?'#2a2f45':'#f2f2f2';Sfx.click();draw();};
+  pick('tColor','color');pick('tTrim','trim');pick('tShape','shape',true);pick('tSymbol','symbol',true);
+  nameIn.oninput=draw;
+  shortIn.oninput=()=>{shortIn.value=shortIn.value.toLocaleUpperCase('tr').replace(/[^\p{L}\p{N}]/gu,'');draw();};
+  draw();
 }
 function start(){
   Sfx.init();Sfx.resume(); // "Yeniden başla" duraklatma ekranından gelir

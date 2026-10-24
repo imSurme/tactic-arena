@@ -62,10 +62,14 @@ const Net=(()=>{
   const r1=v=>Math.round(v*10)/10;
   // misafirin gözünden: saha 180° döner, takımlar yer değiştirir
   const mx=x=>2*CX-x,my=y=>2*CY-y;
-  // misafir kendi takımını ev sahibindeki rengiyle (kırmızı) görür, bu yüzden olay renkleri değişmez
+  // her takım iki ekranda da aynı formayı giyer, bu yüzden olay renkleri değişmez
   const sc=c=>c;
-  const KIT_KEYS=['color','dark','light','trim','gkColor','gkTrim'];
-  function swapKits(){const a=teams[0],b=teams[1];for(const k of KIT_KEYS)[a[k],b[k]]=[b[k],a[k]];}
+  // arkadaşın gönderdiği takım: ad, forma ve arma (eski sürümden gelirse kırmızı "Rakip")
+  let oppTeam=null;
+  function oppFrom(o){
+    if(!o)return null;const m=Team.clean(o);
+    return{name:m.name,short:m.short,kit:kitFrom(m.color,m.trim),badge:m};
+  }
   const send=m=>{if(conn&&conn.open)conn.send(m);};
   const sendFast=m=>{if(fast&&fast.readyState==='open'){try{fast.send(JSON.stringify(m));return true;}catch(e){}}return false;};
   // iki taraf da aynı numarayla kendi kanalını açar (WebRTC "negotiated" kanal: ek sinyal gerekmez)
@@ -290,7 +294,7 @@ const Net=(()=>{
     showOverlay(`<h2>BAĞLANTI KOPTU</h2><p>${msg}</p><button class="cta" id="go">ANA MENÜ</button>`,{go:showMenu});
   }
   function cleanup(){
-    role=null;matchCtx=null;
+    role=null;matchCtx=null;matchOpp=null;oppTeam=null;
     try{conn&&conn.close();}catch(e){}
     try{peer&&peer.destroy();}catch(e){}
     try{fast&&fast.close();}catch(e){}
@@ -307,7 +311,7 @@ const Net=(()=>{
     if(m.t==='pi'){const r={t:'po',c:m.c};if(!sendFast(r))send(r);return;}
     if(m.t==='po'){const rtt=performance.now()-m.c;pingMs=pingMs==null?rtt:pingMs*.7+rtt*.3;return;}
     if(role==='host'){
-      if(m.t==='hello'){guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();pvpOppSuper=SUPER_KEYS.includes(m.super)?m.super:Deck.randomSuper();beginMatch();}
+      if(m.t==='hello'){oppTeam=oppFrom(m.team);guestDeck=Array.isArray(m.deck)&&Deck.valid(m.deck)?m.deck:Deck.random();pvpOppSuper=SUPER_KEYS.includes(m.super)?m.super:Deck.randomSuper();beginMatch();}
       else if(m.t==='super'&&state==='play'&&!paused){if(!playSuper(teams[1],null))send({t:'deny'});}
       else if(m.t==='card'&&state==='play'&&!paused){
         if(!playCard(teams[1],m.i,null))send({t:'deny'});
@@ -315,7 +319,7 @@ const Net=(()=>{
       else if(m.t==='rematch'){readyThem=true;rematchStatus();if(readyMe)beginMatch();}
       else if(m.t==='bye'){if(state==='play'||state==='goal')forfeitWin('Rakip maçtan ayrıldı.');else lost('Rakip maçtan ayrıldı.');}
     }else if(role==='guest'){
-      if(m.t==='start')guestBegin(m);
+      if(m.t==='start'){oppTeam=oppFrom(m.team);guestBegin(m);}
       else if(m.t==='s')receiveSnap(m);
       else if(m.t==='ev'){for(const e of m.ev)applyEvent(e);}
       else if(m.t==='stats')pvpStats=m.s;
@@ -339,18 +343,18 @@ const Net=(()=>{
   // ---------- maçı başlat
   function beginMatch(){
     readyMe=readyThem=false;
-    matchCtx={pvp:true,label:'ARKADAŞ MAÇI'};matchOpp=null;pvpOppDeck=guestDeck;
+    matchCtx={pvp:true,label:'ARKADAŞ MAÇI'};matchOpp=oppTeam;pvpOppDeck=guestDeck;
     Sfx.init();newMatch();paused=false;hideOverlay();applyOppHud();resize();
     state='play';sendT=0;events=[];sentEnd=false;lastHeard=performance.now();gone=null;
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
     if(ball.owner)ball.owner.decT=1.7; // santra yazı bitince yapılır
     Sfx.whistle();
-    send({t:'start'});
+    send({t:'start',team:Team.get()});
   }
   function guestBegin(){
     readyMe=readyThem=false;
-    matchCtx={pvp:true,guest:true,label:'ARKADAŞ MAÇI'};matchOpp=null;
-    Sfx.init();newMatch();swapKits();paused=false;hideOverlay();applyOppHud();resize();
+    matchCtx={pvp:true,guest:true,label:'ARKADAŞ MAÇI'};matchOpp=oppTeam;
+    Sfx.init();newMatch();paused=false;hideOverlay();applyOppHud();resize();
     for(const t of teams)for(const p of t.players)p.fsm.current=null;
     state='play';snap=null;buf=[];offs=[];renderT=null;offMin=null;lastSnapAt=performance.now();lastHeard=performance.now();gone=null;
     banners.push({type:'info',text:'BAŞLA!',sub:'Arkadaş maçı',color:'#ffc83d',t:0,life:1.6});
@@ -433,7 +437,7 @@ ${navigator.share?'<button class="cta" id="shareLink">PAYLAŞ</button>':''}
           // istek bazen sunucuda askıda kalır: 9 sn'de açılmazsa temiz bir bağlantıyla yeniden dene
           timer=setTimeout(()=>{if(role==='guest'&&conn===c&&!c.open){if(attempt<6){status('Tekrar deneniyor ('+attempt+'/6)…');attemptJoin();}else netError({type:'timeout'});}},9000);
           watchIce(c,()=>{if(role==='guest'&&conn===c&&!c.open){clearTimeout(timer);netError({type:'ice'});}});
-          c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),super:Deck.getSuper(),v:1});});
+          c.on('open',()=>{clearTimeout(timer);status('Bağlandı, maç başlıyor…');c.send({t:'hello',deck:Deck.get(),super:Deck.getSuper(),team:Team.get(),v:1});});
           c.on('data',m=>{if(m&&m.t==='full'){cleanup();showOverlay('<h2>ODA DOLU</h2><p>Bu odada zaten iki oyuncu var.</p><button class="cta" id="go">ANA MENÜ</button>',{go:showMenu});}});
         });
       };

@@ -1,5 +1,5 @@
 // Maç durumu: takımlar, top, santra
-// matchOpp: turnuva rakibi {name, short, kit, str}; matchCtx: {tour, knockout, label}. Hızlı maçta ikisi de null
+// matchOpp: turnuva rakibi ya da arkadaşın {name, short, kit, str, badge?}; matchCtx: {tour, knockout, label}. Hızlı maçta ikisi de null
 let matchOpp=null,matchCtx=null;
 // rakibin gücü: ayarlardaki zorluk × turnuva rakibinin gücü
 function oppMod(){if(matchCtx&&matchCtx.pvp)return{skill:1,think:1};const d=Settings.diff(),s=matchOpp?matchOpp.str:1;return{skill:d.skill*s,think:d.think/s};}
@@ -8,10 +8,11 @@ let parts=[],floats=[],banners=[],handKey='',lastAfford=[],oppLog=[],overtime=fa
 
 function makeTeam(id){
   const keys=shuffle(id===0?Deck.get():matchCtx&&matchCtx.pvp&&pvpOppDeck?pvpOppDeck.slice():Deck.random());
-  const t={id,score:0,stars:STAR_START,fx:{},hand:keys.slice(0,4),queue:keys.slice(4),players:[],chasers:[],
-    color:id?'#ff4d5e':'#2f80ff',dark:id?'#b81f35':'#1747b5',light:id?'#ffb0b8':'#9cc4ff',trim:id?'#7a0f22':'#ffffff',
-    gkColor:id?'#ffa21f':'#b6f23a',gkTrim:id?'#7a3d00':'#2e5a00'};
-  if(id===1&&matchOpp&&matchOpp.kit)Object.assign(t,matchOpp.kit);
+  const t={id,score:0,stars:STAR_START,fx:{},hand:keys.slice(0,4),queue:keys.slice(4),players:[],chasers:[]};
+  // ad, kısa ad, arma (badge) ve forma: sen her zaman kendi takımınsın; rakip turnuva takımı, arkadaşın ya da kırmızı "Rakip"
+  if(id===0){const m=Team.get();Object.assign(t,Team.kit(),{name:m.name,short:m.short,badge:m});}
+  else if(matchOpp)Object.assign(t,matchOpp.kit,{name:matchOpp.name,short:matchOpp.short,badge:matchOpp.badge||Team.badgeFor(matchOpp.name,matchOpp.kit.color)});
+  else Object.assign(t,kitFrom('#ff4d5e','#7a0f22'),{name:'Rakip',short:'RAKİP',badge:{color:'#ff4d5e',trim:'#ffffff',shape:0,symbol:1}});
   t.superKey=id===0?Deck.getSuper():matchCtx&&matchCtx.pvp&&pvpOppSuper?pvpOppSuper:Deck.randomSuper();t.superUsed=false;
   ROLES.forEach(([role,bx,by,num],i)=>{
     const pl={team:t,role,bx,by,num,x:0,y:0,vx:0,vy:0,fa:id?Math.PI/2:-Math.PI/2,
@@ -24,6 +25,7 @@ function makeTeam(id){
 }
 function newMatch(){
   teams=[makeTeam(0),makeTeam(1)];
+  if(matchCtx&&matchCtx.guest)settleKits(teams[1],teams[0]);else settleKits(teams[0],teams[1]); // arkadaş maçında ev sahibi odayı kuran
   clock=Settings.get('length');stats=freshStats();refFx=[];pendingCards=[];lastPossessor=null;doubleShown=false;overtime=false;paused=false;oppLog=[];aiT=2.5;parts=[];floats=[];banners=[];handKey='';lastAfford=[];superKeyShown='';
   kickoff(Math.random()<.5?0:1);
 }

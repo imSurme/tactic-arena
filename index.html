@@ -20,9 +20,9 @@
 <body>
 <div id="app">
   <div id="hud">
-    <div class="side" id="side0" style="--tc:var(--home)"><span class="ballmark"></span><svg class="crest" viewBox="0 0 32 32"><path id="crest0" d="M16 2 28 6v9c0 7-5 12.5-12 15C9 27.5 4 22 4 15V6z" fill="#2f80ff" stroke="#fff" stroke-width="2.5"/><path d="M16 9l2 4.3 4.6.5-3.4 3.1 1 4.6L16 19.2l-4.2 2.3 1-4.6-3.4-3.1 4.6-.5z" fill="#fff"/></svg><div><div class="who">SEN</div><div class="sc" id="s0">0</div></div></div>
+    <div class="side" id="side0" style="--tc:var(--home)"><span class="ballmark"></span><span class="crestwrap" id="crest0"></span><div><div class="who" id="who0">SEN</div><div class="sc" id="s0">0</div></div></div>
     <div class="mid"><div id="timer">2:00</div><div id="half">MAÇ</div></div>
-    <div class="side r" id="side1" style="--tc:var(--away)"><span class="ballmark"></span><svg class="crest" viewBox="0 0 32 32"><path id="crest1" d="M16 2 28 6v9c0 7-5 12.5-12 15C9 27.5 4 22 4 15V6z" fill="#ff4d5e" stroke="#fff" stroke-width="2.5"/><circle cx="16" cy="15" r="6" fill="none" stroke="#fff" stroke-width="2.6"/></svg><div style="text-align:right"><div class="who" id="who1">RAKİP</div><div class="sc" id="s1">0</div></div></div>
+    <div class="side r" id="side1" style="--tc:var(--away)"><span class="ballmark"></span><span class="crestwrap" id="crest1"></span><div style="text-align:right"><div class="who" id="who1">RAKİP</div><div class="sc" id="s1">0</div></div></div>
   </div>
   <div id="stage">
     <div id="field">
@@ -52,6 +52,7 @@
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/team.js"></script>
 <script src="js/fsm.js"></script>
 <script src="js/state.js"></script>
 <script src="js/cards.js"></script>
